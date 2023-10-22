@@ -1,14 +1,19 @@
 package br.com.talison.contabil.service.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Date;
 
+@Getter
+@Setter
 public class UserDto implements Serializable {
 
 
-    private Integer id;
+    private String id;
 
     @NotNull
     @NotBlank

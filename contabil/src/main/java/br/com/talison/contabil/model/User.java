@@ -7,13 +7,15 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Getter
 @Setter
 @Document(collection = "user")
-public class User {
+public class User implements Serializable {
 
+    @jakarta.persistence.Id
     @Id
     private String id;
 
@@ -40,4 +42,6 @@ public class User {
         this.role = role;
         this.createdAt = new Date();
     }
+
+
 }
