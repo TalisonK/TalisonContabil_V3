@@ -1,5 +1,6 @@
-package br.com.talison.contabil.model;
+package br.com.talison.contabil.domain;
 
+import br.com.talison.contabil.domain.enums.EnumRole;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
@@ -15,7 +16,6 @@ import java.util.Date;
 @Document(collection = "user")
 public class User implements Serializable {
 
-    @jakarta.persistence.Id
     @Id
     private String id;
 
@@ -37,11 +37,10 @@ public class User implements Serializable {
     }
 
     public User(String name, String password, EnumRole role) {
+        this();
         this.name = name;
         this.password = password;
         this.role = role;
-        this.createdAt = new Date();
     }
-
 
 }

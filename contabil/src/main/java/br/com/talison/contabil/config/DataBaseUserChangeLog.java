@@ -17,6 +17,9 @@ public class DataBaseUserChangeLog {
     public void before() {
 
         mongoTemplate.createCollection("user");
+        mongoTemplate.createCollection("expense");
+        mongoTemplate.createCollection("income");
+        mongoTemplate.createCollection("category");
     }
 
 }

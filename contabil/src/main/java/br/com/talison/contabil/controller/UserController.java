@@ -1,6 +1,7 @@
 package br.com.talison.contabil.controller;
 
-import br.com.talison.contabil.service.dto.UserDto;
+import br.com.talison.contabil.domain.dto.UserCreateDto;
+import br.com.talison.contabil.domain.dto.UserDto;
 import br.com.talison.contabil.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +19,22 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> addUser(@Valid @RequestBody UserDto userDto) {
+    public ResponseEntity<String> addUser(@Valid @RequestBody UserCreateDto userDto) {
 
-        return ResponseEntity.status(201).body(userService.addUser(userDto));
+        UserDto dto = userService.addUser(userDto);
 
+        if(dto != null){
+            return ResponseEntity.status(201).body(dto.getId());
+        }
+        else{
+            return ResponseEntity.status(409).body(null);
+        }
     }
 
-    public void deleteUser() {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String id) {
+        userService.deleteUser(id);
+        return ResponseEntity.status(200).build();
 
     }
 
@@ -55,7 +65,18 @@ public class UserController {
         else{
             return ResponseEntity.status(404).body(null);
         }
+    }
 
+    @PostMapping("/login")
+    public ResponseEntity<UserDto> login(@Valid @RequestBody UserDto dto) {
+        UserDto ret = userService.login(dto);
+
+        if(ret != null){
+            return ResponseEntity.status(200).body(ret);
+        }
+        else{
+            return ResponseEntity.status(404).body(null);
+        }
     }
 
 }
