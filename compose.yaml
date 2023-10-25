@@ -24,6 +24,19 @@ services:
       timeout: 5s
       retries: 5
   
+  front:
+    container_name: contabil_front
+    hostname: contabil_front
+    build:
+      context: ./contabil-web-app
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "4200:4200"
+    expose:
+      - 4200
+    
+
   
   adminer: # interface para o banco de dados
     image: adminer

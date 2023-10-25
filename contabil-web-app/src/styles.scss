@@ -1,0 +1,53 @@
+/* You can add global styles to this file, and also import other style files */
+@import "primeng/resources/themes/bootstrap4-light-blue/theme.css";
+@import "primeng/resources/primeng.css";
+@import "primeicons/primeicons.css";
+
+
+html{
+    font-family: Poppins, sans-serif;
+}
+
+body{
+    margin: 0;
+}
+
+.flex-row{
+    display: flex;
+    flex-direction: row;
+}
+
+.space-between{
+    justify-content: space-between;
+}
+
+.pad0{
+    padding: 0!important;
+}
+
+.w-100{
+    width: 100%;
+}
+
+.submit-button .p-button{
+    width: 100%!important;
+    padding: 6px;
+}
+
+.forgot-button .p-button{
+    float: inline-end;
+    font-size: 0.7rem;
+    padding: 0;
+    padding-top: 4px;
+}
+
+.right{
+    float: inline-end;
+
+}
+
+.error-message{
+    color: red;
+    font-size: 0.8rem;
+    margin: 1px 5px;
+}

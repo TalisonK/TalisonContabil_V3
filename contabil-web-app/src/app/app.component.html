@@ -1,0 +1,11 @@
+<div *ngIf="user === null">
+    <login></login>
+</div>
+<div *ngIf="user !== null">
+    <div>HEADER</div>
+    <div class="flex-row">
+        <div>Siderbar</div>
+        <router-outlet></router-outlet>
+    </div>
+    <div>FOTTER</div>
+</div>
