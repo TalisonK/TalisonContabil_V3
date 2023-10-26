@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { User } from 'src/domains/User';
+
 
 @Component({
   selector: 'app-login-form',
@@ -6,6 +9,10 @@ import { Component } from '@angular/core';
   styleUrls: ['./login-form.component.scss']
 })
 export class LoginFormComponent {
+
+  @Output() userEvent = new EventEmitter<User>();
+
+  constructor(private router: Router){}
 
   invalidUser: boolean = false;
   invalidPass: boolean = false;
@@ -22,6 +29,15 @@ export class LoginFormComponent {
     this.invalidPass = this.password === '';
 
     if (this.invalidUser || this.invalidPass) return;
+    
+    
+    const user = new User();
+    user.nome = this.user;
+    user.password = this.password;
+
+    this.userEvent.emit(user);
+
+    this.router.navigate(['/dashboard']);
   }
 
 }

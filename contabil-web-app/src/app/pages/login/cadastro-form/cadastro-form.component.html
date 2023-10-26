@@ -1,6 +1,6 @@
 <div class="login-form-body">
-    <h1 class="m-0 text-primary font-semibold text-2xl"> Welcome back! </h1>
-    <span class="text-500 mt-2 mini-text">Please fill the fields to sign-in</span>
+    <h1 class="m-0 text-primary font-semibold text-2xl"> Welcome! </h1>
+    <span class="text-500 mt-2 mini-text">Please fill the fields to sign-up</span>
     <div pFocusTrap class="form-components">
 
         <div *ngIf="invalidUser" class="form-components">
@@ -27,7 +27,7 @@
     
             <i class="pi pi-exclamation-triangle error-message">{{passwordError}}</i>
         </div>
-        <div *ngIf="!invalidPass">
+        <div *ngIf="!invalidPass" class="mb-3">
             <span class="p-input-icon-left mt-2">
                 <i class="pi pi-lock"></i>
                 <p-password [(ngModel)]="password" placeholder="Password" [toggleMask]="true"></p-password>
@@ -36,7 +36,7 @@
         </div>
         
         <div class="button-box">
-            <p-button label="Login" class="mt-3 submit-button" (onClick)="login()"></p-button>
+            <p-button label="Login" class="mt-3 submit-button" (onClick)="create()"></p-button>
         </div>
         
     </div>

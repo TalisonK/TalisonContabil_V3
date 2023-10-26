@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { LoginModule } from './pages/login/login.module';
 import { DashboardModule } from './pages/dashboard/dashboard.module';
 import { PrimengModule } from './shared/primeng.module';
+import { LayoutModule } from './pages/layout/layout.module';
 
 @NgModule({
   declarations: [
@@ -17,7 +18,8 @@ import { PrimengModule } from './shared/primeng.module';
     BrowserAnimationsModule,
     LoginModule,
     DashboardModule,
-    PrimengModule
+    PrimengModule,
+    LayoutModule
   ],
   providers: [],
   bootstrap: [AppComponent],
