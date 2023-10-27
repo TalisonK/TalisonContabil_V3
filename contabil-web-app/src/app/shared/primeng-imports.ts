@@ -61,6 +61,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 import { TreeModule } from 'primeng/tree';
 import { TreeTableModule } from 'primeng/treetable';
+import { DividerModule } from 'primeng/divider';
 
 export const PRIMENG_IMPORTS = [
     AccordionModule,
@@ -92,6 +93,7 @@ export const PRIMENG_IMPORTS = [
     InputTextareaModule,
     ListboxModule,
     MegaMenuModule,
+    DividerModule,
     MenuModule,
     MenubarModule,
     MessageModule,

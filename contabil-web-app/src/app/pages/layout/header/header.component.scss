@@ -1,7 +1,19 @@
 .header {
     width: 100%; 
     height: 2%; 
-    min-height: 64px;
-    background-color: aqua;
+    min-height: 40px;
+    height: 55px;
+    background-color: #3F51B5;
     margin: 0;
+}
+
+.logo{
+    width: 70px!important;
+    height: 55px!important;
+    padding: 5px 13px;
+    background-color: #223188;
+}
+
+.divider{
+    background-color: rgba($color: #000000, $alpha: 0);
 }

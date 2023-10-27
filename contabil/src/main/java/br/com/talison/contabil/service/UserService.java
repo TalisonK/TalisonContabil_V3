@@ -1,10 +1,10 @@
 package br.com.talison.contabil.service;
 
 import br.com.talison.contabil.domain.User;
-import br.com.talison.contabil.domain.dto.UserCreateDto;
+import br.com.talison.contabil.domain.dto.UserPassDto;
 import br.com.talison.contabil.domain.dto.UserDto;
 import br.com.talison.contabil.repository.UserRepository;
-import br.com.talison.contabil.service.mapper.UserCreateMapper;
+import br.com.talison.contabil.service.mapper.UserPassMapper;
 import br.com.talison.contabil.service.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -22,7 +22,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserMapper userMapper;
-    private final UserCreateMapper userCreateMapper;
+    private final UserPassMapper userPassMapper;
     private final UserRepository userRepository;
 
 
@@ -30,7 +30,7 @@ public class UserService {
         return userMapper.toDto(userRepository.findAll());
     }
 
-    public UserDto addUser(UserCreateDto user) {
+    public UserDto addUser(UserPassDto user) {
 
         User novo = new User();
         novo.setName(user.getName());
@@ -44,7 +44,7 @@ public class UserService {
         }
 
         user.setCreatedAt(new Date());
-        User entrada = userRepository.save(userCreateMapper.toEntity(user));
+        User entrada = userRepository.save(userPassMapper.toEntity(user));
 
         return userMapper.toDto(entrada);
     }
@@ -70,12 +70,12 @@ public class UserService {
         return novo.map(userMapper::toDto).orElse(null);
     }
 
-    public UserDto login(UserDto dto) {
-        User user = userMapper.toEntity(dto);
-        Example<User> example = Example.of(user, ExampleMatcher.matching().withIgnorePaths("id", "createdAt", "role", "name"));
+    public UserDto login(UserPassDto dto) {
+        User user = userPassMapper.toEntity(dto);
 
-        Optional<User> verification = userRepository.findOne(example);
+        Optional<User> novo = userRepository.findByNameAndPassword(user.getName(), user.getPassword());
 
-        return verification.map(userMapper::toDto).orElse(null);
+        return novo.map(userMapper::toDto).orElse(null);
+
     }
 }

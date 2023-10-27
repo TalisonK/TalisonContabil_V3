@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
 import { Router } from '@angular/router';
 import { User } from 'src/domains/User';
+import { UserServices } from 'src/services/user.services';
 
 
 @Component({
@@ -12,7 +13,7 @@ export class LoginFormComponent {
 
   @Output() userEvent = new EventEmitter<User>();
 
-  constructor(private router: Router){}
+  constructor(private router: Router, private userService: UserServices){}
 
   invalidUser: boolean = false;
   invalidPass: boolean = false;
@@ -24,20 +25,23 @@ export class LoginFormComponent {
   password: string = '';
 
 
-  login() {
+  async login() {
     this.invalidUser = this.user === '';
     this.invalidPass = this.password === '';
 
     if (this.invalidUser || this.invalidPass) return;
-    
-    
-    const user = new User();
-    user.nome = this.user;
-    user.password = this.password;
 
-    this.userEvent.emit(user);
-
-    this.router.navigate(['/dashboard']);
+    this.userService.login(this.user, this.password).subscribe({
+      next: (user: User) => {
+        localStorage.setItem('user', JSON.stringify(user));
+        this.userEvent.emit(user);
+        this.router.navigate(['/dashboard']);
+      },
+      error: () => {
+        this.invalidUser = true;
+        this.invalidPass = true;
+      }
+    })
   }
 
 }

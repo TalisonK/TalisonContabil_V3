@@ -4,7 +4,7 @@ import { Observable } from "rxjs";
 import { User } from "src/domains/User";
 
 @Injectable()
-export class userServices {
+export class UserServices {
 
     url = `http://localhost:8080/user`;
 
@@ -14,14 +14,8 @@ export class userServices {
         return this.http.get<User[]>(`${this.url}/all`);
     }
 
-    login(user: string, password: string): Observable<User> {
-        const mock:User =  new User();
-        mock.nome = user;
-        mock.password = password;
-        return new Observable<User>(observer => {
-            observer.next(mock);
-        })
-        //return this.http.post<User>(`${this.url}/login`, {user, password});
+    login(name: string, password: string): Observable<User> {
+        return this.http.post<User>(`${this.url}/login`, {name, password});
     }
 }
 

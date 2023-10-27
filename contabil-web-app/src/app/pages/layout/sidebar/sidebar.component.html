@@ -1,3 +1,12 @@
 <div class="sidebar">
-    <p style="margin: 0;">sidebar works!</p>
+    <div class='flex-row'>
+        <img src="../../../../assets/mini-logo-invertido.png" alt="logo" class="logo"/>
+    </div>
+    <div class="menu">
+        <ng-template ngFor let-item [ngForOf]="items" let-i="index">
+            <div pTooltip={{item.label}} class="menuItem" (click)="move(item)">
+                <i class="pi {{item.icon}} menuIcon"></i>
+            </div>
+        </ng-template>
+    </div>
 </div>

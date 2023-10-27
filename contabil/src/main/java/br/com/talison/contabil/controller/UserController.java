@@ -1,6 +1,6 @@
 package br.com.talison.contabil.controller;
 
-import br.com.talison.contabil.domain.dto.UserCreateDto;
+import br.com.talison.contabil.domain.dto.UserPassDto;
 import br.com.talison.contabil.domain.dto.UserDto;
 import br.com.talison.contabil.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<String> addUser(@Valid @RequestBody UserCreateDto userDto) {
+    public ResponseEntity<String> addUser(@Valid @RequestBody UserPassDto userDto) {
 
         UserDto dto = userService.addUser(userDto);
 
@@ -68,7 +68,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<UserDto> login(@Valid @RequestBody UserDto dto) {
+    public ResponseEntity<UserDto> login(@Valid @RequestBody UserPassDto dto) {
         UserDto ret = userService.login(dto);
 
         if(ret != null){

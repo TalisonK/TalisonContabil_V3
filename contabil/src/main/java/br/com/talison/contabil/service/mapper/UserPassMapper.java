@@ -1,10 +1,10 @@
 package br.com.talison.contabil.service.mapper;
 
 import br.com.talison.contabil.domain.User;
-import br.com.talison.contabil.domain.dto.UserCreateDto;
+import br.com.talison.contabil.domain.dto.UserPassDto;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
-public interface UserCreateMapper extends EntityMapper<UserCreateDto, User>{
+public interface UserPassMapper extends EntityMapper<UserPassDto, User>{
 
 }

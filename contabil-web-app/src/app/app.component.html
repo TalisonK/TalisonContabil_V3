@@ -1,10 +1,12 @@
 <div *ngIf="user !== null">
-    <app-header/>
     <div class="flex-row">
         <app-sidebar/>
-        <router-outlet></router-outlet>
+        <div style="width: 100%;">
+            <app-breadcrumb/>
+            <router-outlet></router-outlet>
+        </div>
     </div>
-    <app-footer/>
+    
 </div>
 <div *ngIf="user === null">
     <login (userEvent)="login($event)"></login>
