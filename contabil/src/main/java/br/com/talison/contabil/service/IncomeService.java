@@ -21,6 +21,7 @@ public class IncomeService {
     private final IncomeRepository incomeRepository;
     private final UserRepository userRepository;
     private final IncomeMapper incomeMapper;
+    private final TotalsService totalsService;
 
     public List<IncomeDto> listar() {
         return incomeMapper.toDto(incomeRepository.findAll());
@@ -40,12 +41,18 @@ public class IncomeService {
                 user.get(),
                 income.getReceivedAt());
 
+        totalsService.updateTotals(income.getReceivedAt(), user.get().getId(), "expense");
+
         return incomeMapper.toDto(incomeRepository.save(novo));
     }
 
     public IncomeDto updateIncome(IncomeDto dto) {
         if (incomeRepository.existsById(dto.getId())) {
             incomeRepository.save(incomeMapper.toEntity(dto));
+
+            User user = userRepository.findByName(dto.getUser()).get();
+
+            totalsService.updateTotals(dto.getReceivedAt(), user.getId(), "expense");
             return dto;
         }
         return null;

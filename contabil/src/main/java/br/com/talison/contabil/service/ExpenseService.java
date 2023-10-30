@@ -74,8 +74,7 @@ public class ExpenseService {
 
             for(; expense.getActualParcel() <= expense.getTotalParcel(); expense.setActualParcel(expense.getActualParcel() + 1)) {
                 results.add(sendExpense(expense, category.get(), user.get()).getId());
-                TotalsDto d = totalsService.getTotals(expense.getPaidAt(), user.get().getId(), "expense");
-                //totalsService.addToTotals(d, expense.getValue());
+                totalsService.updateTotals(expense.getPaidAt(), user.get().getId(), "expense");
                 expense.setPaidAt(new java.sql.Date(expense.getPaidAt().getYear(), expense.getPaidAt().getMonth() + 1, 15));
             }
 
