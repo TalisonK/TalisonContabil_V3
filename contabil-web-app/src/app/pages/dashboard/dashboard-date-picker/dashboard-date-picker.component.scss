@@ -1,0 +1,18 @@
+.picker-body{
+  justify-content: start;
+  text-align: center;
+  align-content: center;
+  overflow:auto;
+}
+
+.item-button{
+  margin:8px;
+  height: 65px;
+}
+
+.item{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  cursor: pointer;
+}

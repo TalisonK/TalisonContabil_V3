@@ -4,13 +4,17 @@ import { DashboardBodyComponent } from './dashboard-body/dashboard-body.componen
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { PrimengModule } from 'src/app/shared/primeng.module';
 import { DashboardHeaderComponent } from './dashboard-header/dashboard-header.component';
+import { DashboardDatePickerComponent } from './dashboard-date-picker/dashboard-date-picker.component';
+import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.component';
 
 
 
 @NgModule({
   declarations: [
     DashboardBodyComponent,
-    DashboardHeaderComponent
+    DashboardHeaderComponent,
+    DashboardDatePickerComponent,
+    DashboardResumeComponent
   ],
   imports: [
     CommonModule,

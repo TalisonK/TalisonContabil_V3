@@ -24,4 +24,8 @@ export class DashboardBodyComponent implements OnInit{
       this.user = parse;
     }
   }
+
+  updateDate(date:Date) {
+    this.date = date;
+  }
 }

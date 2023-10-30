@@ -20,6 +20,7 @@ public class DataBaseUserChangeLog {
         mongoTemplate.createCollection("expense");
         mongoTemplate.createCollection("income");
         mongoTemplate.createCollection("category");
+        mongoTemplate.createCollection("totals");
     }
 
 }

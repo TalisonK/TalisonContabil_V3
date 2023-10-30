@@ -50,7 +50,7 @@ public class ExpenseService {
             return null;
         }
 
-        if(expense.getTotalParcel() < expense.getActualParcel()) {
+        if((expense.getTotalParcel() != null && expense.getActualParcel() != null) && (expense.getTotalParcel() < expense.getActualParcel())) {
             return null;
         }
 
