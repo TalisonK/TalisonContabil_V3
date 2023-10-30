@@ -29,17 +29,31 @@ public class TotalsService {
     private final TotalsMapper totalsMapper;
 
     private List<Date> calendarGenerator(String year, String month) {
-        String start = year + "-" + month + "-01";
-        String end = year + "-" + month + "-31";
 
-        SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd");
+        List<String> months = Arrays.asList("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec");
+
+        String start = "";
+        String end = "";
+
+        if(month.length() == 3){
+            start = year + "-" + (months.indexOf(month) + 1) + "-01";
+            end = year + "-" + (months.indexOf(month) + 1) + "-31";
+        }
+        else {
+            start = year + "-" + month + "-01";
+            end = year + "-" + month + "-31";
+        }
+
+        SimpleDateFormat form = null;
 
         try{
+            form = new SimpleDateFormat("yyyy-MM-dd");
             Date Date1 = form.parse(start);
             Date Date2 = form.parse(end);
             return Arrays.asList(Date1, Date2);
-        }catch (ParseException e){
-            e.printStackTrace();
+        }
+        catch (ParseException e){
+            System.out.println("Erro ao gerar as datas de filtragem! Erro:" + year + month);;
         }
         return null;
     }
@@ -94,6 +108,14 @@ public class TotalsService {
         }
     }
 
+    public TotalsDto getTotals(Date date, String userId, String type){
+
+        String month = new SimpleDateFormat("MMM", Locale.ENGLISH).format(date);
+        String year = new SimpleDateFormat("yyyy", Locale.ENGLISH).format(date);
+
+        return getTotals(year, month, userId, type);
+    }
+
     public TotalsDto getTotals(String year, String month, String userId, String type){
 
         Optional<Totals> explorer = totalsRepository.findByTypeAndYearAndMonthAndUserId(type, year, month, userId);
@@ -107,12 +129,21 @@ public class TotalsService {
         }
     }
 
+    public TotalsDto updateTotals(Date date, String userId, String type){
+
+        String month = new SimpleDateFormat("MMM", Locale.ENGLISH).format(date);
+        String year = new SimpleDateFormat("yyyy", Locale.ENGLISH).format(date);
+
+        return updateTotals(year, month, userId, type);
+    }
+
+
     public TotalsDto updateTotals(String year, String month, String userId, String type){
 
         Optional<Totals> explorer = totalsRepository.findByTypeAndYearAndMonthAndUserId(type, year, month, userId);
 
         if(explorer.isEmpty()){
-            return null;
+            return getTotals(year, month, userId, type);
         }
         else{
             Totals totals = explorer.get();
@@ -141,6 +172,23 @@ public class TotalsService {
             }
 
             return totalsMapper.toDto(totals);
+        }
+    }
+
+    public void addToTotals(TotalsDto totalsDto, Double value){
+
+        Optional<Totals> explorer = totalsRepository.findById(totalsDto.getId());
+
+        if(explorer.isEmpty()){
+            return;
+        }
+        else{
+            Totals totals = explorer.get();
+            totals.setUpdatedAt(new Date());
+
+            totals.setValue(totals.getValue() + value);
+
+            totalsRepository.save(totals);
         }
     }
 

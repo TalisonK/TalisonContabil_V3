@@ -4,6 +4,7 @@ import br.com.talison.contabil.domain.Category;
 import br.com.talison.contabil.domain.Expense;
 import br.com.talison.contabil.domain.User;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
+import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.domain.enums.EnumPaymentMethod;
 import br.com.talison.contabil.repository.CategoryRepository;
 import br.com.talison.contabil.repository.ExpenseRepository;
@@ -24,6 +25,7 @@ public class ExpenseService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
+    private final TotalsService totalsService;
 
 
     private Expense sendExpense(ExpenseDto expense, Category category, User user) {
@@ -72,6 +74,8 @@ public class ExpenseService {
 
             for(; expense.getActualParcel() <= expense.getTotalParcel(); expense.setActualParcel(expense.getActualParcel() + 1)) {
                 results.add(sendExpense(expense, category.get(), user.get()).getId());
+                TotalsDto d = totalsService.getTotals(expense.getPaidAt(), user.get().getId(), "expense");
+                //totalsService.addToTotals(d, expense.getValue());
                 expense.setPaidAt(new java.sql.Date(expense.getPaidAt().getYear(), expense.getPaidAt().getMonth() + 1, 15));
             }
 
@@ -80,13 +84,20 @@ public class ExpenseService {
         } else {
             expense.setActualParcel(null);
             expense.setTotalParcel(null);
-            return List.of(sendExpense(expense, category.get(), user.get()).getId());
+            List<String> results = List.of(sendExpense(expense, category.get(), user.get()).getId());
+
+            totalsService.updateTotals(expense.getPaidAt(), user.get().getId(), "expense");
+            return results;
         }
     }
 
     public ExpenseDto updateExpense(ExpenseDto dto) {
         if (expenseRepository.existsById(dto.getId())) {
+
+            Optional<User> user = userRepository.findByName(dto.getUser());
+
             expenseRepository.save(expenseMapper.toEntity(dto));
+            totalsService.updateTotals(dto.getPaidAt(), user.get().getId(), "expense");
             return dto;
         }
         return null;
