@@ -30,8 +30,15 @@ public class UserService {
         return userMapper.toDto(userRepository.findAll());
     }
 
+    public Boolean existsByName(String name) {
+        return userRepository.existsByName(name);
+    }
+
     public UserDto addUser(UserPassDto user) {
 
+        if(existsByName(user.getName())) {
+            return null;
+        }
         User novo = new User();
         novo.setName(user.getName());
 

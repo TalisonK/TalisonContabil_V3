@@ -19,7 +19,7 @@ public class IncomeController {
 
     @GetMapping("/all")
     public ResponseEntity<List<IncomeDto>> getAllIncomes() {
-        return ResponseEntity.ok(incomeService.listar());
+        return ResponseEntity.ok(incomeService.list());
     }
 
     @GetMapping("/{id}")

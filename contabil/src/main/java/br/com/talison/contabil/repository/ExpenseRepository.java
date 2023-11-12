@@ -12,7 +12,7 @@ public interface ExpenseRepository extends MongoRepository<Expense, String> {
 
     Optional<Expense> findByDescription(String description);
 
-    Optional<List<Expense>> findAllByUserIdAndPaidAtBetween(String user_id, Date paidAt, Date paidAt2);
+    Optional<List<Expense>> findAllByUserIdAndPaidAtBetweenOrderByPaidAt(String user_id, Date paidAt, Date paidAt2);
 
     Optional<List<Expense>> findAllByUserIdAndPaidAt_YearAndPaidAt_Month(String user_id, int paidAt_year, int paidAt_month);
 

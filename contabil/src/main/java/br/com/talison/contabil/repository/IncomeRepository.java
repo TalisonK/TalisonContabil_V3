@@ -9,8 +9,6 @@ import java.util.Optional;
 
 public interface IncomeRepository extends MongoRepository<Income, String> {
 
-    Optional<List<Income>> findAllByUserIdAndReceivedAtBetween(String user_id, Date receivedAt, Date receivedAt2);
-
-    Optional<List<Income>> findAllByUserIdAndReceivedAt_YearAndReceivedAt_Month(String user_id, int receivedAt_year, int receivedAt_month);
+    Optional<List<Income>> findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(String user_id, Date receivedAt_start, Date receivedAt_end);
 
 }

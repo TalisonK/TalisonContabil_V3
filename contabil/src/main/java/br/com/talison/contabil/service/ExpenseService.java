@@ -2,6 +2,7 @@ package br.com.talison.contabil.service;
 
 import br.com.talison.contabil.domain.Category;
 import br.com.talison.contabil.domain.Expense;
+import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.User;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
 import br.com.talison.contabil.domain.dto.TotalsDto;
@@ -109,5 +110,13 @@ public class ExpenseService {
 
     public ExpenseDto getExpenseById(String id) {
         return expenseMapper.toDto(expenseRepository.findById(id).orElse(null));
+    }
+
+    public List<Expense> listAllByMonth(String userId, Date start, Date end) {
+
+        Optional<List<Expense>> incomes = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, start, end);
+
+        return incomes.orElse(null);
+
     }
 }

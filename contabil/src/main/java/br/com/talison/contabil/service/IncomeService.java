@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +24,7 @@ public class IncomeService {
     private final IncomeMapper incomeMapper;
     private final TotalsService totalsService;
 
-    public List<IncomeDto> listar() {
+    public List<IncomeDto> list() {
         return incomeMapper.toDto(incomeRepository.findAll());
     }
 
@@ -41,9 +42,11 @@ public class IncomeService {
                 user.get(),
                 income.getReceivedAt());
 
-        totalsService.updateTotals(income.getReceivedAt(), user.get().getId(), "expense");
+        Income response = incomeRepository.save(novo);
 
-        return incomeMapper.toDto(incomeRepository.save(novo));
+        totalsService.updateTotals(income.getReceivedAt(), user.get().getId(), "income");
+
+        return incomeMapper.toDto(response);
     }
 
     public IncomeDto updateIncome(IncomeDto dto) {
@@ -52,7 +55,7 @@ public class IncomeService {
 
             User user = userRepository.findByName(dto.getUser()).get();
 
-            totalsService.updateTotals(dto.getReceivedAt(), user.getId(), "expense");
+            totalsService.updateTotals(dto.getReceivedAt(), user.getId(), "income");
             return dto;
         }
         return null;
@@ -66,3 +69,4 @@ public class IncomeService {
         return incomeMapper.toDto(incomeRepository.findById(id).orElse(null));
     }
 }
+
