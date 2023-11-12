@@ -6,7 +6,7 @@ import { LoginComponent } from './login/login.component';
 import { LoginFormComponent } from './login-form/login-form.component';
 import { CadastroFormComponent } from './cadastro-form/cadastro-form.component';
 import { ForgotFormComponent } from './forgot-form/forgot-form.component';
-import { UserServices } from 'src/services/user.services';
+import { UserServices } from 'src/services/User.services';
 
 
 @NgModule({

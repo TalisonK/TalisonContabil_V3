@@ -6,6 +6,7 @@ import { PrimengModule } from 'src/app/shared/primeng.module';
 import { DashboardHeaderComponent } from './dashboard-header/dashboard-header.component';
 import { DashboardDatePickerComponent } from './dashboard-date-picker/dashboard-date-picker.component';
 import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.component';
+import {DashboardServices} from "../../../services/Dashboard.services";
 
 
 
@@ -20,6 +21,9 @@ import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.co
     CommonModule,
     DashboardRoutingModule,
     PrimengModule
-  ]
+  ],
+    providers: [
+        DashboardServices
+    ],
 })
 export class DashboardModule { }

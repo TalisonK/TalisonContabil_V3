@@ -1,10 +1,10 @@
 <div class="flex-row">
-  <div class="value">
-    <p-header class="header">Income</p-header>
-    <p>R${{valor}}</p>
-    <p>+{{15}}%</p>
-  </div>
+    <div class="value">
+        <p-header class="header">{{title}}</p-header>
+        <p>R${{Number.parseInt(values[7].value.toFixed(2))}}</p>
+        <p>+{{15}}%</p>
+    </div>
 
-  <img src="../../../../assets/Chart.png" style="margin: 10px;"/>
+    <p-chart type="line" [data]="getValues()" ></p-chart>
 
 </div>

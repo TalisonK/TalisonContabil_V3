@@ -30,6 +30,5 @@ export class AppComponent implements OnInit {
 
 	login(user: User) {
 		this.user = user;
-		console.log(this.user);
 	}
 }

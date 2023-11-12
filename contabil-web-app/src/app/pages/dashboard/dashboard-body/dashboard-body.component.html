@@ -4,9 +4,9 @@
         <app-dashboard-date-picker (dateOut)="updateDate($event)" class="date-picker shade-card"/>
         <div style="width: 60%;">
             <div class="wrapper" style="justify-content: space-between; margin: 10px; margin-right: 0;">
-                <app-dashboard-resume class="shade-card income"/>
-                <app-dashboard-resume class="shade-card income"/>
-                <app-dashboard-resume class="shade-card income"/>
+                <app-dashboard-resume class="shade-card income" [values]="incomeArray" [title]="resumes[0]" [year]="date.getFullYear().toString()" [month]="date.toLocaleString('default', { month: 'short' })"/>
+                <app-dashboard-resume class="shade-card income" [values]="expenseArray" [title]="resumes[1]" [year]="date.getFullYear().toString()" [month]="date.toLocaleString('default', { month: 'short' })"/>
+                <app-dashboard-resume class="shade-card income" [values]="balanceArray" [title]="resumes[2]" [year]="date.getFullYear().toString()" [month]="date.toLocaleString('default', { month: 'short' })"/>
             </div>
 
             <div style="width: 99%; height: 415px; background-color: rgb(58, 185, 122);min-width: 500px;margin: 10px;">

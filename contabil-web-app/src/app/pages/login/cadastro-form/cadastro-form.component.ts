@@ -22,8 +22,6 @@ export class CadastroFormComponent {
     this.invalidPass = this.password === '';
 
     if (this.invalidUser || this.invalidPass) return;
-
-    console.log("cria");
   }
 
 }
