@@ -8,10 +8,22 @@ import {DashboardModule} from './pages/dashboard/dashboard.module';
 import {PrimengModule} from './shared/primeng.module';
 import {LayoutModule} from './pages/layout/layout.module';
 import {ChartModule} from "primeng/chart";
+import { ActivityComponent } from './pages/forms/activity/activity.component';
+import { FormsModule } from './pages/forms/forms.module';
 
 @NgModule({
-    declarations: [AppComponent],
-    imports: [BrowserModule, AppRoutingModule, BrowserAnimationsModule, ChartModule, LoginModule, DashboardModule, PrimengModule, LayoutModule],
+    declarations: [AppComponent, ActivityComponent],
+    imports: [
+        BrowserModule,
+        AppRoutingModule,
+        BrowserAnimationsModule,
+        ChartModule,
+        LoginModule,
+        DashboardModule,
+        PrimengModule,
+        LayoutModule,
+        FormsModule
+    ],
     providers: [],
     bootstrap: [AppComponent],
 

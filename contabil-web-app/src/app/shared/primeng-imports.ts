@@ -25,6 +25,7 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { InputSwitchModule } from 'primeng/inputswitch';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
+import { KeyFilterModule } from 'primeng/keyfilter';
 import { ListboxModule } from 'primeng/listbox';
 import { MegaMenuModule } from 'primeng/megamenu';
 import { MenuModule } from 'primeng/menu';
@@ -91,6 +92,7 @@ export const PRIMENG_IMPORTS = [
     InputSwitchModule,
     InputTextModule,
     InputTextareaModule,
+    KeyFilterModule,
     ListboxModule,
     MegaMenuModule,
     DividerModule,
