@@ -32,6 +32,6 @@ public class IncomeDto implements Serializable {
 
     @NotNull
     @NotBlank
-    private Date receivedAt;
+    private LocalDateTime receivedAt;
 
 }

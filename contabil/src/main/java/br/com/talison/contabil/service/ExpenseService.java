@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -65,10 +66,10 @@ public class ExpenseService {
         }
 
         if(expense.getPaymentMethod() == EnumPaymentMethod.CREDIT_CARD) {
-            if(expense.getPaidAt().getDate() <= 10){
-                expense.setPaidAt(new Date(expense.getPaidAt().getYear(), expense.getPaidAt().getMonth(), 15));
+            if(expense.getPaidAt().getDayOfMonth() <= 10){
+                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue(), 15, 0, 0, 0));
             } else {
-                expense.setPaidAt(new java.sql.Date(expense.getPaidAt().getYear(), expense.getPaidAt().getMonth() + 1, 15));
+                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue() + 1, 15, 0, 0, 0));
             }
 
             List<String> results = new ArrayList<>();
@@ -76,7 +77,7 @@ public class ExpenseService {
             for(; expense.getActualParcel() <= expense.getTotalParcel(); expense.setActualParcel(expense.getActualParcel() + 1)) {
                 results.add(sendExpense(expense, category.get(), user.get()).getId());
                 totalsService.updateTotals(expense.getPaidAt(), user.get().getId(), "expense");
-                expense.setPaidAt(new java.sql.Date(expense.getPaidAt().getYear(), expense.getPaidAt().getMonth() + 1, 15));
+                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue() + 1, 15, 0, 0, 0));
             }
 
             return results;

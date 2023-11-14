@@ -1,7 +1,7 @@
 import {Component, OnInit} from '@angular/core';
 import {User} from 'src/domains/User';
 import {DashboardServices} from "../../../../services/Dashboard.services";
-import {Totals} from "../../../../domains/Totals";
+import {Totals} from "../../../../domains/Totals.interface";
 
 @Component({
     selector: 'app-dashboard-body',
@@ -10,9 +10,9 @@ import {Totals} from "../../../../domains/Totals";
 })
 export class DashboardBodyComponent implements OnInit {
 
-    resumes: any[] = ["Income", "Expense", "Balance"];
+    resumes: any[] = ["IncomeInterface", "Expense", "Balance"];
     date: Date = new Date();
-    user: User = new User();
+    user: User = {} as User;
     incomeArray: Totals[] = [];
     expenseArray: Totals[] = [];
     balanceArray: Totals[] = [];

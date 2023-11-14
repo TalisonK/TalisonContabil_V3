@@ -31,9 +31,9 @@ public class Income implements Serializable {
     private LocalDateTime createdAt;
 
     @Field("receivedAt")
-    private Date receivedAt;
+    private LocalDateTime receivedAt;
 
-    public Income(String description, Double value, User user, Date receivedAt) {
+    public Income(String description, Double value, User user, LocalDateTime receivedAt) {
         this.description = description;
         this.value = value;
         this.user = user;

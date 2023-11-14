@@ -7,7 +7,8 @@ import { DashboardHeaderComponent } from './dashboard-header/dashboard-header.co
 import { DashboardDatePickerComponent } from './dashboard-date-picker/dashboard-date-picker.component';
 import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.component';
 import {DashboardServices} from "../../../services/Dashboard.services";
-
+import { DashboardTimelineComponent } from './dashboard-timeline/dashboard-timeline.component';
+import {TotalsServices} from "../../../services/Totals.services";
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import {DashboardServices} from "../../../services/Dashboard.services";
     DashboardBodyComponent,
     DashboardHeaderComponent,
     DashboardDatePickerComponent,
-    DashboardResumeComponent
+    DashboardResumeComponent,
+    DashboardTimelineComponent
   ],
   imports: [
     CommonModule,
@@ -23,7 +25,8 @@ import {DashboardServices} from "../../../services/Dashboard.services";
     PrimengModule
   ],
     providers: [
-        DashboardServices
+        DashboardServices,
+        TotalsServices
     ],
 })
 export class DashboardModule { }

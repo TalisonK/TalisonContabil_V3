@@ -1,0 +1,28 @@
+<div class="timeline-body">
+    <p-header>Timeline</p-header>
+
+    <div>
+        <p-timeline [value]="activities" styleClass="customized-timeline">
+            <ng-template pTemplate="marker" let-activity>
+            <span class="custom-marker shadow-2" [style.backgroundColor]="activity.type === 'income'?'#048063':'#db5151'">
+                <i [ngClass]="activity.type === 'income'?'pi-angle-down':'pi-angle-up'"></i>
+            </span>
+            </ng-template>
+            <ng-template pTemplate="content" let-activity>
+                <p-card [header]="activity.description" [subheader]="activity.activityDate">
+                    <div class="activity-data">
+                        <div class="activity-type">
+                            <i [ngClass]="activity.type === 'income'?'pi-angle-down':'pi-angle-up'"></i>
+                        </div>
+                        <div class="activity-amount">
+                            <p-header>
+                                {{activity.amount | currency:'USD':'symbol':'1.2-2'}}
+                            </p-header>
+                        </div>
+                    </div>
+                </p-card>
+            </ng-template>
+        </p-timeline>
+    </div>
+
+</div>

@@ -1,6 +1,6 @@
 import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
-import {Totals} from "../domains/Totals";
+import {Totals} from "../domains/Totals.interface";
 import {Injectable} from "@angular/core";
 
 

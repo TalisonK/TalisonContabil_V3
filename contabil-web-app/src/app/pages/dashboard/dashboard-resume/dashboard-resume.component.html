@@ -2,9 +2,11 @@
     <div class="value">
         <p-header class="header">{{title}}</p-header>
         <p>R${{Number.parseInt(values[7].value.toFixed(2))}}</p>
-        <p>+{{15}}%</p>
+        <p>{{100 - Number.parseInt(((values[6].value * 100) / values[7].value).toFixed(2)) }}%</p>
     </div>
 
-    <p-chart type="line" [data]="getValues()" ></p-chart>
+<!--    <div class="chart">-->
+<!--        <p-chart type="line" [data]="chartData" [options]="chartOptions"></p-chart>-->
+<!--    </div>-->
 
 </div>

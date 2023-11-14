@@ -1,6 +1,7 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {ActivityComponent} from "./pages/forms/activity/activity.component";
+import {ChartComponent} from "./pages/forms/chart/chart.component";
 
 const routes: Routes = [
     {
@@ -11,6 +12,10 @@ const routes: Routes = [
         path: 'forms',
         component: ActivityComponent
     },
+    {
+        path: 'chart',
+        component: ChartComponent
+    }
 ];
 
 @NgModule({

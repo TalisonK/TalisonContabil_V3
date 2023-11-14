@@ -10,7 +10,7 @@ export class DashboardHeaderComponent {
 
   constructor() {}
 
-  @Input() user: User = new User();
+  @Input() user: User = {} as User;
 
   @Input() date: Date = new Date();
 

@@ -40,7 +40,7 @@ public class Expense implements Serializable {
     private LocalDateTime createdAt;
 
     @Field("paidAt")
-    private Date paidAt;
+    private LocalDateTime paidAt;
 
     @Field("actualParcel")
     private Integer actualParcel;
@@ -52,7 +52,7 @@ public class Expense implements Serializable {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Expense(String description, EnumPaymentMethod paymentMethod, Category category, Double value, User user, Date paidAt) {
+    public Expense(String description, EnumPaymentMethod paymentMethod, Category category, Double value, User user, LocalDateTime paidAt) {
         this();
         this.description = description;
         this.paymentMethod = paymentMethod;
@@ -62,7 +62,7 @@ public class Expense implements Serializable {
         this.paidAt = paidAt;
     }
 
-    public Expense(String description, EnumPaymentMethod paymentMethod, Category category, Double value, User user, Date paidAt, Integer actualParcel, Integer totalParcel) {
+    public Expense(String description, EnumPaymentMethod paymentMethod, Category category, Double value, User user, LocalDateTime paidAt, Integer actualParcel, Integer totalParcel) {
         this(description, paymentMethod, category, value, user, paidAt);
         this.actualParcel = actualParcel;
         this.totalParcel = totalParcel;

@@ -10,9 +10,10 @@ import {LayoutModule} from './pages/layout/layout.module';
 import {ChartModule} from "primeng/chart";
 import { ActivityComponent } from './pages/forms/activity/activity.component';
 import { FormsModule } from './pages/forms/forms.module';
+import {ChartComponent} from "./pages/forms/chart/chart.component";
 
 @NgModule({
-    declarations: [AppComponent, ActivityComponent],
+    declarations: [AppComponent, ActivityComponent, ChartComponent],
     imports: [
         BrowserModule,
         AppRoutingModule,

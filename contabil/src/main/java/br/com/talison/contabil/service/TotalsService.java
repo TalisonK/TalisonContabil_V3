@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -168,7 +169,7 @@ public class TotalsService {
         }
     }
 
-    public TotalsDto updateTotals(Date date, String userId, String type){
+    public TotalsDto updateTotals(LocalDateTime date, String userId, String type){
 
         String month = new SimpleDateFormat("MMM", Locale.ENGLISH).format(date);
         String year = new SimpleDateFormat("yyyy", Locale.ENGLISH).format(date);

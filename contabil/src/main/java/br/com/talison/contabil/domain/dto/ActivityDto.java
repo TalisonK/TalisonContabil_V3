@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 
@@ -23,6 +24,6 @@ public class ActivityDto implements Serializable {
 
     private Double value;
 
-    private Date activityDate;
+    private LocalDateTime activityDate;
 
 }

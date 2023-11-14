@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { DashboardBodyComponent } from './dashboard-body/dashboard-body.component';
 
 const routes: Routes = [
-  {path: '', component: DashboardBodyComponent}
+  {path: '', component: DashboardBodyComponent},
 ];
 
 @NgModule({

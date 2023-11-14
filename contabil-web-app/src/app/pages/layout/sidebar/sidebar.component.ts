@@ -18,6 +18,6 @@ export class SidebarComponent {
   items: MenuItem[] = [
     { "label": "Dashboards", icon: "pi-home", routerLink:'/dashboard' },
     { "label": "Segundo" , icon: "pi-user", routerLink:'/forms' },
-    { "label": "Terceiro", icon: "pi-plus", routerLink:'/dashboard' }
+    { "label": "Terceiro", icon: "pi-plus", routerLink:'/chart' }
   ];
 }

@@ -42,7 +42,7 @@ public class ExpenseDto implements Serializable {
 
     @NotNull
     @NotBlank
-    private Date paidAt;
+    private LocalDateTime paidAt;
 
     private Integer actualParcel;
 

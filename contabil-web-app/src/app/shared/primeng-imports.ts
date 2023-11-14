@@ -56,6 +56,7 @@ import { TableModule } from 'primeng/table';
 import { TabViewModule } from 'primeng/tabview';
 import { TerminalModule } from 'primeng/terminal';
 import { TieredMenuModule } from 'primeng/tieredmenu';
+import { TimelineModule } from 'primeng/timeline';
 import { ToastModule } from 'primeng/toast';
 import { ToggleButtonModule } from 'primeng/togglebutton';
 import { ToolbarModule } from 'primeng/toolbar';
@@ -124,6 +125,7 @@ export const PRIMENG_IMPORTS = [
     TabViewModule,
     TerminalModule,
     TieredMenuModule,
+    TimelineModule,
     ToastModule,
     ToggleButtonModule,
     ToolbarModule,

@@ -1,10 +1,10 @@
 import {NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {PrimengModule} from "../../shared/primeng.module";
-import {CategoryServices} from "../../../services/category.services";
+import {CategoryServices} from "../../../services/Category.services";
 import {MethodsUtil} from "../../shared/utils/methods.util";
-import {ExpenseServices} from "../../../services/expense.services";
-import {IncomeServices} from "../../../services/income.services";
+import {ExpenseServices} from "../../../services/Expense.services";
+import {IncomeServices} from "../../../services/Income.services";
 
 
 @NgModule({

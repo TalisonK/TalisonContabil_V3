@@ -1,8 +1,8 @@
 import {Component, OnInit} from '@angular/core';
-import {CategoryServices} from "../../../../services/category.services";
+import {CategoryServices} from "../../../../services/Category.services";
 import {MethodsUtil} from "../../../shared/utils/methods.util";
-import {IncomeServices} from "../../../../services/income.services";
-import {ExpenseServices} from "../../../../services/expense.services";
+import {IncomeServices} from "../../../../services/Income.services";
+import {ExpenseServices} from "../../../../services/Expense.services";
 
 @Component({
     selector: 'app-income', templateUrl: './activity.component.html', styleUrls: ['./activity.component.scss']
