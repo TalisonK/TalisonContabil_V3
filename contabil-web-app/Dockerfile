@@ -1,22 +1,19 @@
-FROM node:18-alpine
+FROM node:18-alpine AS build
 
 # Create app directory
 WORKDIR /app
 
 # Install app dependencies
-
-COPY package*.json ./
+COPY . .
 
 RUN npm install
 
-RUN npm install -g @angular/cli@16.2.7
+RUN npm run build
 
 
 # Bundle app source
+FROM nginx:alpine
 
-COPY . .
+COPY --from=build /app/dist/contabil-web-app/ /usr/share/nginx/html
 
-EXPOSE 4200
-
-RUN ["npm", "run", "disable-analytics"]
-CMD [ "npm", "start" ]
+EXPOSE 80

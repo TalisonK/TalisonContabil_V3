@@ -1,5 +1,4 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {Activity} from "../../../../domains/timeline.interface";
 import {TotalsServices} from "../../../../services/Totals.services";
 
 @Component({
