@@ -2,12 +2,13 @@ import {HttpClient} from "@angular/common/http";
 import {Observable} from "rxjs";
 import {Totals} from "../domains/Totals.interface";
 import {Injectable} from "@angular/core";
+import {environment} from "../environments/environment";
 
 
 @Injectable()
 export class DashboardServices {
 
-    url = `http://localhost:8080/totals`;
+    url = environment.API_BASE_URL + '/totals';
     constructor(private http: HttpClient) {}
 
 

@@ -11,7 +11,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/income")
+@RequestMapping("/api/income")
 @RequiredArgsConstructor
 public class IncomeController {
 

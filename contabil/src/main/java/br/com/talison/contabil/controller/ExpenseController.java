@@ -11,7 +11,7 @@ import javax.validation.Valid;
 import java.util.List;
 
 @RestController
-@RequestMapping("/expense")
+@RequestMapping("/api/expense")
 @RequiredArgsConstructor
 public class ExpenseController {
 

@@ -5,7 +5,7 @@
         "ng": "ng",
         "disable-analytics": "ng analytics disable --global",
         "start": "ng serve",
-        "build": "ng build",
+        "build": "ng build --configuration production",
         "watch": "ng build --watch --configuration development",
         "test": "ng test"
     },
