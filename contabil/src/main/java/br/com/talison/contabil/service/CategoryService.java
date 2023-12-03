@@ -18,7 +18,7 @@ public class CategoryService {
     private final CategoryMapper categoryMapper;
 
     public List<CategoryDto> list() {
-        return categoryMapper.toDto(categoryRepository.findAll());
+        return categoryMapper.toDto(categoryRepository.findAllByOrderByNameAsc().get());
     }
 
     public CategoryDto addCategory(CategoryDto category) {
