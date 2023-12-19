@@ -1,28 +1,42 @@
 <div class="timeline-body">
-    <p-header>Timeline</p-header>
+    <p-header class="header margin5">Timeline</p-header>
 
-    <div>
-        <p-timeline [value]="activities" styleClass="customized-timeline">
-            <ng-template pTemplate="marker" let-activity>
-            <span class="custom-marker shadow-2" [style.backgroundColor]="activity.type === 'income'?'#048063':'#db5151'">
-                <i [ngClass]="activity.type === 'income'?'pi-angle-down':'pi-angle-up'"></i>
-            </span>
-            </ng-template>
-            <ng-template pTemplate="content" let-activity>
-                <p-card [header]="activity.description" [subheader]="activity.activityDate">
-                    <div class="activity-data">
-                        <div class="activity-type">
-                            <i [ngClass]="activity.type === 'income'?'pi-angle-down':'pi-angle-up'"></i>
+    <div style="width: 100%">
+        <div class="timeline">
+            <div *ngFor="let item of activities" class="timeline-item" style="margin: 10px">
+                <div class="flex-row space-between" style="height: 100px;">
+                    <div class="flex-row space-between" style="width: 85%">
+                        <div class="margin0" style="width: 100%; padding-left: 10px">
+                            <p class="margin0" style="font-size: 1.2em; font-weight: bold">{{item.description}}</p>
+                            <div class="flex-row timeline-mini-body space-between">
+                                <i *ngIf="item.type ==='income'" [style.backgroundColor]="'#048063'" class="pi pi-arrow-up" style="margin-right: 5px; border-radius: 100vw; padding: 3px; margin-top: 15px;"></i>
+                                <i *ngIf="!(item.type ==='income')" [style.backgroundColor]="'#db5151'" class="pi pi-arrow-down" style="margin-right: 5px; border-radius: 100vw; padding: 3px; margin-top: 15px;"></i>
+
+                                <div class="flex-column">
+                                    <p style="font-size: 0.8em; text-align: center">Valor</p>
+                                    <p class="margin0">R$ {{item.value}}</p>
+                                </div>
+
+                                <div class="flex-column" style="margin-right: 20px; margin-top: 20px; width: 50px">
+                                    <p *ngIf="item.method === 'CREDIT_CARD'" style="font-size: 0.8em; margin: 0">Parcelas</p>
+                                    <p *ngIf="item.method === 'CREDIT_CARD'" style="text-align: center">{{ item.actualParcel }} - {{ item.totalParcel }}</p>
+                                    <p *ngIf="(item.type === 'income')">Entrada</p>
+                                    <p *ngIf="item.method === 'DEBIT_CARD'">Débito</p>
+                                    <p *ngIf="item.method === 'MONEY'">Dinheiro</p>
+                                    <p *ngIf="item.method === 'PIX'">Pix</p>
+                                </div>
+                            </div>
                         </div>
-                        <div class="activity-amount">
-                            <p-header>
-                                {{activity.amount | currency:'USD':'symbol':'1.2-2'}}
-                            </p-header>
-                        </div>
+
                     </div>
-                </p-card>
-            </ng-template>
-        </p-timeline>
+                    <div style="display: flex; flex-direction: column">
+                        <p style="font-size: 0.8em; margin-bottom: 0; margin-top: 0">{{item.activityDate.slice(0,10)}}</p>
+                        <p style="font-size: 0.8em; margin-top: 0; align-self: end">{{item.activityDate.slice(11)}}</p>
+                    </div>
+                </div>
+                <p-divider/>
+            </div>
+        </div>
     </div>
 
 </div>

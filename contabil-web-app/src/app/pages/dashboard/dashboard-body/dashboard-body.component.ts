@@ -2,6 +2,7 @@ import {Component, OnInit} from '@angular/core';
 import {User} from 'src/domains/User';
 import {DashboardServices} from "../../../../services/Dashboard.services";
 import {Totals} from "../../../../domains/Totals.interface";
+import {TotalsServices} from "../../../../services/Totals.services";
 
 @Component({
     selector: 'app-dashboard-body',
@@ -16,8 +17,9 @@ export class DashboardBodyComponent implements OnInit {
     incomeArray: Totals[] = [];
     expenseArray: Totals[] = [];
     balanceArray: Totals[] = [];
+    timeline: any = [];
 
-    constructor(private dashboardServices: DashboardServices) {
+    constructor(private dashboardServices: DashboardServices, private totalServices: TotalsServices) {
     }
 
     ngOnInit() {
@@ -31,8 +33,12 @@ export class DashboardBodyComponent implements OnInit {
     }
 
     update(){
-        this.updateIncome();
-        this.updateExpense();
+        let date = this.date.toLocaleString('default', {month: 'short'});
+        let month: string = date.slice(0, 1).toUpperCase() + date.slice(1, 3);
+        this.user = JSON.parse(localStorage.getItem('user') || '{}');
+        this.updateIncome(month, this.date.getFullYear());
+        this.updateExpense(month, this.date.getFullYear());
+        this.updateTimeline(month, this.date.getFullYear());
     }
 
     updateDate(date: Date) {
@@ -40,12 +46,10 @@ export class DashboardBodyComponent implements OnInit {
         this.update();
     }
 
-    updateIncome() {
-        let date = this.date.toLocaleString('default', {month: 'short'});
-        let month: string = date.slice(0, 1).toUpperCase() + date.slice(1, 3);
-        this.user = JSON.parse(localStorage.getItem('user') || '{}');
+    updateIncome(month: string, year: number) {
+
         if (this.user.id != null) {
-            this.dashboardServices.getIncomes(this.user.id, this.date.getFullYear().toString(), month).subscribe({
+            this.dashboardServices.getIncomes(this.user.id, year.toString(), month).subscribe({
                 next: (data) => {
                     //this.income = Number.parseInt(data[7].value.toFixed(2));
                     this.incomeArray = data;
@@ -56,12 +60,9 @@ export class DashboardBodyComponent implements OnInit {
         }
     }
 
-    updateExpense() {
-        let date = this.date.toLocaleString('default', {month: 'short'});
-        let month: string = date.slice(0, 1).toUpperCase() + date.slice(1, 3);
-        this.user = JSON.parse(localStorage.getItem('user') || '{}');
+    updateExpense(month: string, year: number) {
         if (this.user.id != null) {
-            this.dashboardServices.getExpense(this.user.id, this.date.getFullYear().toString(), month).subscribe({
+            this.dashboardServices.getExpense(this.user.id, year.toString(), month).subscribe({
                 next: (data) => {
                     //this.expense = Number.parseInt(data[7].value.toFixed(2));
                     this.expenseArray = data;
@@ -69,6 +70,22 @@ export class DashboardBodyComponent implements OnInit {
                     console.log(error);
                 }
             });
+        }
+    }
+
+    updateTimeline(month: string, year: number) {
+        if(this.user.id != null) {
+            this.totalServices.getTimeline(this.user.id, year.toString(), month).subscribe({
+                next: (data: any[]) => {
+                    this.timeline = data
+                    console.log(data)
+                    console.log(year)
+                    console.log(month)
+                },
+                error: (error) => {
+                    console.log(error);
+                }
+            })
         }
     }
 }

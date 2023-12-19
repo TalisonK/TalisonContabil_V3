@@ -26,4 +26,8 @@ public class ActivityDto implements Serializable {
 
     private LocalDateTime activityDate;
 
+    private Integer actualParcel;
+
+    private Integer totalParcel;
+
 }

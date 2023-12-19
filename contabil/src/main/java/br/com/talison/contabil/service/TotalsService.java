@@ -37,7 +37,22 @@ public class TotalsService {
     private List<String> months = Arrays.asList("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec");
 
     private Integer convertMonthToNumber(String month) {
-        return months.indexOf(month) + 1;
+
+        int selectedMonth = 0;
+
+        if(months.contains(month)) {
+            selectedMonth = months.indexOf(month) + 1;
+        }
+        else {
+            Dictionary<String, String> monthsDic = months();
+
+            String translate = monthsDic.get(month);
+
+            selectedMonth = months.indexOf(translate) + 1;
+        }
+
+        return selectedMonth;
+
     }
 
     private Dictionary<String, String> months(){
