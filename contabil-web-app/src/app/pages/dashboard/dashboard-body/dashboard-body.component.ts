@@ -11,7 +11,7 @@ import {TotalsServices} from "../../../../services/Totals.services";
 })
 export class DashboardBodyComponent implements OnInit {
 
-    resumes: any[] = ["IncomeInterface", "Expense", "Balance"];
+    resumes: any[] = ["Income", "Expense", "Balance"];
     date: Date = new Date();
     user: User = {} as User;
     incomeArray: Totals[] = [];

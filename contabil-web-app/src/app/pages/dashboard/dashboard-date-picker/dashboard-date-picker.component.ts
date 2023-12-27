@@ -38,7 +38,7 @@ export class DashboardDatePickerComponent implements OnInit{
   getDates(): Date[] {
 
     const date: Date = new Date(this.date);
-    date.setFullYear(date.getFullYear() + 1);
+    date.setFullYear(date.getFullYear() + 2);
 
     const dates: Date[] = [];
 

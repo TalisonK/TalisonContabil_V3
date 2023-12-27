@@ -369,7 +369,7 @@ public class TotalsService {
 
             activities.add(activity);
         }
-        activities.sort(Comparator.comparing(ActivityDto::getActivityDate).reversed());
+        activities.sort(Comparator.comparing(ActivityDto::getCreatedAt).reversed());
         return activities;
     }
 }

@@ -66,10 +66,20 @@ public class ExpenseService {
         }
 
         if(expense.getPaymentMethod() == EnumPaymentMethod.CREDIT_CARD) {
+
+            int year = expense.getPaidAt().getYear();
+            int month = expense.getPaidAt().getMonthValue();
+
             if(expense.getPaidAt().getDayOfMonth() <= 10){
-                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue(), 15, 0, 0, 0));
+                expense.setPaidAt(LocalDateTime.of(year, month, 15, 0, 0, 0));
             } else {
-                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue() + 1, 15, 0, 0, 0));
+                if(month == 12) {
+                    year++;
+                    month = 1;
+                } else {
+                    month++;
+                }
+                expense.setPaidAt(LocalDateTime.of(year, month, 15, 0, 0, 0));
             }
 
             List<String> results = new ArrayList<>();
@@ -77,7 +87,13 @@ public class ExpenseService {
             for(; expense.getActualParcel() <= expense.getTotalParcel(); expense.setActualParcel(expense.getActualParcel() + 1)) {
                 results.add(sendExpense(expense, category.get(), user.get()).getId());
                 totalsService.updateTotals(expense.getPaidAt(), user.get().getId(), "expense");
-                expense.setPaidAt(LocalDateTime.of(expense.getPaidAt().getYear(), expense.getPaidAt().getMonthValue() + 1, 15, 0, 0, 0));
+                if(month == 12) {
+                    year++;
+                    month = 1;
+                } else {
+                    month++;
+                }
+                expense.setPaidAt(LocalDateTime.of(year, month, 15, 0, 0, 0));
             }
 
             return results;

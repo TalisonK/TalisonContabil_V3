@@ -3,25 +3,24 @@
     <p-divider/>
     <div style="width: 100%">
         <div class="timeline">
-            <div *ngFor="let item of activities" class="timeline-item" style="margin: 10px">
-                <div class="flex-row space-between" style="height: 100px;">
-                    <div class="flex-row space-between" style="width: 85%">
+            <div *ngFor="let item of activities" class="timeline-item">
+                <div class="flex-row" style="height: 100px;">
+                    <i *ngIf="item.type ==='income'" [style.backgroundColor]="'#048063'" class="pi pi-arrow-up" style="margin-right: 5px; padding: 3px;color: white"></i>
+                    <i *ngIf="!(item.type ==='income')" [style.backgroundColor]="'#db5151'" class="pi pi-arrow-down" style="margin-right: 5px; padding: 3px;color: white"></i>
+                    <div class="flex-row" style="width: 83%">
                         <div class="margin0" style="width: 100%; padding-left: 10px">
                             <div class="margin0">
                                 <p class="margin0" style="font-size: 1.2em; font-weight: bold">{{item.description}}</p>
                                 <p class="margin0" style="font-size: 0.7em" >{{item.activityCategory}}</p>
                             </div>
 
-                            <div class="flex-row timeline-mini-body space-between">
-                                <i *ngIf="item.type ==='income'" [style.backgroundColor]="'#048063'" class="pi pi-arrow-up" style="margin-right: 5px; border-radius: 100vw; padding: 3px;"></i>
-                                <i *ngIf="!(item.type ==='income')" [style.backgroundColor]="'#db5151'" class="pi pi-arrow-down" style="margin-right: 5px; border-radius: 100vw; padding: 3px;"></i>
-
+                            <div class="flex-row timeline-mini-body space-evenly">
                                 <div class="flex-column">
-                                    <p style="font-size: 0.8em; text-align: center; margin-top: 0">Valor</p>
+                                    <p style="font-size: 0.8em; text-align: center; margin-top: 10px">Valor</p>
                                     <p class="margin0">R$ {{item.value}}</p>
                                 </div>
 
-                                <div class="flex-column" style="margin-right: 20px; margin-top: 20px; width: 50px">
+                                <div class="flex-column" style="margin-right: 20px; margin-top: 20px; width: 60px">
                                     <p *ngIf="item.method === 'CREDIT_CARD'" style="font-size: 0.8em; margin: 0">Parcelas</p>
                                     <p *ngIf="item.method === 'CREDIT_CARD'" style="text-align: center">{{ item.actualParcel }} - {{ item.totalParcel }}</p>
                                     <p *ngIf="(item.type === 'income')">Entrada</p>
@@ -33,12 +32,16 @@
                         </div>
 
                     </div>
-                    <div style="display: flex; flex-direction: column">
+                    <div style="display: flex; flex-direction: column; margin-top: 5px">
                         <p style="font-size: 0.8em; margin-bottom: 0; margin-top: 0">{{item.activityDate.slice(0,10)}}</p>
                         <p style="font-size: 0.8em; margin-top: 0; align-self: end">{{item.activityDate.slice(11)}}</p>
                     </div>
                 </div>
                 <p-divider/>
+            </div>
+            <div *ngIf="activities.length === 0" class="flex-column" style="width: 100%; height: 100%; align-items: center; justify-content: center; margin-top: 50px">
+                <i class="pi pi-exclamation-triangle" style="font-size: 3em; margin-bottom: 10px"></i>
+                <p style="font-size: 1.2em; font-weight: bold">Nenhuma atividade encontrada</p>
             </div>
         </div>
     </div>
