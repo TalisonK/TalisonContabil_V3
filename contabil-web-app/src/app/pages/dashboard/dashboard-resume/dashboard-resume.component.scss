@@ -1,18 +1,19 @@
-.value{
-  display: flex;
-  flex-direction: column;
-  margin: 5px 10px;
-  justify-content: space-between;
-  align-content: center;
-  height: 130px
+.value {
+    display: flex;
+    flex-direction: column;
+    margin: 5px 10px;
+    justify-content: space-between;
+    align-content: center;
+    height: 130px
 }
 
-.header{
-  margin-bottom: 10px;
-  font-weight: bold;
+.header {
+    margin-bottom: 10px;
+    font-weight: bold;
+    justify-content: space-evenly;
 }
 
-.chart{
+.chart {
     width: 70%;
     margin: 3px;
     z-index: 1000;

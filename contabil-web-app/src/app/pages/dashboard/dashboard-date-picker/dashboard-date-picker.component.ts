@@ -23,15 +23,15 @@ export class DashboardDatePickerComponent implements OnInit{
 
   coiso() {
     setTimeout(() => {
-      var objDiv: HTMLElement | null = document.getElementById("picker-body");
-      var objDiv2: HTMLElement | null = document.getElementById("selected");
+      let objDiv: HTMLElement | null = document.getElementById("picker-body");
+      let objDiv2: HTMLElement | null = document.getElementById("selected");
 
       const difYear = this.date.getFullYear() - 2020;
-      const difMonth = (difYear * 12) + this.date.getMonth();
+      const difMonth = (difYear * 12) + this.date.getMonth() - 2;
 
-      // @ts-ignore
-      objDiv.scrollLeft = difMonth * objDiv2?.clientWidth;
-    }, 100);
+        // @ts-ignore
+        objDiv.scrollLeft = difMonth * objDiv2?.clientWidth;
+    }, 2700);
   }
 
 

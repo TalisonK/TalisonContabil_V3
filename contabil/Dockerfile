@@ -1,4 +1,4 @@
-FROM gradle:jdk17-alpine AS build
+FROM gradle:jdk17 AS build
 
 # Set the working directory
 ENV APP_HOME=/usr/app

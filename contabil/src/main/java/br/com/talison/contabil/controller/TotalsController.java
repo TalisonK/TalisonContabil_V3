@@ -1,6 +1,7 @@
 package br.com.talison.contabil.controller;
 
 import br.com.talison.contabil.domain.dto.ActivityDto;
+import br.com.talison.contabil.domain.dto.DashboardDto;
 import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.service.TotalsService;
 import lombok.RequiredArgsConstructor;
@@ -58,16 +59,16 @@ public class TotalsController {
         return ResponseEntity.status(200).body(retorno);
     }
 
-    @PostMapping("/income-vs-expense")
-    public ResponseEntity<List<List<TotalsDto>>> getIncomeVsExpense(@RequestBody TotalsDto totalsDto) {
-        List<List<TotalsDto>> retorno = totalsService.getIncomeVsExpense(totalsDto.getUserId(), totalsDto.getYear());
+    @PostMapping("/timeline")
+    public ResponseEntity<List<ActivityDto>> getTimeline(@RequestBody TotalsDto totalsDto) {
+        List<ActivityDto> retorno = totalsService.timelineByMonth(totalsDto.getUserId(), totalsDto.getYear(), totalsDto.getMonth());
 
         return ResponseEntity.status(200).body(retorno);
     }
 
-    @PostMapping("/timeline")
-    public ResponseEntity<List<ActivityDto>> getTimeline(@RequestBody TotalsDto totalsDto) {
-        List<ActivityDto> retorno = totalsService.timelineByMonth(totalsDto.getUserId(), totalsDto.getYear(), totalsDto.getMonth());
+    @PostMapping("/dashboard")
+    public ResponseEntity<DashboardDto> getDashboard(@RequestBody TotalsDto totalsDto) {
+        DashboardDto retorno = totalsService.dashboardHandler(totalsDto.getUserId(), totalsDto.getYear(), totalsDto.getMonth());
 
         return ResponseEntity.status(200).body(retorno);
     }

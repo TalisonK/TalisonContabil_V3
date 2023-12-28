@@ -54,8 +54,9 @@ export class DashboardResumeComponent implements OnInit{
 
     ngOnInit() {
         setTimeout(() => {
-            this.value = Number.parseInt(this.values[7].value.toFixed(2));
-            this.fraction = Number.parseInt(((this.values[6].value * 100) / this.values[7].value).toFixed(2)) - 100;
+
+            this.value = Number.parseInt(this.values[1].value.toFixed(2));
+            this.fraction = Number.parseInt(((this.values[0].value * 100) / this.values[1].value).toFixed(2)) - 100;
             },
             1000
         );

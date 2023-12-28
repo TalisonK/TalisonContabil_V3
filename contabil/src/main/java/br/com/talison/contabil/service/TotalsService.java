@@ -4,6 +4,7 @@ import br.com.talison.contabil.domain.Expense;
 import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.Totals;
 import br.com.talison.contabil.domain.dto.ActivityDto;
+import br.com.talison.contabil.domain.dto.DashboardDto;
 import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.repository.ExpenseRepository;
 import br.com.talison.contabil.repository.IncomeRepository;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -120,8 +122,10 @@ public class TotalsService {
 
             Double cont = value.get().stream().map(Income::getValue).reduce(0.0, Double::sum);
 
+            DecimalFormat df = new DecimalFormat("####0.00");
+
             totals.setType("income");
-            totals.setValue(cont);
+            totals.setValue(Double.parseDouble(df.format(cont).replace(",", ".")));
             totalsRepository.save(totals);
             return totals;
         }
@@ -148,27 +152,28 @@ public class TotalsService {
 
             Double cont = value.get().stream().map(Expense::getValue).reduce(0.0, Double::sum);
 
+
+            DecimalFormat df = new DecimalFormat("####0.00");
+
             totals.setType("expense");
-            totals.setValue(cont);
+            totals.setValue(Double.parseDouble(df.format(cont).replace(",", ".")));
             totalsRepository.save(totals);
             return totals;
         }
     }
 
-    private List<Totals> createTotals(String year, String month, String userId){
+    public DashboardDto dashboardHandler(String userId, String year, String month){
 
-        List<Totals> ret = new ArrayList<>();
-        ret.add(createIncome(year, month, userId));
-        ret.add(createExpense(year, month, userId));
-        return ret;
-    }
+        DashboardDto dashboardDto = new DashboardDto(userId, year, month);
 
-    public TotalsDto getTotals(Date date, String userId, String type){
+        dashboardDto.getResumes().put("incomes", getLastIncomeTotals(userId, year, month));
+        dashboardDto.getResumes().put("expenses", getLastExpenseTotals(userId, year, month));
+        dashboardDto.getResumes().put("balances", getLastBalanceTotals(userId, year, month));
+        dashboardDto.getTimeline().addAll(timelineByMonth(userId, year, month));
 
-        String month = new SimpleDateFormat("MMM", Locale.ENGLISH).format(date);
-        String year = new SimpleDateFormat("yyyy", Locale.ENGLISH).format(date);
+        dashboardDto.getCharts().put("incomeXexpense", getIncomeVsExpense(userId, year, month));
 
-        return getTotals(year, month, userId, type);
+        return dashboardDto;
     }
 
     public TotalsDto getTotals(String year, String month, String userId, String type){
@@ -246,7 +251,7 @@ public class TotalsService {
 
         List<TotalsDto> totals = new ArrayList<>();
 
-        for(int i = 7; i > 0; i--){
+        for(int i = 1; i > 0; i--){
             int monthAux = convertMonthToNumber(month) - i;
             String yearAux = year;
 
@@ -286,47 +291,48 @@ public class TotalsService {
         return balances;
     }
 
-    public List<List<TotalsDto>> getIncomeVsExpense(String userId, String year){
+    public HashMap<String, List<TotalsDto>> getIncomeVsExpense(String userId, String year, String month){
 
-        Optional<List<Totals>> explorer = totalsRepository.findAllByUserIdAndYear(userId, year);
+        HashMap<String, List<TotalsDto>> incomeVsExpense = new HashMap<>();
 
-        List<Totals> incomes = new ArrayList<>();
-        List<Totals> expenses = new ArrayList<>();
+        List<TotalsDto> incomes = new ArrayList<>();
+        List<TotalsDto> expenses = new ArrayList<>();
 
-        explorer.get().forEach(totals -> {
-            if(Objects.equals(totals.getType(), "income")){
-                incomes.add(totals);
+        int monthAux = convertMonthToNumber(month);
+
+        String yearAux = year;
+
+        for(int i = 0; i < 7; i++){
+            if(monthAux < 1){
+                monthAux = 12;
+                yearAux = String.valueOf(Integer.parseInt(yearAux) - 1);
             }
-            else if(Objects.equals(totals.getType(), "expense")){
-                expenses.add(totals);
-            }
-        });
-
-        if(incomes.size() != 12){
-            List<String> months = new ArrayList<>(List.copyOf(this.months));
-
-            incomes.forEach(totals -> {
-                months.remove(totals.getMonth());
-            });
-
-            months.forEach(month -> {
-                incomes.add(totalsMapper.toEntity(getTotals(year, month, userId, "income")));
-            });
+            incomes.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "income"));
+            expenses.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "expense"));
+            monthAux--;
         }
 
-        if(expenses.size() != 12){
-            List<String> months = new ArrayList<>(List.copyOf(this.months));
+        monthAux = convertMonthToNumber(month) + 1;
+        yearAux = year;
 
-            expenses.forEach(totals -> {
-                months.remove(totals.getMonth());
-            });
+        Collections.reverse(incomes);
+        Collections.reverse(expenses);
 
-            months.forEach(month -> {
-                expenses.add(totalsMapper.toEntity(getTotals(year, month, userId, "expense")));
-            });
+        for (int i = 0; i < 6; i++) {
+            if (monthAux > 12) {
+                monthAux = 1;
+                yearAux = String.valueOf(Integer.parseInt(yearAux) + 1);
+            }
+            incomes.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "income"));
+            expenses.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "expense"));
+            monthAux++;
         }
 
-        return Arrays.asList(totalsMapper.toDto(incomes), totalsMapper.toDto(expenses));
+        incomeVsExpense.put("incomes", incomes);
+        incomeVsExpense.put("expenses", expenses);
+
+        return incomeVsExpense;
+
     }
 
     public List<ActivityDto> timelineByMonth(String userId, String year, String month) {

@@ -1,5 +1,4 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {TotalsServices} from "../../../../services/Totals.services";
 
 @Component({
   selector: 'app-dashboard-timeline',

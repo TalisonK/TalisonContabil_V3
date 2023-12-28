@@ -8,7 +8,6 @@ import { DashboardDatePickerComponent } from './dashboard-date-picker/dashboard-
 import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.component';
 import {DashboardServices} from "../../../services/Dashboard.services";
 import { DashboardTimelineComponent } from './dashboard-timeline/dashboard-timeline.component';
-import {TotalsServices} from "../../../services/Totals.services";
 
 
 @NgModule({
@@ -25,8 +24,7 @@ import {TotalsServices} from "../../../services/Totals.services";
     PrimengModule
   ],
     providers: [
-        DashboardServices,
-        TotalsServices
+        DashboardServices
     ],
 })
 export class DashboardModule { }

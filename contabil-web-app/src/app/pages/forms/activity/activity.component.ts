@@ -49,7 +49,6 @@ export class ActivityComponent implements OnInit {
 
         if(user.name){
             if(this.type){
-                console.log("oi")
                 this.incomeServices.createIncome({
                     description: this.description,
                     value: this.value,
