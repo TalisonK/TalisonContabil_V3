@@ -8,6 +8,7 @@ import { DashboardDatePickerComponent } from './dashboard-date-picker/dashboard-
 import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.component';
 import {DashboardServices} from "../../../services/Dashboard.services";
 import { DashboardTimelineComponent } from './dashboard-timeline/dashboard-timeline.component';
+import { DashboardIncomeVSexpenseComponent } from './dashboard-income-vsexpense/dashboard-income-vsexpense.component';
 
 
 @NgModule({
@@ -16,7 +17,8 @@ import { DashboardTimelineComponent } from './dashboard-timeline/dashboard-timel
     DashboardHeaderComponent,
     DashboardDatePickerComponent,
     DashboardResumeComponent,
-    DashboardTimelineComponent
+    DashboardTimelineComponent,
+    DashboardIncomeVSexpenseComponent
   ],
   imports: [
     CommonModule,

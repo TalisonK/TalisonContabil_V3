@@ -11,9 +11,7 @@
                 <!--                <app-dashboard-resume class="shade-card income" [values]="balanceArray" [title]="resumes[2]" [year]="date.getFullYear().toString()" [month]="date.toLocaleString('default', { month: 'short' })"/>-->
             </div>
 
-            <div style="width: 99%; height: 415px; background-color: rgb(58, 185, 122);min-width: 500px;margin: 10px;">
-            chart income vs expense
-            </div>
+            <app-dashboard-income-vsexpense [incomes]="content.charts.incomeXexpense.incomes" [expenses]="content.charts.incomeXexpense.expenses"/>
             <div style="width: 99%; height: 415px; background-color: rgb(58, 185, 122);min-width: 500px;margin: 10px;">
             category expense showdown
             </div>
