@@ -3,5 +3,5 @@
         <p-header class="hi">Hi, {{user.name}}!</p-header>
         <p class= 'role'>{{user.role?.slice(5)}}</p>
     </div>
-    <p>{{date.toLocaleString('default', {month: 'short'}).slice(0, 3) + '-' + date.getFullYear()}}</p>
+    <p-calendar [(ngModel)]="date" view="month" dateFormat="M-yy" [readonlyInput]="true" class="month-picker" (onClose)="updateDate()"></p-calendar>
 </div>

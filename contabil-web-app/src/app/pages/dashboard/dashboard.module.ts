@@ -9,6 +9,7 @@ import { DashboardResumeComponent } from './dashboard-resume/dashboard-resume.co
 import {DashboardServices} from "../../../services/Dashboard.services";
 import { DashboardTimelineComponent } from './dashboard-timeline/dashboard-timeline.component';
 import { DashboardIncomeVSexpenseComponent } from './dashboard-income-vsexpense/dashboard-income-vsexpense.component';
+import { DashboardCategoryChartComponent } from './dashboard-category-chart/dashboard-category-chart.component';
 
 
 @NgModule({
@@ -18,7 +19,8 @@ import { DashboardIncomeVSexpenseComponent } from './dashboard-income-vsexpense/
     DashboardDatePickerComponent,
     DashboardResumeComponent,
     DashboardTimelineComponent,
-    DashboardIncomeVSexpenseComponent
+    DashboardIncomeVSexpenseComponent,
+    DashboardCategoryChartComponent
   ],
   imports: [
     CommonModule,

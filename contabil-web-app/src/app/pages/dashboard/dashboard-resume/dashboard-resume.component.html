@@ -1,8 +1,11 @@
-<div class="flex-row">
+<div class="flex-row w-100">
     <div class="value">
         <p-header class="header">{{title}}</p-header>
-        <p>R${{Number.parseInt(values[1].value.toFixed(2))}}</p>
-        <p>{{100 - Number.parseInt(((values[0].value * 100) / values[1].value).toFixed(2)) }}%</p>
+        <div class="flex-row w-100 space-between">
+            <p>R${{Number.parseInt(values[1].value.toFixed(2))}}</p>
+            <p *ngIf="!(title==='Balance')">{{100 - Number.parseInt(((values[0].value * 100) / values[1].value).toFixed(2)) }}%</p>
+        </div>
+
     </div>
 
 <!--    <div class="chart">-->

@@ -1,17 +1,22 @@
-import { Component, Input } from '@angular/core';
-import { User } from 'src/domains/User';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {User} from 'src/domains/User';
 
 @Component({
-  selector: 'app-dashboard-header',
-  templateUrl: './dashboard-header.component.html',
-  styleUrls: ['./dashboard-header.component.scss']
+    selector: 'app-dashboard-header',
+    templateUrl: './dashboard-header.component.html',
+    styleUrls: ['./dashboard-header.component.scss']
 })
 export class DashboardHeaderComponent {
 
-  constructor() {}
+    @Output() dateOut: EventEmitter<Date> = new EventEmitter<Date>();
+    @Input() user: User = {} as User;
+    @Input() date: Date = new Date();
 
-  @Input() user: User = {} as User;
+    constructor() {
+    }
 
-  @Input() date: Date = new Date();
+    updateDate() {
+        this.dateOut.emit(this.date);
+    }
 
 }

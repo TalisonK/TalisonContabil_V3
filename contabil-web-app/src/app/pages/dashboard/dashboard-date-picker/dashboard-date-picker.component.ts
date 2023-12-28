@@ -27,7 +27,7 @@ export class DashboardDatePickerComponent implements OnInit{
       let objDiv2: HTMLElement | null = document.getElementById("selected");
 
       const difYear = this.date.getFullYear() - 2020;
-      const difMonth = (difYear * 12) + this.date.getMonth() - 2;
+      const difMonth = (difYear * 12) + this.date.getMonth() - 2.5;
 
         // @ts-ignore
         objDiv.scrollLeft = difMonth * objDiv2?.clientWidth;

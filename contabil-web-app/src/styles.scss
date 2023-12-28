@@ -57,6 +57,10 @@ body{
     width: 100%;
 }
 
+.h-100{
+    height: 100%;
+}
+
 .right{
     float: inline-end;
 }
@@ -104,11 +108,6 @@ body{
     width: 100%;
 }
 
-.chart-incomevsexpense canvas{
-    height: 400px;
-    padding:10px;
-}
-
 //overwrite do primeng custom
 
 .submit-button .p-button{
@@ -121,6 +120,21 @@ body{
     font-size: 0.7rem;
     padding: 0;
     padding-top: 4px;
+}
+
+.chart-incomevsexpense canvas{
+    height: 400px;
+    padding:10px;
+}
+
+.month-picker .p-inputtext{
+    border: none!important;
+    cursor: pointer;
+}
+
+.month-picker .p-datepicker{
+    top: 55px!important;
+    left: -32px!important;
 }
 
 
