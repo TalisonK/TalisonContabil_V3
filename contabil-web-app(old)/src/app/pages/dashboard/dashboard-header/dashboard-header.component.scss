@@ -1,0 +1,22 @@
+.head-body{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 0 10px;
+}
+
+.role {
+    font-size: 0.7rem;
+    align-self: end;
+    padding-left: 4px;
+}
+
+.hi{
+    align-self: center;
+    font-size: 1.4rem;
+}
+
+.month-picker{
+    width: 110px;
+    height: 100%;
+}
