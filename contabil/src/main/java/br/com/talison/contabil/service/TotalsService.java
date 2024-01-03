@@ -5,6 +5,7 @@ import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.Totals;
 import br.com.talison.contabil.domain.dto.ActivityDto;
 import br.com.talison.contabil.domain.dto.DashboardDto;
+import br.com.talison.contabil.domain.dto.IncomeVSExpense;
 import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.repository.ExpenseRepository;
 import br.com.talison.contabil.repository.IncomeRepository;
@@ -171,7 +172,7 @@ public class TotalsService {
         dashboardDto.getResumes().put("balances", getLastBalanceTotals(userId, year, month));
         dashboardDto.getTimeline().addAll(timelineByMonth(userId, year, month));
 
-        dashboardDto.getCharts().put("incomeXexpense", getIncomeVsExpense(userId, year, month));
+        dashboardDto.getIncomeVSexpense().addAll(getIncomeVsExpense(userId, year, month));
 
         return dashboardDto;
     }
@@ -291,12 +292,11 @@ public class TotalsService {
         return balances;
     }
 
-    public HashMap<String, List<TotalsDto>> getIncomeVsExpense(String userId, String year, String month){
+    public List<IncomeVSExpense> getIncomeVsExpense(String userId, String year, String month){
 
-        HashMap<String, List<TotalsDto>> incomeVsExpense = new HashMap<>();
 
-        List<TotalsDto> incomes = new ArrayList<>();
-        List<TotalsDto> expenses = new ArrayList<>();
+        List<IncomeVSExpense> result = new ArrayList<>();
+
 
         int monthAux = convertMonthToNumber(month);
 
@@ -307,31 +307,48 @@ public class TotalsService {
                 monthAux = 12;
                 yearAux = String.valueOf(Integer.parseInt(yearAux) - 1);
             }
-            incomes.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "income"));
-            expenses.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "expense"));
+
+            String monthString = convertMonthToString(monthAux);
+
+            TotalsDto income = getTotals(yearAux, monthString, userId, "income");
+            TotalsDto expense = getTotals(yearAux, monthString, userId, "expense");
+
+            IncomeVSExpense novo = new IncomeVSExpense();
+
+            novo.setMonthYear(monthString);
+            novo.setIncome(income.getValue());
+            novo.setExpense(expense.getValue());
+            result.add(novo);
+
             monthAux--;
         }
 
         monthAux = convertMonthToNumber(month) + 1;
         yearAux = year;
 
-        Collections.reverse(incomes);
-        Collections.reverse(expenses);
+        Collections.reverse(result);
 
         for (int i = 0; i < 6; i++) {
             if (monthAux > 12) {
                 monthAux = 1;
                 yearAux = String.valueOf(Integer.parseInt(yearAux) + 1);
             }
-            incomes.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "income"));
-            expenses.add(getTotals(yearAux, convertMonthToString(monthAux), userId, "expense"));
+            String monthString = convertMonthToString(monthAux);
+
+            TotalsDto income = getTotals(yearAux, monthString, userId, "income");
+            TotalsDto expense = getTotals(yearAux, monthString, userId, "expense");
+
+            IncomeVSExpense novo = new IncomeVSExpense();
+
+            novo.setMonthYear(monthString);
+            novo.setIncome(income.getValue());
+            novo.setExpense(expense.getValue());
+            result.add(novo);
+
             monthAux++;
         }
 
-        incomeVsExpense.put("incomes", incomes);
-        incomeVsExpense.put("expenses", expenses);
-
-        return incomeVsExpense;
+        return result;
 
     }
 

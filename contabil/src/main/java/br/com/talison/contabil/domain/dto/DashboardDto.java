@@ -25,7 +25,7 @@ public class DashboardDto implements Serializable {
 
     private HashMap<String, List<TotalsDto>> resumes;
 
-    private HashMap<String, HashMap<String, List<TotalsDto>>> charts;
+    private List<IncomeVSExpense> incomeVSexpense;
 
 
     public DashboardDto(String userId, String year, String month) {
@@ -41,8 +41,7 @@ public class DashboardDto implements Serializable {
         this.resumes.put("expenses", new ArrayList<>());
         this.resumes.put("balances", new ArrayList<>());
 
-        this.charts = new HashMap<>();
-        this.charts.put("incomeXexpense", new HashMap<>());
+        this.incomeVSexpense = new ArrayList<>();
 
     }
 

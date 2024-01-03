@@ -1,23 +1,19 @@
-import Activity from "./Activity"
-import Totals from "./Totals"
+import Activity from './Activity'
+import IncomeVSExpense from './IncomeVSExpense'
+import Totals from './Totals'
 
 interface DashboardBundle {
-    userId: string,
-    year: string,
-    month: string,
-    updatedAt: Date,
-    timeline: Activity[],
+    userId: string
+    year: string
+    month: string
+    updatedAt: Date
+    timeline: Activity[]
     resumes: {
-        incomes: Totals[],
-        expenses: Totals[],
+        incomes: Totals[]
+        expenses: Totals[]
         balances: Totals[]
-    },
-    charts: {
-        incomeXexpense: {
-            incomes: Totals[],
-            expenses: Totals[]
-        }
     }
+    incomeVSexpense: IncomeVSExpense[]
 }
 
-export default DashboardBundle;
+export default DashboardBundle

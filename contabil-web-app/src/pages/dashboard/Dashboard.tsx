@@ -6,9 +6,10 @@ import dayjs from 'dayjs'
 import User from '../../interfaces/User'
 import DashboardBundle from '../../interfaces/Dashboard'
 import { getDashboard } from '../../api/Dashboard'
-import Resume from './resume'
+import Resume from './Resume'
 import { CircularProgress } from '@mui/material'
 import Timeline from './timeline'
+import IncomeExpense from './IncomeExpense'
 
 const Dashboard = () => {
     const [user, setUser] = useState<User>({} as User)
@@ -19,7 +20,7 @@ const Dashboard = () => {
 
     useEffect(() => {
         updater()
-    }, [date])
+    }, [])
 
     const updater = () => {
         updateBundle(updateUser())
@@ -71,6 +72,7 @@ const Dashboard = () => {
                     justifyContent="center"
                     style={{ padding: '20px' }}
                 >
+                    {/* Header */}
                     <DisplayFlex direction="column" width="80%" height="100vh">
                         <DisplayFlex
                             direction="row"
@@ -109,14 +111,14 @@ const Dashboard = () => {
                                         views={['month', 'year']}
                                         format="MMM-YYYY"
                                         value={dayjs(date)}
-                                        onYearChange={(newDate) =>
-                                            updateDate(newDate)
-                                        }
                                     />
                                 </LocalizationProvider>
                             </DisplayFlex>
                         </DisplayFlex>
+
+                        {/* Body */}
                         <DisplayFlex direction="row">
+                            {/* Resume */}
                             <DisplayFlex direction="column" width="65%">
                                 <DisplayFlex
                                     direction="row"
@@ -155,6 +157,8 @@ const Dashboard = () => {
                                         />
                                     </DisplayFlex>
                                 </DisplayFlex>
+
+                                {/* IncomeVSExpense and pie */}
                                 <DisplayFlex
                                     direction="row"
                                     width="100%"
@@ -163,18 +167,24 @@ const Dashboard = () => {
                                     marginTop="10px"
                                 >
                                     <DisplayFlex
-                                        width="60%"
+                                        width="70%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
-                                    ></DisplayFlex>
+                                    >
+                                        <IncomeExpense
+                                            lista={bundle.incomeVSexpense}
+                                        />
+                                    </DisplayFlex>
                                     <DisplayFlex
-                                        width="39%"
+                                        width="29%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
                                     ></DisplayFlex>
                                 </DisplayFlex>
+
+                                {/* Chart category by expense and pie */}
                                 <DisplayFlex
                                     direction="row"
                                     width="100%"
@@ -196,6 +206,8 @@ const Dashboard = () => {
                                     ></DisplayFlex>
                                 </DisplayFlex>
                             </DisplayFlex>
+
+                            {/* Timeline */}
                             <DisplayFlex
                                 width="35%"
                                 height="1100px"
