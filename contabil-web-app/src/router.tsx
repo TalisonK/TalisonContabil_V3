@@ -12,7 +12,6 @@ export const RouterApp = () => {
         <BrowserRouter>
             <Routes>
                 <Route path="/" Component={Dashboard} />
-                <Route path="/login" Component={Login} />
             </Routes>
         </BrowserRouter>
     )

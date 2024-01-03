@@ -8,7 +8,11 @@ import { faArrowRightToBracket } from "@fortawesome/free-solid-svg-icons";
 import {login} from "../../api/LoginService";
 import { VariantType, useSnackbar } from "notistack";
 
-const Login = () => {
+interface LoginProps {
+    update: () => void;
+}
+
+const Login = (props: LoginProps) => {
 
     const {enqueueSnackbar} = useSnackbar();
 
@@ -38,15 +42,16 @@ const Login = () => {
 
     const submitEvent = ():void => {
         handleNotification("Teste");
-        // login(name, password).then((response: any) => {
+        login(name, password).then((response: any) => {
             
-        //     localStorage.setItem("user", JSON.stringify(response.data))
-            
-        //     console.log(response);
-        // }
-        // ).catch((error: any) => {
-        //     console.log(error);
-        // });
+            localStorage.setItem("user", JSON.stringify(response.data));
+            handleNotificationVariant("Login realizado com sucesso!", "success");
+            props.update();
+        }
+        ).catch((error: any) => {
+            handleNotificationVariant("Erro ao realizar login!", "error");
+            console.log(error);
+        });
         
     }
 

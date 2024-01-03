@@ -15,10 +15,16 @@ interface Size{
     width?:string
 }
 
-interface FlexAtributes extends Margin, Size{
+interface Overflow{
+    overflow?:string
+}
+
+interface FlexAtributes extends Margin, Size, Overflow{
     direction?:string,
     wrap?: string,
     justifyContent?: string
+    backgroundColor?: string
+    card?: boolean
 }
 
 interface TextProps extends Margin{
@@ -44,6 +50,13 @@ export const DisplayFlex = styled.div<FlexAtributes>`
     ${props => props.marginLeft && `margin-left: ${props.marginLeft}!important;`}
     ${props => props.marginRight && `margin-right: ${props.marginRight}!important;`}
 
+    ${props => props.overflow && `overflow: ${props.overflow}!important;`}
+    ${props => props.backgroundColor && `background-color: ${props.backgroundColor};`}
+    
+    ${props => props.card && `
+        background-color: #fff;
+        box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.20);
+    `}
     
 `;
 
@@ -70,6 +83,7 @@ export const Text = styled.p<TextProps>`
     ${props => props.margin && `margin: ${props.margin};`}
 `;
 
+
 const marginMaker = (props: Margin): string => {
 
     let retorno: string = "";
@@ -82,6 +96,8 @@ const marginMaker = (props: Margin): string => {
 
     return retorno;
 }
+
+
 
 
 export const AppContainer = styled.div`

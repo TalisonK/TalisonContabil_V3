@@ -32,7 +32,7 @@ export const LoginForm = styled.div`
     flex-direction: column;
     align-self: center;
     width: 600px;
-    height: 1000px;
+    height: 100%;
     align-self: center;
     align-items: center;
 
@@ -43,15 +43,15 @@ export const FormContainer = styled.div`
   display: flex;
   flex-direction: column;
   width: 80%;
-  margin-bottom: 100px;
+  margin-bottom: 15%;
 
 `;
 
 export const LoginFormLogo = styled.img`
   height: 100px;
   width: 100px;
-  margin-bottom: 70px;
-  margin-top: 90px;
+  margin-bottom: 20%;
+  margin-top: 20%;
 
 `;
 
