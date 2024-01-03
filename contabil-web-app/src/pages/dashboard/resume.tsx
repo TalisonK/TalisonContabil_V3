@@ -8,6 +8,18 @@ interface Props {
 }
 
 const Resume = (props: Props) => {
+    const getPercentage = () => {
+        return (
+            100 -
+            Number.parseInt(
+                (
+                    (props.entradas[0].value * 100) /
+                    props.entradas[1].value
+                ).toFixed(2)
+            )
+        )
+    }
+
     return (
         <DisplayFlex direction="row" justifyContent="space-between" width="95%">
             <DisplayFlex direction="column">
@@ -20,14 +32,9 @@ const Resume = (props: Props) => {
             </DisplayFlex>
             <DisplayFlex>
                 <Text fontSize="1em" style={{ alignSelf: 'center' }}>
-                    {100 -
-                        Number.parseInt(
-                            (
-                                (props.entradas[0].value * 100) /
-                                props.entradas[1].value
-                            ).toFixed(2)
-                        )}
-                    %
+                    {Number.isNaN(getPercentage())
+                        ? ''
+                        : `${getPercentage()} %`}
                 </Text>
             </DisplayFlex>
         </DisplayFlex>

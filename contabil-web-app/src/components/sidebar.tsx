@@ -49,6 +49,13 @@ const Sidebar = () => {
         setAnchorElUser(null)
     }
 
+    const handleLogout = (setting: string) => {
+        if (setting === 'Logout') {
+            localStorage.removeItem('user')
+            window.location.href = '/'
+        }
+    }
+
     return (
         <AppBar position="static" id="sidebar">
             <Container maxWidth="xl">
@@ -128,7 +135,7 @@ const Sidebar = () => {
                             {settings.map((setting) => (
                                 <MenuItem
                                     key={setting}
-                                    onClick={handleCloseUserMenu}
+                                    onClick={() => handleLogout(setting)}
                                 >
                                     <Typography textAlign="center">
                                         {setting}

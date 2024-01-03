@@ -8,12 +8,14 @@ import DashboardBundle from '../../interfaces/Dashboard'
 import { getDashboard } from '../../api/Dashboard'
 import Resume from './resume'
 import { CircularProgress } from '@mui/material'
+import Timeline from './timeline'
 
 const Dashboard = () => {
     const [user, setUser] = useState<User>({} as User)
     const [date, setDate] = useState<Date>(new Date())
 
     const [bundle, setBundle] = useState<DashboardBundle>({} as DashboardBundle)
+    const [loading, setLoading] = useState<boolean>(true)
 
     useEffect(() => {
         updater()
@@ -43,12 +45,13 @@ const Dashboard = () => {
                 date.toLocaleString('default', { month: 'short' }).slice(1, 3)
         ).then((res) => {
             setBundle(res.data)
-            console.log(res.data)
+            setLoading(false)
         })
     }
 
     const updateDate = (newDate: any) => {
         const nd = newDate.toDate()
+        setLoading(true)
         if (
             nd.getMonth() !== date.getMonth() ||
             nd.getFullYear() !== date.getFullYear()
@@ -60,7 +63,7 @@ const Dashboard = () => {
 
     return (
         <>
-            {bundle.resumes ? (
+            {!loading ? (
                 <DisplayFlex
                     overflow="auto"
                     width="100%"
@@ -102,6 +105,7 @@ const Dashboard = () => {
                                     dateAdapter={AdapterDayjs}
                                 >
                                     <DatePicker
+                                        className="date-picker"
                                         views={['month', 'year']}
                                         format="MMM-YYYY"
                                         value={dayjs(date)}
@@ -196,7 +200,9 @@ const Dashboard = () => {
                                 width="35%"
                                 height="1100px"
                                 card={true}
-                            ></DisplayFlex>
+                            >
+                                <Timeline activities={bundle.timeline} />
+                            </DisplayFlex>
                         </DisplayFlex>
                     </DisplayFlex>
                 </DisplayFlex>
