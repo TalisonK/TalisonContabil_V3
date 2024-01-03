@@ -8,7 +8,6 @@ import './style.css'
 
 function App() {
     const [user, setUser] = React.useState(null)
-    const [date, setDate] = useState<Date>(new Date())
 
     useEffect(() => {
         const userStorage = localStorage.getItem('user')

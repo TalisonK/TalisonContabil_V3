@@ -1,7 +1,0 @@
-<div class="head-body">
-    <div class="flex-row">
-        <p-header class="hi">Hi, {{user.name}}!</p-header>
-        <p class= 'role'>{{user.role?.slice(5)}}</p>
-    </div>
-    <p-calendar [(ngModel)]="date" view="month" dateFormat="M-yy" [readonlyInput]="true" class="month-picker" (onClose)="updateDate()"></p-calendar>
-</div>
