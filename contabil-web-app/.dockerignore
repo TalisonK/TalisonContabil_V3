@@ -1,6 +1,8 @@
-node_modules
-dist
-.vscode
+#node_modules
 .idea
-.editorconfig
+build
 .gitignore
+.prettierrc
+Dockerfile
+README.md
+yarn*

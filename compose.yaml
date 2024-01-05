@@ -9,9 +9,9 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "80:80"
+      - "18000:80"
     expose:
-      - 80
+      - 18000
   
   back:
     container_name: contabil_back
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "8080:8080"
+      - "18080:8080"
     expose:
-      - 8080
+      - 18080
   
