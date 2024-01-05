@@ -1,7 +1,7 @@
 FROM gradle:jdk17 AS build
 
 # Set the working directory
-ENV APP_HOME=/usr/app
+ENV APP_HOME=/usr/app/
 WORKDIR $APP_HOME
 COPY build.gradle settings.gradle gradlew $APP_HOME
 COPY gradle $APP_HOME/gradle
@@ -14,10 +14,10 @@ RUN gradle build
 
 
 # Container with builded app
-FROM openjdk:17-alpine
+FROM openjdk:17
 
 ENV ARTIFACT_NAME=contabil-0.0.1-SNAPSHOT.jar
-ENV APP_HOME=/usr/app
+ENV APP_HOME=/usr/app/
 
 WORKDIR $APP_HOME
 
