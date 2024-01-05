@@ -7,7 +7,7 @@ import User from '../../interfaces/User'
 import DashboardBundle from '../../interfaces/Dashboard'
 import { getDashboard } from '../../api/Dashboard'
 import Resume from './Resume'
-import { CircularProgress } from '@mui/material'
+import { Button, CircularProgress, Skeleton } from '@mui/material'
 import Timeline from './timeline'
 import IncomeExpense from './IncomeExpense'
 
@@ -17,12 +17,14 @@ const Dashboard = () => {
 
     const [bundle, setBundle] = useState<DashboardBundle>({} as DashboardBundle)
     const [loading, setLoading] = useState<boolean>(true)
+    const [skeleton, setSkeleton] = useState<boolean>(false)
 
     useEffect(() => {
         updater()
-    }, [])
+    }, [date])
 
     const updater = () => {
+        setSkeleton(true)
         updateBundle(updateUser())
     }
 
@@ -47,18 +49,20 @@ const Dashboard = () => {
         ).then((res) => {
             setBundle(res.data)
             setLoading(false)
+            setSkeleton(false)
         })
     }
 
     const updateDate = (newDate: any) => {
         const nd = newDate.toDate()
-        setLoading(true)
+        //setLoading(true)
         if (
             nd.getMonth() !== date.getMonth() ||
             nd.getFullYear() !== date.getFullYear()
         ) {
             setDate(nd)
-            updateBundle(user.id)
+        } else {
+            //setLoading(false)
         }
     }
 
@@ -101,16 +105,35 @@ const Dashboard = () => {
                             <DisplayFlex
                                 marginLeft="auto"
                                 marginRight="5px"
-                                width="135px"
+                                width={
+                                    date.getFullYear() ===
+                                    new Date().getFullYear()
+                                        ? '135px'
+                                        : '199px'
+                                }
                             >
                                 <LocalizationProvider
                                     dateAdapter={AdapterDayjs}
                                 >
+                                    {date.getFullYear() !==
+                                    new Date().getFullYear() ? (
+                                        <Button
+                                            style={{ padding: 0, margin: 0 }}
+                                            onClick={() => {
+                                                setDate(new Date())
+                                            }}
+                                        >
+                                            Today
+                                        </Button>
+                                    ) : (
+                                        <></>
+                                    )}
                                     <DatePicker
                                         className="date-picker"
                                         views={['month', 'year']}
                                         format="MMM-YYYY"
                                         value={dayjs(date)}
+                                        onYearChange={updateDate}
                                     />
                                 </LocalizationProvider>
                             </DisplayFlex>
@@ -126,36 +149,66 @@ const Dashboard = () => {
                                     justifyContent="space-between"
                                     style={{ paddingRight: '10px' }}
                                 >
-                                    <DisplayFlex
-                                        width="32%"
-                                        height="100px"
-                                        card={true}
-                                    >
-                                        <Resume
-                                            entradas={bundle.resumes.incomes}
-                                            type="Income"
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="32%"
+                                            height="100px"
+                                            card={true}
+                                        >
+                                            <Resume
+                                                entradas={
+                                                    bundle.resumes.incomes
+                                                }
+                                                type="Income"
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'32%'}
+                                            height={'100px'}
                                         />
-                                    </DisplayFlex>
-                                    <DisplayFlex
-                                        width="32%"
-                                        height="100px"
-                                        card={true}
-                                    >
-                                        <Resume
-                                            entradas={bundle.resumes.expenses}
-                                            type="Expense"
+                                    )}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="32%"
+                                            height="100px"
+                                            card={true}
+                                        >
+                                            <Resume
+                                                entradas={
+                                                    bundle.resumes.expenses
+                                                }
+                                                type="Expense"
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'32%'}
+                                            height={'100px'}
                                         />
-                                    </DisplayFlex>
-                                    <DisplayFlex
-                                        width="32%"
-                                        height="100px"
-                                        card={true}
-                                    >
-                                        <Resume
-                                            entradas={bundle.resumes.balances}
-                                            type="Balance"
+                                    )}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="32%"
+                                            height="100px"
+                                            card={true}
+                                        >
+                                            <Resume
+                                                entradas={
+                                                    bundle.resumes.balances
+                                                }
+                                                type="Balance"
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'32%'}
+                                            height={'100px'}
                                         />
-                                    </DisplayFlex>
+                                    )}
                                 </DisplayFlex>
 
                                 {/* IncomeVSExpense and pie */}
@@ -166,22 +219,40 @@ const Dashboard = () => {
                                     justifyContent="space-between"
                                     marginTop="10px"
                                 >
-                                    <DisplayFlex
-                                        width="70%"
-                                        height="100%"
-                                        card={true}
-                                        marginRight="10px"
-                                    >
-                                        <IncomeExpense
-                                            lista={bundle.incomeVSexpense}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="70%"
+                                            height="100%"
+                                            card={true}
+                                            marginRight="10px"
+                                        >
+                                            <IncomeExpense
+                                                lista={bundle.incomeVSexpense}
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'70%'}
+                                            height={'100%'}
+                                            style={{ marginRight: '10px' }}
                                         />
-                                    </DisplayFlex>
-                                    <DisplayFlex
-                                        width="29%"
-                                        height="100%"
-                                        card={true}
-                                        marginRight="10px"
-                                    ></DisplayFlex>
+                                    )}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="29%"
+                                            height="100%"
+                                            card={true}
+                                            marginRight="10px"
+                                        ></DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'29%'}
+                                            height={'100%'}
+                                            style={{ marginRight: '10px' }}
+                                        />
+                                    )}
                                 </DisplayFlex>
 
                                 {/* Chart category by expense and pie */}
@@ -208,13 +279,21 @@ const Dashboard = () => {
                             </DisplayFlex>
 
                             {/* Timeline */}
-                            <DisplayFlex
-                                width="35%"
-                                height="1100px"
-                                card={true}
-                            >
-                                <Timeline activities={bundle.timeline} />
-                            </DisplayFlex>
+                            {!skeleton ? (
+                                <DisplayFlex
+                                    width="35%"
+                                    height="1100px"
+                                    card={true}
+                                >
+                                    <Timeline activities={bundle.timeline} />
+                                </DisplayFlex>
+                            ) : (
+                                <Skeleton
+                                    variant="rectangular"
+                                    width={'35%'}
+                                    height={'1100px'}
+                                />
+                            )}
                         </DisplayFlex>
                     </DisplayFlex>
                 </DisplayFlex>

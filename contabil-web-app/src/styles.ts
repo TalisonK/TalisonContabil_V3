@@ -1,6 +1,8 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { OutlinedInput, TextField } from '@mui/material'
 import styled from 'styled-components'
 
+//ABSTRACTED COMPONENTS
 interface Margin {
     margin?: string
     marginTop?: string
@@ -18,6 +20,7 @@ interface Overflow {
     overflow?: string
 }
 
+// COMPONENTS
 interface FlexAtributes extends Margin, Size, Overflow {
     direction?: string
     wrap?: string
@@ -33,6 +36,8 @@ interface TextProps extends Margin {
     width?: string
     textAlign?: string
 }
+
+interface TextFieldProps extends Margin, Size {}
 
 export const DisplayFlex = styled.div<FlexAtributes>`
     display: flex;
@@ -113,25 +118,35 @@ export const Image = styled.img<FlexAtributes>`
     ${(props) => props.margin && `margin: ${props.margin};`}
 `
 
-const marginMaker = (props: Margin): string => {
-    let retorno: string = ''
+export const TextFieldStyled = styled(TextField)<TextFieldProps>`
+    /* Margin */
+    ${(props) => props.marginTop && `margin-top: ${props.marginTop}!important;`}
+    ${(props) =>
+        props.marginBottom && `margin-bottom: ${props.marginBottom}!important;`}
+    ${(props) =>
+        props.marginLeft && `margin-left: ${props.marginLeft}!important;`}
+    ${(props) =>
+        props.marginRight && `margin-right: ${props.marginRight}!important;`}
+    ${(props) => props.margin && `margin: ${props.margin};`}
+    /* Size */
+    ${(props) => props.height && `height: ${props.height}!important;`}
+    ${(props) => props.width && `width: ${props.width}!important;`}
+`
 
-    retorno += props.margin ? `margin: ${props.margin}!important;` : ''
-    retorno += props.marginTop
-        ? `margin-top: ${props.marginTop}!important;`
-        : ''
-    retorno += props.marginBottom
-        ? `margin-bottom: ${props.marginBottom}!important;`
-        : ''
-    retorno += props.marginLeft
-        ? `margin-left: ${props.marginLeft}!important;`
-        : ''
-    retorno += props.marginRight
-        ? `margin-right: ${props.marginRight}!important;`
-        : ''
-
-    return retorno
-}
+export const OutlinedFieldStyled = styled(OutlinedInput)<TextFieldProps>`
+    /* Margin */
+    ${(props) => props.marginTop && `margin-top: ${props.marginTop}!important;`}
+    ${(props) =>
+        props.marginBottom && `margin-bottom: ${props.marginBottom}!important;`}
+    ${(props) =>
+        props.marginLeft && `margin-left: ${props.marginLeft}!important;`}
+    ${(props) =>
+        props.marginRight && `margin-right: ${props.marginRight}!important;`}
+    ${(props) => props.margin && `margin: ${props.margin};`}
+    /* Size */
+    ${(props) => props.height && `height: ${props.height}!important;`}
+    ${(props) => props.width && `width: ${props.width}!important;`}
+`
 
 export const AppContainer = styled.div`
     font-family: 'Roboto';
