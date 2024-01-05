@@ -22,6 +22,7 @@ public class WebConfig {
                                 "http://localhost:4200",
                                 "http://localhost:3000",
                                 "http://localhost:80",
+                                "http://localhost:18000/",
                                 "http://front:80",
                                 "http://front",
                                 "http://localhost"
