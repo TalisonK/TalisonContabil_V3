@@ -173,8 +173,48 @@ public class TotalsService {
         dashboardDto.getTimeline().addAll(timelineByMonth(userId, year, month));
 
         dashboardDto.getIncomeVSexpense().addAll(getIncomeVsExpense(userId, year, month));
+        dashboardDto.getExpenseByCategory().putAll(getExpenseByCategory(userId, year, month, dashboardDto.getTimeline()));
+        dashboardDto.getExpenseByMethod().putAll(getExpenseByMethod(userId, year, month, dashboardDto.getTimeline()));
 
         return dashboardDto;
+    }
+
+    public HashMap<String, Double> getExpenseByCategory(String userId, String year, String month, List<ActivityDto> timeline) {
+        HashMap<String, Double> result = new HashMap<>();
+
+        for (ActivityDto activityDto : timeline) {
+            if(activityDto.getType().equals("income")){
+                continue;
+            }
+            else
+            if(result.containsKey(activityDto.getActivityCategory())){
+                result.put(activityDto.getActivityCategory(), Math.floor(result.get(activityDto.getActivityCategory()) + activityDto.getValue() * 100) / 100);
+            }
+            else{
+                result.put(activityDto.getActivityCategory(), Math.floor(activityDto.getValue() * 100) / 100);
+            }
+        }
+        return result;
+    }
+
+    public HashMap<String, Double> getExpenseByMethod(String userId, String year, String month,  List<ActivityDto> timeline) {
+        HashMap<String, Double> result = new HashMap<>();
+
+        for (ActivityDto activityDto : timeline) {
+            if(activityDto.getType().equals("income")){
+                continue;
+            }
+            else
+            if(result.containsKey(activityDto.getMethod())){
+                Double calc = Math.floor( result.get(activityDto.getMethod()) + activityDto.getValue() * 100) / 100;
+
+                result.put(activityDto.getMethod(), calc);
+            }
+            else{
+                result.put(activityDto.getMethod(), Math.floor(activityDto.getValue() * 100) / 100);
+            }
+        }
+        return result;
     }
 
     public TotalsDto getTotals(String year, String month, String userId, String type){
@@ -200,7 +240,6 @@ public class TotalsService {
 
         return updateTotals(year, month, userId, type);
     }
-
 
     public TotalsDto updateTotals(String year, String month, String userId, String type){
 
@@ -293,10 +332,7 @@ public class TotalsService {
     }
 
     public List<IncomeVSExpense> getIncomeVsExpense(String userId, String year, String month){
-
-
         List<IncomeVSExpense> result = new ArrayList<>();
-
 
         int monthAux = convertMonthToNumber(month);
 

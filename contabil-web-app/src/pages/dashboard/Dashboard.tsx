@@ -10,6 +10,9 @@ import Resume from './Resume'
 import { Button, CircularProgress, Skeleton } from '@mui/material'
 import Timeline from './timeline'
 import IncomeExpense from './IncomeExpense'
+import ExpensePie from './ExpensePie'
+import PaymentPie from './PaymentPie'
+import BarCategory from './BarCategory'
 
 const Dashboard = () => {
     const [user, setUser] = useState<User>({} as User)
@@ -244,7 +247,11 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
-                                        ></DisplayFlex>
+                                        >
+                                            <ExpensePie
+                                                data={bundle.expenseByCategory}
+                                            />
+                                        </DisplayFlex>
                                     ) : (
                                         <Skeleton
                                             variant="rectangular"
@@ -264,17 +271,23 @@ const Dashboard = () => {
                                     marginTop="10px"
                                 >
                                     <DisplayFlex
-                                        width="39%"
+                                        width="29%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
-                                    ></DisplayFlex>
+                                    >
+                                        <PaymentPie
+                                            data={bundle.expenseByMethod}
+                                        />
+                                    </DisplayFlex>
                                     <DisplayFlex
-                                        width="60%"
+                                        width="70%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
-                                    ></DisplayFlex>
+                                    >
+                                        <BarCategory />
+                                    </DisplayFlex>
                                 </DisplayFlex>
                             </DisplayFlex>
 
