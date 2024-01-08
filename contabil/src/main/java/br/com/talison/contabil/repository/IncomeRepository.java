@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IncomeRepository extends MongoRepository<Income, String> {
+    
+    Optional<List<Income>> findAllByUserId(String user_id);
 
     Optional<List<Income>> findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(String user_id, Date receivedAt_start, Date receivedAt_end);
 

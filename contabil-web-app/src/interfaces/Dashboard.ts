@@ -14,6 +14,8 @@ interface DashboardBundle {
         balances: Totals[]
     }
     incomeVSexpense: IncomeVSExpense[]
+    expenseByCategory: any
+    expenseByMethod: any
 }
 
 export default DashboardBundle

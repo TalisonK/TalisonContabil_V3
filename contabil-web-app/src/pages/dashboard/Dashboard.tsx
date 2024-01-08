@@ -10,6 +10,9 @@ import Resume from './Resume'
 import { Button, CircularProgress, Skeleton } from '@mui/material'
 import Timeline from './timeline'
 import IncomeExpense from './IncomeExpense'
+import ExpensePie from './ExpensePie'
+import PaymentPie from './PaymentPie'
+import BarCategory from './BarCategory'
 
 const Dashboard = () => {
     const [user, setUser] = useState<User>({} as User)
@@ -46,11 +49,17 @@ const Dashboard = () => {
                 .slice(0, 1)
                 .toLocaleUpperCase() +
                 date.toLocaleString('default', { month: 'short' }).slice(1, 3)
-        ).then((res) => {
-            setBundle(res.data)
-            setLoading(false)
-            setSkeleton(false)
-        })
+        )
+            .then((res) => {
+                setBundle(res.data)
+                setLoading(false)
+                setSkeleton(false)
+            })
+            .catch((err) => {
+                console.log(err)
+                localStorage.removeItem('user')
+                window.location.href = '/'
+            })
     }
 
     const updateDate = (newDate: any) => {
@@ -76,8 +85,8 @@ const Dashboard = () => {
                     justifyContent="center"
                     style={{ padding: '20px' }}
                 >
-                    {/* Header */}
-                    <DisplayFlex direction="column" width="80%" height="100vh">
+                    <DisplayFlex direction="column" width="80%" height="90vh">
+                        {/* Header */}
                         <DisplayFlex
                             direction="row"
                             width="100%"
@@ -244,7 +253,11 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
-                                        ></DisplayFlex>
+                                        >
+                                            <ExpensePie
+                                                data={bundle.expenseByCategory}
+                                            />
+                                        </DisplayFlex>
                                     ) : (
                                         <Skeleton
                                             variant="rectangular"
@@ -264,17 +277,23 @@ const Dashboard = () => {
                                     marginTop="10px"
                                 >
                                     <DisplayFlex
-                                        width="39%"
+                                        width="29%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
-                                    ></DisplayFlex>
+                                    >
+                                        <PaymentPie
+                                            data={bundle.expenseByMethod}
+                                        />
+                                    </DisplayFlex>
                                     <DisplayFlex
-                                        width="60%"
+                                        width="70%"
                                         height="100%"
                                         card={true}
                                         marginRight="10px"
-                                    ></DisplayFlex>
+                                    >
+                                        <BarCategory />
+                                    </DisplayFlex>
                                 </DisplayFlex>
                             </DisplayFlex>
 

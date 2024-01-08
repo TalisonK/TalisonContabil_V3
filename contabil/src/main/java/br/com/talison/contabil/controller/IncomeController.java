@@ -1,6 +1,7 @@
 package br.com.talison.contabil.controller;
 
 
+import br.com.talison.contabil.domain.dto.ActivityDto;
 import br.com.talison.contabil.domain.dto.IncomeDto;
 import br.com.talison.contabil.service.IncomeService;
 import lombok.RequiredArgsConstructor;
@@ -17,9 +18,9 @@ public class IncomeController {
 
     private final IncomeService incomeService;
 
-    @GetMapping("/all")
-    public ResponseEntity<List<IncomeDto>> getAllIncomes() {
-        return ResponseEntity.ok(incomeService.list());
+    @GetMapping("/all/{id}")
+    public ResponseEntity<List<ActivityDto>> getAllIncomes(@PathVariable String id) {
+        return ResponseEntity.ok(incomeService.listActivities(id));
     }
 
     @GetMapping("/{id}")
