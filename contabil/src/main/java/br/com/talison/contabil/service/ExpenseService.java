@@ -4,12 +4,14 @@ import br.com.talison.contabil.domain.Category;
 import br.com.talison.contabil.domain.Expense;
 import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.User;
+import br.com.talison.contabil.domain.dto.ActivityDto;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
 import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.domain.enums.EnumPaymentMethod;
 import br.com.talison.contabil.repository.CategoryRepository;
 import br.com.talison.contabil.repository.ExpenseRepository;
 import br.com.talison.contabil.repository.UserRepository;
+import br.com.talison.contabil.service.mapper.ActivityExpenseMapper;
 import br.com.talison.contabil.service.mapper.ExpenseMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +29,7 @@ public class ExpenseService {
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
     private final ExpenseMapper expenseMapper;
+    private final ActivityExpenseMapper activityExpenseMapper;
     private final TotalsService totalsService;
 
 
@@ -45,6 +48,24 @@ public class ExpenseService {
 
     public List<ExpenseDto> listar() {
         return expenseMapper.toDto(expenseRepository.findAll());
+    }
+
+    public List<ActivityDto> listActivities( String id) {
+
+        Optional<List<Expense>> expenses = expenseRepository.findAllByUserId(id);
+
+        if(expenses.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<ActivityDto> data = activityExpenseMapper.toDto(expenses.get());
+
+        data = data.stream().map((dto) -> {
+            dto.setType("Expense");
+            return dto;
+        }).toList();
+
+        return data;
     }
 
     public List<String> addExpense(ExpenseDto expense) {

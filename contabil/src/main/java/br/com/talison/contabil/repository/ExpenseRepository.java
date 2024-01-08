@@ -16,4 +16,5 @@ public interface ExpenseRepository extends MongoRepository<Expense, String> {
 
     Optional<List<Expense>> findAllByUserIdAndPaidAt_YearAndPaidAt_Month(String user_id, int paidAt_year, int paidAt_month);
 
+    Optional<List<Expense>> findAllByUserId(String id);
 }

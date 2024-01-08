@@ -3,10 +3,7 @@ package br.com.talison.contabil.service;
 import br.com.talison.contabil.domain.Expense;
 import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.Totals;
-import br.com.talison.contabil.domain.dto.ActivityDto;
-import br.com.talison.contabil.domain.dto.DashboardDto;
-import br.com.talison.contabil.domain.dto.IncomeVSExpense;
-import br.com.talison.contabil.domain.dto.TotalsDto;
+import br.com.talison.contabil.domain.dto.*;
 import br.com.talison.contabil.repository.ExpenseRepository;
 import br.com.talison.contabil.repository.IncomeRepository;
 import br.com.talison.contabil.repository.TotalsRepository;
@@ -206,7 +203,7 @@ public class TotalsService {
             }
             else
             if(result.containsKey(activityDto.getMethod())){
-                Double calc = Math.floor( result.get(activityDto.getMethod()) + activityDto.getValue() * 100) / 100;
+                Double calc = Math.floor( (result.get(activityDto.getMethod()) + activityDto.getValue()) * 100) / 100;
 
                 result.put(activityDto.getMethod(), calc);
             }
@@ -214,6 +211,12 @@ public class TotalsService {
                 result.put(activityDto.getMethod(), Math.floor(activityDto.getValue() * 100) / 100);
             }
         }
+        return result;
+    }
+
+    public List<CategoryByMonthDto> getExpenseByCategoryByMonth(String userId, String year, String month) {
+        List<CategoryByMonthDto> result = new ArrayList<>();
+
         return result;
     }
 

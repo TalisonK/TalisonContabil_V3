@@ -26,13 +26,13 @@ function App() {
     return (
         <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
             <AppContainer>
-                {user ? (
+                {!localStorage.getItem('user') ? (
+                    <Login update={updateUser} />
+                ) : (
                     <DisplayFlex direction="column" overflow="hidden">
                         <Sidebar />
                         <RouterApp />
                     </DisplayFlex>
-                ) : (
-                    <Login update={updateUser} />
                 )}
             </AppContainer>
         </SnackbarProvider>

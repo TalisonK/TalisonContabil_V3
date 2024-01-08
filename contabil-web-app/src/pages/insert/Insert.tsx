@@ -46,12 +46,21 @@ const Insert = () => {
     ])
 
     useEffect(() => {
-        categoryList().then((res) => {
-            setCategories(res)
-        })
+        categoryList()
+            .then((res) => {
+                setCategories(res)
+            })
+
+            .catch((err) => {
+                console.log(err)
+                localStorage.removeItem('user')
+                window.location.href = '/'
+            })
         const userStorage = localStorage.getItem('user')
         if (userStorage) {
             setUser(JSON.parse(userStorage))
+        } else {
+            window.location.href = '/'
         }
     }, [])
 
@@ -147,10 +156,11 @@ const Insert = () => {
             card={true}
             direction="column"
             width={type === 'Expense' ? '50%' : '25%'}
-            height="1000px"
-            marginTop="100px"
-            marginBottom="100px"
+            height="90vh"
+            marginBottom="10px"
+            marginTop="10px"
             style={{ alignSelf: 'center' }}
+            overflow="auto"
         >
             <DisplayFlex
                 width="100%"
@@ -197,6 +207,8 @@ const Insert = () => {
                         style={{
                             marginRight: '70px',
                             marginLeft: '70px',
+                            marginTop: '50px',
+                            marginBottom: '50px',
                         }}
                     >
                         <InputLabel style={{ marginLeft: '7px' }}>
@@ -217,11 +229,7 @@ const Insert = () => {
                             label="Amount"
                         />
                     </FormControl>
-                    <DisplayFlex
-                        direction="column"
-                        marginBottom="90px"
-                        width="100%"
-                    >
+                    <DisplayFlex direction="column" width="100%">
                         <DisplayFlex
                             width="100%"
                             justifyContent="center"
@@ -240,7 +248,7 @@ const Insert = () => {
                     </DisplayFlex>
                 </DisplayFlex>
                 {type === 'Expense' ? (
-                    <Divider orientation="vertical" variant="middle" flexItem />
+                    <Divider orientation="vertical" flexItem />
                 ) : (
                     <></>
                 )}
@@ -251,7 +259,7 @@ const Insert = () => {
                             justifyContent="space-evenly"
                             width="50%"
                             height="100%"
-                            marginTop="40px"
+                            marginTop="50px"
                         >
                             <FormControl
                                 style={{
@@ -283,6 +291,7 @@ const Insert = () => {
                                 style={{
                                     marginRight: '70px',
                                     marginLeft: '70px',
+                                    marginTop: '70px',
                                     marginBottom: `${
                                         paymentMethod === 'CREDIT_CARD'
                                             ? '0px'
@@ -351,26 +360,20 @@ const Insert = () => {
                     <></>
                 )}
             </DisplayFlex>
-            <DisplayFlex
+            <Divider variant="middle" flexItem />
+            <Button
+                variant="contained"
                 style={{
-                    position: 'absolute',
-                    top: '1050px',
-                    left: `${type === 'Expense' ? '64%' : '46.5%'}`,
+                    width: '200px',
+                    height: '50px',
+                    alignSelf: 'center',
+                    marginTop: '10px',
+                    marginBottom: '10px',
                 }}
+                onClick={() => submit()}
             >
-                <Button
-                    variant="contained"
-                    style={{
-                        width: '200px',
-                        height: '50px',
-                        alignSelf: 'center',
-                        marginBottom: '50px',
-                    }}
-                    onClick={() => submit()}
-                >
-                    Insert
-                </Button>
-            </DisplayFlex>
+                Insert
+            </Button>
         </DisplayFlex>
     )
 }
