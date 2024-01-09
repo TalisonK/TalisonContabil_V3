@@ -56,6 +56,13 @@ public class ExpenseController {
 
     }
 
+    @PostMapping("/delete/bucket")
+    public ResponseEntity<Void> deleteExpenseBucket(@RequestBody List<String> ids) {
+        expenseService.deleteBucket(ids);
+        return ResponseEntity.status(200).build();
+
+    }
+
     @PutMapping
     public ResponseEntity<ExpenseDto> updateExpense(@PathVariable ExpenseDto dto) {
         ExpenseDto ret = expenseService.updateExpense(dto);

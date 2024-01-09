@@ -23,10 +23,13 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { categoryList, submitActivity } from '../../api/insert'
 import Category from '../../interfaces/Category'
 import User from '../../interfaces/User'
+import { VariantType, useSnackbar } from 'notistack'
 
 const numericOnly = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',']
 
 const Insert = () => {
+    const { enqueueSnackbar } = useSnackbar()
+
     const [user, setUser] = useState<User>({} as User)
     const [description, setDescription] = useState<string>('')
     const [value, setValue] = useState<string>('0,00')
@@ -44,6 +47,13 @@ const Insert = () => {
         'MONEY',
         'PIX',
     ])
+
+    //Errors
+
+    const [descriptionError, setDescriptionError] = useState<boolean>(false)
+    const [valueError, setValueError] = useState<boolean>(false)
+    const [categoryError, setCategoryError] = useState<boolean>(false)
+    const [paymentMethodError, setPaymentMethodError] = useState<boolean>(false)
 
     useEffect(() => {
         categoryList()
@@ -64,8 +74,63 @@ const Insert = () => {
         }
     }, [])
 
+    const handleNotificationVariant = (
+        messagee: string,
+        variant: VariantType
+    ) => {
+        enqueueSnackbar(messagee, { variant })
+    }
+
+    const resetValidation = () => {
+        setDescriptionError(false)
+        setValueError(false)
+        setCategoryError(false)
+        setPaymentMethodError(false)
+    }
+
+    const validate = () => {
+        resetValidation()
+        let validated: boolean = true
+        if (!description) {
+            setDescriptionError(true)
+            validated = false
+        }
+
+        if (value === '0,00') {
+            setValueError(true)
+            validated = false
+        }
+
+        if (type === 'Expense' && !category) {
+            setCategoryError(true)
+            validated = false
+        }
+
+        if (type === 'Expense' && !paymentMethod) {
+            setPaymentMethodError(true)
+            validated = false
+        }
+
+        return validated
+    }
+
+    const resetValues = () => {
+        setDescription('')
+        setValue('0,00')
+        setCategory('')
+        setPaymentMethod('')
+        setActualParcel(1)
+        setTotalParcel(1)
+    }
+
     const submit = () => {
-        if (!description || !value || !paidAt) return
+        if (!validate()) {
+            handleNotificationVariant(
+                'Please fill in all required fields!',
+                'error'
+            )
+            return
+        }
 
         let data: any = {
             description,
@@ -88,8 +153,13 @@ const Insert = () => {
             delete data.category
         }
 
+        console.log(data)
         submitActivity(data).then((res) => {
-            console.log(res)
+            handleNotificationVariant(
+                'Atividade inserida com sucesso!',
+                'success'
+            )
+            resetValues()
         })
     }
 
@@ -202,6 +272,7 @@ const Insert = () => {
                         variant="outlined"
                         marginRight="70px"
                         marginLeft="70px"
+                        error={descriptionError}
                     />
                     <FormControl
                         style={{
@@ -211,13 +282,17 @@ const Insert = () => {
                             marginBottom: '50px',
                         }}
                     >
-                        <InputLabel style={{ marginLeft: '7px' }}>
+                        <InputLabel
+                            style={{ marginLeft: '7px' }}
+                            error={valueError}
+                        >
                             Value
                         </InputLabel>
                         <OutlinedFieldStyled
                             onFocus={(event) => {
                                 valueStart(event)
                             }}
+                            error={valueError}
                             value={value}
                             onChange={(e) => ValueHandler(e)}
                             id="outlined-adornment-amount"
@@ -266,6 +341,7 @@ const Insert = () => {
                                     marginRight: '70px',
                                     marginLeft: '70px',
                                 }}
+                                error={categoryError}
                             >
                                 <InputLabel id="demo-simple-select-label">
                                     Category
@@ -298,6 +374,7 @@ const Insert = () => {
                                             : '55px'
                                     }`,
                                 }}
+                                error={paymentMethodError}
                             >
                                 <InputLabel id="demo-simple-select-label">
                                     Payment Method

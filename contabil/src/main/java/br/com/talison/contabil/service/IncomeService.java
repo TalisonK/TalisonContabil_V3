@@ -90,5 +90,15 @@ public class IncomeService {
     public IncomeDto getIncomeById(String id) {
         return incomeMapper.toDto(incomeRepository.findById(id).orElse(null));
     }
+
+    public void deleteBucket(List<String> ids) {
+        for(String id : ids) {
+            Income income = incomeRepository.findById(id).orElse(null);
+            if(income != null) {
+                incomeRepository.deleteById(id);
+                totalsService.updateTotals(income.getReceivedAt(), income.getUser().getId(), "income");
+            }
+        }
+    }
 }
 

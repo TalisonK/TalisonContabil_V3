@@ -157,4 +157,14 @@ public class ExpenseService {
         return incomes.orElse(null);
 
     }
+
+    public void deleteBucket(List<String> ids) {
+        for(String id : ids) {
+            Expense expense = expenseRepository.findById(id).orElse(null);
+            if(expense != null) {
+                expenseRepository.deleteById(id);
+                totalsService.updateTotals(expense.getPaidAt(), expense.getUser().getId(), "expense");
+            }
+        }
+    }
 }

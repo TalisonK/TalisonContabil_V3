@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "18080:8080"
+      - "18080:18080"
     expose:
       - 18080
   

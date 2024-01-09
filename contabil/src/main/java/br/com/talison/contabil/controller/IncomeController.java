@@ -66,4 +66,11 @@ public class IncomeController {
 
     }
 
+    @PostMapping("/delete/bucket")
+    public ResponseEntity<Void> deleteIncomeBucket(@RequestBody List<String> ids) {
+        incomeService.deleteBucket(ids);
+        return ResponseEntity.status(200).build();
+
+    }
+
 }

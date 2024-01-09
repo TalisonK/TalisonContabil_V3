@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { DisplayFlex } from '../../styles'
-import { DataGrid, GridColDef, GridValueGetterParams } from '@mui/x-data-grid'
-import { getList } from '../../api/List'
+import { DataGrid, GridColDef } from '@mui/x-data-grid'
+import { deleteActivity, getList } from '../../api/List'
 import Activity from '../../interfaces/Activity'
+import { Button, ButtonGroup } from '@mui/material'
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 220 },
@@ -20,6 +21,8 @@ const columns: GridColDef[] = [
 const ListPage = () => {
     const [rows, setRows] = useState<Activity[]>([])
 
+    const [selectionModel, setSelectionModel] = useState<any[]>([])
+
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}')
         if (!user.id) {
@@ -31,6 +34,19 @@ const ListPage = () => {
         })
     }, [])
 
+    const deleteSelected = () => {
+        const bucket = rows.filter((row) => selectionModel.includes(row.id))
+
+        deleteActivity(bucket).then((res) => {
+            if (res) {
+                const user = JSON.parse(localStorage.getItem('user') || '{}')
+                getList(user.id).then((response) => {
+                    setRows(response)
+                })
+            }
+        })
+    }
+
     return (
         <DisplayFlex
             direction="column"
@@ -40,7 +56,30 @@ const ListPage = () => {
             style={{ alignItems: 'center' }}
         >
             <DisplayFlex direction="column" width="80%" marginTop="30px">
+                <DisplayFlex
+                    direction="row"
+                    width="100%"
+                    justifyContent="end"
+                    marginBottom="10px"
+                >
+                    <ButtonGroup variant="contained">
+                        <Button
+                            color="warning"
+                            disabled={!(selectionModel.length === 1)}
+                        >
+                            Edit
+                        </Button>
+                        <Button
+                            color="error"
+                            onClick={deleteSelected}
+                            disabled={!(selectionModel.length >= 1)}
+                        >
+                            Delete
+                        </Button>
+                    </ButtonGroup>
+                </DisplayFlex>
                 <DataGrid
+                    showCellVerticalBorder={true}
                     rows={rows}
                     columns={columns}
                     initialState={{
@@ -50,6 +89,8 @@ const ListPage = () => {
                     }}
                     pageSizeOptions={[10, 20, 30, 50, 100]}
                     checkboxSelection
+                    onRowSelectionModelChange={(e) => setSelectionModel(e)}
+                    rowSelectionModel={selectionModel}
                 />
             </DisplayFlex>
         </DisplayFlex>
