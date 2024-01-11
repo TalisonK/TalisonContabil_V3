@@ -153,7 +153,6 @@ const Insert = () => {
             delete data.category
         }
 
-        console.log(data)
         submitActivity(data).then((res) => {
             handleNotificationVariant(
                 'Atividade inserida com sucesso!',
@@ -200,8 +199,6 @@ const Insert = () => {
         }
 
         if (cents.length < 2) {
-            console.log('menor que 2')
-
             for (let i = cents.length; i < 2; i++) {
                 cents.concat('0')
             }

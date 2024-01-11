@@ -8,3 +8,10 @@ export const login = (name: string, password: string): any => {
         password: password,
     })
 }
+
+export const signUp = (name: string, password: string): any => {
+    return axios.post(url, {
+        name: name,
+        password: password,
+    })
+}

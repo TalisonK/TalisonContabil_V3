@@ -18,8 +18,6 @@ interface Props {
 
 const IncomeExpense = (props: Props) => {
     const data = () => {
-        console.log(props.lista)
-
         return props.lista
     }
 
