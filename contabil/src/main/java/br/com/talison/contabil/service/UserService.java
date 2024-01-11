@@ -3,6 +3,7 @@ package br.com.talison.contabil.service;
 import br.com.talison.contabil.domain.User;
 import br.com.talison.contabil.domain.dto.UserPassDto;
 import br.com.talison.contabil.domain.dto.UserDto;
+import br.com.talison.contabil.domain.enums.EnumRole;
 import br.com.talison.contabil.repository.UserRepository;
 import br.com.talison.contabil.service.mapper.UserPassMapper;
 import br.com.talison.contabil.service.mapper.UserMapper;
@@ -51,6 +52,7 @@ public class UserService {
         }
 
         user.setCreatedAt(new Date());
+        user.setRole(EnumRole.ROLE_USER.getValue());
         User entrada = userRepository.save(userPassMapper.toEntity(user));
 
         return userMapper.toDto(entrada);
