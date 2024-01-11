@@ -9,7 +9,9 @@ import br.com.talison.contabil.repository.IncomeRepository;
 import br.com.talison.contabil.repository.TotalsRepository;
 import br.com.talison.contabil.service.mapper.ActivityExpenseMapper;
 import br.com.talison.contabil.service.mapper.ActivityIncomeMapper;
+import br.com.talison.contabil.service.mapper.ExpenseMapper;
 import br.com.talison.contabil.service.mapper.TotalsMapper;
+import br.com.talison.contabil.service.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,72 +34,10 @@ public class TotalsService {
 
     private final ActivityIncomeMapper activityIncomeMapper;
     private final ActivityExpenseMapper activityExpenseMapper;
+    private final ExpenseMapper expenseMapper;
     private final TotalsMapper totalsMapper;
 
-    private List<String> months = Arrays.asList("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep","Oct","Nov","Dec");
-
-    private Integer convertMonthToNumber(String month) {
-
-        int selectedMonth = 0;
-
-        if(months.contains(month)) {
-            selectedMonth = months.indexOf(month) + 1;
-        }
-        else {
-            Dictionary<String, String> monthsDic = months();
-
-            String translate = monthsDic.get(month);
-
-            selectedMonth = months.indexOf(translate) + 1;
-        }
-
-        return selectedMonth;
-
-    }
-
-    private Dictionary<String, String> months(){
-        Dictionary<String, String> months = new Hashtable<>();
-        months.put("Fev", "Feb");
-        months.put("Abr", "Apr");
-        months.put("Mai", "May");
-        months.put("Ago", "Aug");
-        months.put("Set", "Sep");
-        months.put("Out", "Oct");
-        months.put("Dez", "Dec");
-        return months;
-    }
-
-    private String convertMonthToString(Integer month) {
-        return months.get(month - 1);
-    }
-
-    private List<Date> calendarGenerator(String year, String month) {
-
-        String start = "";
-        String end = "";
-
-        if(month.length() == 3){
-            start = year + "-" + convertMonthToNumber(month) + "-01";
-            end = year + "-" + convertMonthToNumber(month) + "-31";
-        }
-        else {
-            start = year + "-" + month + "-01";
-            end = year + "-" + month + "-31";
-        }
-
-        SimpleDateFormat form = null;
-
-        try{
-            form = new SimpleDateFormat("yyyy-MM-dd");
-            Date Date1 = form.parse(start);
-            Date Date2 = form.parse(end);
-            return Arrays.asList(Date1, Date2);
-        }
-        catch (ParseException e){
-            System.out.println("Erro ao gerar as datas de filtragem! Erro:" + year + month);;
-        }
-        return null;
-    }
+    private final DateUtils dateUtils = new DateUtils();
 
     private Totals createIncome(String year, String month, String userId){
 
@@ -114,7 +54,7 @@ public class TotalsService {
             totals.setCreatedAt(new Date());
             totals.setUserId(userId);
 
-            List<Date> calendar = calendarGenerator(year, month);
+            List<Date> calendar = dateUtils.calendarGenerator(year, month);
 
             Optional<List<Income>> value = incomeRepository.findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(userId, calendar.get(0), calendar.get(1));
 
@@ -144,7 +84,7 @@ public class TotalsService {
             totals.setCreatedAt(new Date());
             totals.setUserId(userId);
 
-            List<Date> calendar = calendarGenerator(year, month);
+            List<Date> calendar = dateUtils.calendarGenerator(year, month);
 
             Optional<List<Expense>> value = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, calendar.get(0), calendar.get(1));
 
@@ -173,7 +113,23 @@ public class TotalsService {
         dashboardDto.getExpenseByCategory().putAll(getExpenseByCategory(userId, year, month, dashboardDto.getTimeline()));
         dashboardDto.getExpenseByMethod().putAll(getExpenseByMethod(userId, year, month, dashboardDto.getTimeline()));
 
+        dashboardDto.getFixatedExpenses().put("contas", getExpensesByCategory(new CategoryFilterDto(userId, year, month, "Conta")));
+        dashboardDto.getFixatedExpenses().put("streaming", getExpensesByCategory(new CategoryFilterDto(userId, year, month, "Streaming")));
+
         return dashboardDto;
+    }
+
+    public List<ActivityDto> getExpensesByCategory(CategoryFilterDto categoryFilterDto) {
+
+        List<Date> dates = dateUtils.calendarGenerator(categoryFilterDto.getYear(), categoryFilterDto.getMonth());
+
+        Optional<List<Expense>> expenses = expenseRepository.findAllByUserIdAndPaidAtBetweenAndCategoryName(categoryFilterDto.getUserId(), dates.get(0), dates.get(1), categoryFilterDto.getName());
+
+        if(expenses.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return activityExpenseMapper.toDto(expenses.get());
     }
 
     public HashMap<String, Double> getExpenseByCategory(String userId, String year, String month, List<ActivityDto> timeline) {
@@ -222,7 +178,7 @@ public class TotalsService {
 
     public TotalsDto getTotals(String year, String month, String userId, String type){
 
-        Dictionary<String, String> months = months();
+        Dictionary<String, String> months = dateUtils.months();
 
         String mon = months.get(month) == null ? month : months.get(month);
 
@@ -256,7 +212,7 @@ public class TotalsService {
             totals.setUpdatedAt(new Date());
 
             if(Objects.equals(type, "income")){
-                List<Date> calendar = calendarGenerator(year, month);
+                List<Date> calendar = dateUtils.calendarGenerator(year, month);
 
                 Optional<List<Income>> value = incomeRepository.findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(userId, calendar.get(0), calendar.get(1));
                 Double cont = value.get().stream().map(Income::getValue).reduce(0.0, Double::sum);
@@ -267,7 +223,7 @@ public class TotalsService {
 
             }
             else if(Objects.equals(type, "expense")){
-                List<Date> calendar = calendarGenerator(year, month);
+                List<Date> calendar = dateUtils.calendarGenerator(year, month);
 
                 Optional<List<Expense>> value = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, calendar.get(0), calendar.get(1));
                 Double cont = value.get().stream().map(Expense::getValue).reduce(0.0, Double::sum);
@@ -295,7 +251,7 @@ public class TotalsService {
         List<TotalsDto> totals = new ArrayList<>();
 
         for(int i = 1; i > 0; i--){
-            int monthAux = convertMonthToNumber(month) - i;
+            int monthAux = dateUtils.convertMonthToNumber(month) - i;
             String yearAux = year;
 
             if(monthAux < 1){
@@ -307,7 +263,7 @@ public class TotalsService {
                 yearAux = String.valueOf(Integer.parseInt(yearAux) + 1);
             }
 
-            totals.add(getTotals(yearAux, convertMonthToString(monthAux), userId, type));
+            totals.add(getTotals(yearAux, dateUtils.convertMonthToString(monthAux), userId, type));
         }
 
         totals.add(actual);
@@ -337,7 +293,7 @@ public class TotalsService {
     public List<IncomeVSExpense> getIncomeVsExpense(String userId, String year, String month){
         List<IncomeVSExpense> result = new ArrayList<>();
 
-        int monthAux = convertMonthToNumber(month);
+        int monthAux = dateUtils.convertMonthToNumber(month);
 
         String yearAux = year;
 
@@ -347,7 +303,7 @@ public class TotalsService {
                 yearAux = String.valueOf(Integer.parseInt(yearAux) - 1);
             }
 
-            String monthString = convertMonthToString(monthAux);
+            String monthString = dateUtils.convertMonthToString(monthAux);
 
             TotalsDto income = getTotals(yearAux, monthString, userId, "income");
             TotalsDto expense = getTotals(yearAux, monthString, userId, "expense");
@@ -362,7 +318,7 @@ public class TotalsService {
             monthAux--;
         }
 
-        monthAux = convertMonthToNumber(month) + 1;
+        monthAux = dateUtils.convertMonthToNumber(month) + 1;
         yearAux = year;
 
         Collections.reverse(result);
@@ -372,7 +328,7 @@ public class TotalsService {
                 monthAux = 1;
                 yearAux = String.valueOf(Integer.parseInt(yearAux) + 1);
             }
-            String monthString = convertMonthToString(monthAux);
+            String monthString = dateUtils.convertMonthToString(monthAux);
 
             TotalsDto income = getTotals(yearAux, monthString, userId, "income");
             TotalsDto expense = getTotals(yearAux, monthString, userId, "expense");
@@ -393,7 +349,7 @@ public class TotalsService {
 
     public List<ActivityDto> timelineByMonth(String userId, String year, String month) {
 
-        List<Date> calendar = calendarGenerator(year, month);
+        List<Date> calendar = dateUtils.calendarGenerator(year, month);
 
         List<Income> incomes = incomeRepository.findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(userId, calendar.get(0), calendar.get(1)).orElse(new ArrayList<>());
         List<Expense> expenses = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, calendar.get(0), calendar.get(1)).orElse(new ArrayList<>());

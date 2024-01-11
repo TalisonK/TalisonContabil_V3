@@ -5,6 +5,7 @@ import br.com.talison.contabil.domain.Expense;
 import br.com.talison.contabil.domain.Income;
 import br.com.talison.contabil.domain.User;
 import br.com.talison.contabil.domain.dto.ActivityDto;
+import br.com.talison.contabil.domain.dto.CategoryFilterDto;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
 import br.com.talison.contabil.domain.dto.TotalsDto;
 import br.com.talison.contabil.domain.enums.EnumPaymentMethod;
@@ -13,6 +14,7 @@ import br.com.talison.contabil.repository.ExpenseRepository;
 import br.com.talison.contabil.repository.UserRepository;
 import br.com.talison.contabil.service.mapper.ActivityExpenseMapper;
 import br.com.talison.contabil.service.mapper.ExpenseMapper;
+import br.com.talison.contabil.service.utils.DateUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +34,8 @@ public class ExpenseService {
     private final ActivityExpenseMapper activityExpenseMapper;
     private final TotalsService totalsService;
 
+    private final DateUtils dateUtils = new DateUtils();
+
 
     private Expense sendExpense(ExpenseDto expense, Category category, User user) {
         Expense novo = new Expense(
@@ -44,10 +48,6 @@ public class ExpenseService {
                 expense.getActualParcel(),
                 expense.getTotalParcel());
         return expenseRepository.save(novo);
-    }
-
-    public List<ExpenseDto> listar() {
-        return expenseMapper.toDto(expenseRepository.findAll());
     }
 
     public List<ActivityDto> listActivities( String id) {

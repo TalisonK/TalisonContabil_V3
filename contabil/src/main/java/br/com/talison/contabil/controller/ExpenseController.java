@@ -2,6 +2,7 @@ package br.com.talison.contabil.controller;
 
 
 import br.com.talison.contabil.domain.dto.ActivityDto;
+import br.com.talison.contabil.domain.dto.CategoryFilterDto;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
 import br.com.talison.contabil.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,6 @@ public class ExpenseController {
     public ResponseEntity<List<ActivityDto>> getAllExpenses(@PathVariable String id) {
         return ResponseEntity.ok(expenseService.listActivities( id));
     }
-
-
 
     @GetMapping("/{id}")
     public ResponseEntity<ExpenseDto> getExpenseById(@PathVariable String id) {
@@ -74,5 +73,4 @@ public class ExpenseController {
             return ResponseEntity.status(204).build();
         }
     }
-
 }

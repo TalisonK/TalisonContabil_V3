@@ -12,7 +12,7 @@ import Timeline from './timeline'
 import IncomeExpense from './IncomeExpense'
 import ExpensePie from './ExpensePie'
 import PaymentPie from './PaymentPie'
-import BarCategory from './BarCategory'
+import RecurrentData from './RecurrentData'
 
 const Dashboard = () => {
     const [user, setUser] = useState<User>({} as User)
@@ -268,7 +268,7 @@ const Dashboard = () => {
                                     )}
                                 </DisplayFlex>
 
-                                {/* Chart category by expense and pie */}
+                                {/* Chart fixed fees and pie */}
                                 <DisplayFlex
                                     direction="row"
                                     width="100%"
@@ -292,7 +292,14 @@ const Dashboard = () => {
                                         card={true}
                                         marginRight="10px"
                                     >
-                                        <BarCategory />
+                                        <RecurrentData
+                                            contas={
+                                                bundle.fixatedExpenses.contas
+                                            }
+                                            streaming={
+                                                bundle.fixatedExpenses.streaming
+                                            }
+                                        />
                                     </DisplayFlex>
                                 </DisplayFlex>
                             </DisplayFlex>

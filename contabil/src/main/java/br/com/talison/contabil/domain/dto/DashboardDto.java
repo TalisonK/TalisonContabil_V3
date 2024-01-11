@@ -31,7 +31,7 @@ public class DashboardDto implements Serializable {
 
     private HashMap<String, Double> ExpenseByMethod;
 
-    private List<CategoryByMonthDto> categoryByMonth;
+    private HashMap<String, List<ActivityDto>> FixatedExpenses;
 
 
     public DashboardDto(String userId, String year, String month) {
@@ -50,7 +50,7 @@ public class DashboardDto implements Serializable {
         this.incomeVSexpense = new ArrayList<>();
         this.ExpenseByCategory = new HashMap<>();
         this.ExpenseByMethod = new HashMap<>();
-        this.categoryByMonth = new ArrayList<>();
+        this.FixatedExpenses = new HashMap<>();
 
     }
 

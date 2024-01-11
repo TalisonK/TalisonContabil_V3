@@ -16,6 +16,10 @@ interface DashboardBundle {
     incomeVSexpense: IncomeVSExpense[]
     expenseByCategory: any
     expenseByMethod: any
+    fixatedExpenses: {
+        contas: Activity[]
+        streaming: Activity[]
+    }
 }
 
 export default DashboardBundle
