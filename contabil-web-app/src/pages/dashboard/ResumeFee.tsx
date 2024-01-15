@@ -4,22 +4,31 @@ import { Text } from '../../styles'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { ICONS } from '../../constants/ICONS'
 
-const ResumeFee = (props: any) => {
+interface Props {
+    conta: any
+    size: string
+}
+
+const ResumeFee = (props: Props) => {
     return (
         <DisplayFlex
             direction="column"
-            width="200px"
-            height="150px"
-            marginTop="10px"
-            marginBottom="30px"
+            width={props.size === 'large' ? '200px' : '18%'}
+            height={props.size === 'large' ? '150px' : '70px'}
+            marginTop={props.size === 'large' ? '20px' : '0px'}
+            marginBottom="20px"
             card={true}
-            style={{ borderRadius: '10px' }}
+            style={{
+                borderRadius: '10px',
+                textOverflow: 'clip',
+            }}
         >
             <Text
                 margin="10px"
                 style={{
                     display: 'flex',
                     justifyContent: 'space-between',
+                    alignSelf: props.size === 'small' ? 'center' : '',
                 }}
             >
                 {props.conta.description}

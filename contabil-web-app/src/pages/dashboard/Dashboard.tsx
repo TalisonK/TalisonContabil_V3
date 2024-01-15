@@ -7,7 +7,7 @@ import User from '../../interfaces/User'
 import DashboardBundle from '../../interfaces/Dashboard'
 import { getDashboard } from '../../api/Dashboard'
 import Resume from './Resume'
-import { Button, CircularProgress, Skeleton } from '@mui/material'
+import { Button, CircularProgress, Divider, Skeleton } from '@mui/material'
 import Timeline from './timeline'
 import IncomeExpense from './IncomeExpense'
 import ExpensePie from './ExpensePie'
@@ -75,6 +75,14 @@ const Dashboard = () => {
         }
     }
 
+    const isNow = (compare: Date) => {
+        const now = new Date()
+        return (
+            now.getFullYear() === date.getFullYear() &&
+            now.getMonth() === date.getMonth()
+        )
+    }
+
     return (
         <>
             {!loading ? (
@@ -114,18 +122,12 @@ const Dashboard = () => {
                             <DisplayFlex
                                 marginLeft="auto"
                                 marginRight="5px"
-                                width={
-                                    date.getFullYear() ===
-                                    new Date().getFullYear()
-                                        ? '135px'
-                                        : '199px'
-                                }
+                                width={isNow(date) ? '135px' : '199px'}
                             >
                                 <LocalizationProvider
                                     dateAdapter={AdapterDayjs}
                                 >
-                                    {date.getFullYear() !==
-                                    new Date().getFullYear() ? (
+                                    {!isNow(date) ? (
                                         <Button
                                             style={{ padding: 0, margin: 0 }}
                                             onClick={() => {
@@ -276,41 +278,70 @@ const Dashboard = () => {
                                     justifyContent="space-between"
                                     marginTop="10px"
                                 >
-                                    <DisplayFlex
-                                        width="29%"
-                                        height="100%"
-                                        card={true}
-                                        marginRight="10px"
-                                    >
-                                        <PaymentPie
-                                            data={bundle.expenseByMethod}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="29%"
+                                            height="100%"
+                                            card={true}
+                                            marginRight="10px"
+                                        >
+                                            <PaymentPie
+                                                data={bundle.expenseByMethod}
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'29%'}
+                                            height={'100%'}
+                                            style={{ marginRight: '10px' }}
                                         />
-                                    </DisplayFlex>
-                                    <DisplayFlex
-                                        width="70%"
-                                        height="100%"
-                                        card={true}
-                                        marginRight="10px"
-                                    >
-                                        <RecurrentData
-                                            contas={
-                                                bundle.fixatedExpenses.contas
-                                            }
-                                            streaming={
-                                                bundle.fixatedExpenses.streaming
-                                            }
+                                    )}
+                                    {!skeleton ? (
+                                        <DisplayFlex
+                                            width="70%"
+                                            height="100%"
+                                            card={true}
+                                            marginRight="10px"
+                                        >
+                                            <RecurrentData
+                                                contas={
+                                                    bundle.fixatedExpenses
+                                                        .contas
+                                                }
+                                                streaming={
+                                                    bundle.fixatedExpenses
+                                                        .streaming
+                                                }
+                                            />
+                                        </DisplayFlex>
+                                    ) : (
+                                        <Skeleton
+                                            variant="rectangular"
+                                            width={'70%'}
+                                            height={'100%'}
+                                            style={{ marginRight: '10px' }}
                                         />
-                                    </DisplayFlex>
+                                    )}
                                 </DisplayFlex>
                             </DisplayFlex>
 
                             {/* Timeline */}
                             {!skeleton ? (
                                 <DisplayFlex
+                                    direction="column"
                                     width="35%"
                                     height="1100px"
                                     card={true}
                                 >
+                                    <Text
+                                        fontSize="1.5em"
+                                        margin="0"
+                                        style={{ paddingLeft: '10px' }}
+                                    >
+                                        Timeline
+                                    </Text>
+                                    <Divider />
                                     <Timeline activities={bundle.timeline} />
                                 </DisplayFlex>
                             ) : (

@@ -14,8 +14,8 @@ import {
     Typography,
 } from '@mui/material'
 
-const Sidebar = () => {
-    const pages = ['Insert', 'Charts', 'List']
+const TopBar = () => {
+    const pages = ['Insert', 'List']
     const settings = ['Profile', 'Logout']
 
     const [user, setUser] = useState(null)
@@ -27,22 +27,12 @@ const Sidebar = () => {
         }
     }, [])
 
-    const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
-        null
-    )
     const [anchorElUser, setAnchorElUser] = React.useState<null | HTMLElement>(
         null
     )
 
-    const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorElNav(event.currentTarget)
-    }
     const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorElUser(event.currentTarget)
-    }
-
-    const handleCloseNavMenu = () => {
-        setAnchorElNav(null)
     }
 
     const handleCloseUserMenu = () => {
@@ -150,4 +140,4 @@ const Sidebar = () => {
     )
 }
 
-export default Sidebar
+export default TopBar

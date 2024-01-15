@@ -51,12 +51,23 @@ const RecurrentData = (props: Props) => {
                     style={{ alignItems: 'center' }}
                 >
                     {fixedFee.map((fee) => (
-                        <ResumeFee conta={feeShuffler(fee)} />
+                        <ResumeFee conta={feeShuffler(fee)} size="large" />
                     ))}
                 </DisplayFlex>
 
                 {/* Streaming */}
-                <DisplayFlex></DisplayFlex>
+                <DisplayFlex
+                    width="100%"
+                    height="100%"
+                    justifyContent="space-evenly"
+                    style={{
+                        flexFlow: 'row wrap',
+                    }}
+                >
+                    {props.streaming.map((stream) => (
+                        <ResumeFee conta={stream} size="small" />
+                    ))}
+                </DisplayFlex>
             </DisplayFlex>
         </DisplayFlex>
     )
