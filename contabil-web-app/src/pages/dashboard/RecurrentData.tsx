@@ -48,7 +48,7 @@ const RecurrentData = (props: Props) => {
                     width="100%"
                     height="220px"
                     justifyContent="space-evenly"
-                    style={{ alignItems: 'center' }}
+                    style={{ alignItems: 'center', flexFlow: 'row wrap' }}
                 >
                     {fixedFee.map((fee) => (
                         <ResumeFee conta={feeShuffler(fee)} size="large" />

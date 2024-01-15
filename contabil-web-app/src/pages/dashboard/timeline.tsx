@@ -54,59 +54,68 @@ const TimelineItem = ({ activity }: ItemProps) => {
                     {activity.description}
                 </Text>
                 {/* categoria */}
-                <DisplayFlex
-                    direction="row"
-                    justifyContent="space-between"
-                    width="100%"
-                    height="100%"
-                >
-                    <Text
-                        fontSize="0.8em"
-                        marginBottom="auto"
-                        marginTop="2px"
-                        marginLeft="5px"
-                    >
-                        {activity.activityCategory}
-                    </Text>
-
-                    {/* valor */}
-                    <DisplayFlex direction="column" justifyContent="center">
-                        <Text marginTop="3px" marginBottom="5px">
-                            Valor
-                        </Text>
-                        <Text margin="0" marginBottom="10px">
-                            R$ {activity.value}
+                <DisplayFlex direction="row" width="100%" height="100%">
+                    <DisplayFlex width="25%" style={{ minWidth: '50px' }}>
+                        <Text
+                            fontSize="0.8em"
+                            marginBottom="auto"
+                            marginTop="2px"
+                            marginLeft="5px"
+                        >
+                            {activity.activityCategory}
                         </Text>
                     </DisplayFlex>
+                    <DisplayFlex width="100%" justifyContent="space-evenly">
+                        {/* valor */}
+                        <DisplayFlex
+                            direction="column"
+                            justifyContent="center"
+                            style={{
+                                minWidth: '70px',
+                            }}
+                        >
+                            <Text marginTop="3px" marginBottom="5px">
+                                Valor
+                            </Text>
+                            <Text margin="0" marginBottom="10px">
+                                R$ {activity.value}
+                            </Text>
+                        </DisplayFlex>
 
-                    {/* parcelas */}
-                    <DisplayFlex
-                        direction="column"
-                        marginRight="150px"
-                        justifyContent="center"
-                    >
-                        <Text
-                            marginTop="3px"
-                            marginBottom="5px"
-                            style={{ alignSelf: 'center' }}
+                        {/* parcelas */}
+                        <DisplayFlex
+                            direction="column"
+                            justifyContent="center"
+                            style={{ alignItems: 'center' }}
                         >
-                            {activity.method === 'CREDIT_CARD'
-                                ? 'Parcelas'
-                                : activity.method === 'DEBIT_CARD'
-                                ? 'Débito'
-                                : activity.method === 'PIX'
-                                ? 'PIX'
-                                : ''}
-                        </Text>
-                        <Text
-                            margin="0"
-                            marginBottom="10px"
-                            style={{ textAlign: 'center' }}
-                        >
-                            {activity.method === 'CREDIT_CARD'
-                                ? `${activity.actualParcel} - ${activity.totalParcel}`
-                                : ''}
-                        </Text>
+                            <Text
+                                marginTop="3px"
+                                marginBottom="5px"
+                                style={{
+                                    alignSelf: 'center',
+                                    minWidth: '70px',
+                                    alignItems: 'center',
+                                    textAlign: 'center',
+                                }}
+                            >
+                                {activity.method === 'CREDIT_CARD'
+                                    ? 'Parcelas'
+                                    : activity.method === 'DEBIT_CARD'
+                                    ? 'Débito'
+                                    : activity.method === 'PIX'
+                                    ? 'PIX'
+                                    : ''}
+                            </Text>
+                            <Text
+                                margin="0"
+                                marginBottom="10px"
+                                style={{ textAlign: 'center' }}
+                            >
+                                {activity.method === 'CREDIT_CARD'
+                                    ? `${activity.actualParcel} - ${activity.totalParcel}`
+                                    : ''}
+                            </Text>
+                        </DisplayFlex>
                     </DisplayFlex>
                 </DisplayFlex>
             </DisplayFlex>

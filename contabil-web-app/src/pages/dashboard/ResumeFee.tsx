@@ -13,7 +13,7 @@ const ResumeFee = (props: Props) => {
     return (
         <DisplayFlex
             direction="column"
-            width={props.size === 'large' ? '200px' : '18%'}
+            width={props.size === 'large' ? '23%' : '18%'}
             height={props.size === 'large' ? '150px' : '70px'}
             marginTop={props.size === 'large' ? '20px' : '0px'}
             marginBottom="20px"
@@ -21,6 +21,7 @@ const ResumeFee = (props: Props) => {
             style={{
                 borderRadius: '10px',
                 textOverflow: 'clip',
+                minWidth: '130px',
             }}
         >
             <Text
