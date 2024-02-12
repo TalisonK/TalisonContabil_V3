@@ -4,6 +4,7 @@ package br.com.talison.contabil.controller;
 import br.com.talison.contabil.domain.dto.ActivityDto;
 import br.com.talison.contabil.domain.dto.CategoryFilterDto;
 import br.com.talison.contabil.domain.dto.ExpenseDto;
+import br.com.talison.contabil.domain.dto.ExpenseListDto;
 import br.com.talison.contabil.service.ExpenseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -72,5 +73,10 @@ public class ExpenseController {
         else {
             return ResponseEntity.status(204).build();
         }
+    }
+
+    @PostMapping("/list")
+    public ResponseEntity<Boolean> ExpenseWithList(@RequestBody ExpenseListDto dto) {
+        return ResponseEntity.status(200).body(expenseService.addExpenseWithList(dto));
     }
 }

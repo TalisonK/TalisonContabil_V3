@@ -217,7 +217,7 @@ public class TotalsService {
                 Optional<List<Income>> value = incomeRepository.findAllByUserIdAndReceivedAtBetweenOrderByReceivedAt(userId, calendar.get(0), calendar.get(1));
                 Double cont = value.get().stream().map(Income::getValue).reduce(0.0, Double::sum);
 
-                totals.setValue(cont);
+                totals.setValue((double) Math.round(cont));
 
                 totalsRepository.save(totals);
 
@@ -228,7 +228,7 @@ public class TotalsService {
                 Optional<List<Expense>> value = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, calendar.get(0), calendar.get(1));
                 Double cont = value.get().stream().map(Expense::getValue).reduce(0.0, Double::sum);
 
-                totals.setValue(cont);
+                totals.setValue((double) Math.round(cont));
 
                 totalsRepository.save(totals);
             }

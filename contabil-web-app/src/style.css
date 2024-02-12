@@ -29,3 +29,8 @@
 ::-webkit-scrollbar-thumb:hover {
     background: rgba(40, 30, 30, 0.81);
 }
+
+/* Correções do css material */
+.description-input-space .MuiInputBase-input {
+    padding-right: 60px;
+}

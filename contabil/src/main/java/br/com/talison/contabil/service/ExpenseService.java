@@ -1,16 +1,12 @@
 package br.com.talison.contabil.service;
 
-import br.com.talison.contabil.domain.Category;
-import br.com.talison.contabil.domain.Expense;
-import br.com.talison.contabil.domain.Income;
-import br.com.talison.contabil.domain.User;
-import br.com.talison.contabil.domain.dto.ActivityDto;
-import br.com.talison.contabil.domain.dto.CategoryFilterDto;
-import br.com.talison.contabil.domain.dto.ExpenseDto;
-import br.com.talison.contabil.domain.dto.TotalsDto;
+import br.com.talison.contabil.domain.*;
+import br.com.talison.contabil.domain.List;
+import br.com.talison.contabil.domain.dto.*;
 import br.com.talison.contabil.domain.enums.EnumPaymentMethod;
 import br.com.talison.contabil.repository.CategoryRepository;
 import br.com.talison.contabil.repository.ExpenseRepository;
+import br.com.talison.contabil.repository.ListRepository;
 import br.com.talison.contabil.repository.UserRepository;
 import br.com.talison.contabil.service.mapper.ActivityExpenseMapper;
 import br.com.talison.contabil.service.mapper.ExpenseMapper;
@@ -30,9 +26,13 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final CategoryRepository categoryRepository;
     private final UserRepository userRepository;
+    private final ListRepository listRepository;
+
     private final ExpenseMapper expenseMapper;
     private final ActivityExpenseMapper activityExpenseMapper;
+
     private final TotalsService totalsService;
+
 
     private final DateUtils dateUtils = new DateUtils();
 
@@ -50,15 +50,15 @@ public class ExpenseService {
         return expenseRepository.save(novo);
     }
 
-    public List<ActivityDto> listActivities( String id) {
+    public java.util.List<ActivityDto> listActivities(String id) {
 
-        Optional<List<Expense>> expenses = expenseRepository.findAllByUserId(id);
+        Optional<java.util.List<Expense>> expenses = expenseRepository.findAllByUserId(id);
 
         if(expenses.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<ActivityDto> data = activityExpenseMapper.toDto(expenses.get());
+        java.util.List<ActivityDto> data = activityExpenseMapper.toDto(expenses.get());
 
         data = data.stream().map((dto) -> {
             dto.setType("Expense");
@@ -68,7 +68,7 @@ public class ExpenseService {
         return data;
     }
 
-    public List<String> addExpense(ExpenseDto expense) {
+    public java.util.List<String> addExpense(ExpenseDto expense) {
 
         //validations
         if(expense.getPaymentMethod() == EnumPaymentMethod.CREDIT_CARD && (expense.getTotalParcel() == null || expense.getActualParcel() == null)) {
@@ -103,7 +103,7 @@ public class ExpenseService {
                 expense.setPaidAt(LocalDateTime.of(year, month, 15, 0, 0, 0));
             }
 
-            List<String> results = new ArrayList<>();
+            java.util.List<String> results = new ArrayList<>();
 
             for(; expense.getActualParcel() <= expense.getTotalParcel(); expense.setActualParcel(expense.getActualParcel() + 1)) {
                 results.add(sendExpense(expense, category.get(), user.get()).getId());
@@ -122,7 +122,7 @@ public class ExpenseService {
         } else {
             expense.setActualParcel(null);
             expense.setTotalParcel(null);
-            List<String> results = List.of(sendExpense(expense, category.get(), user.get()).getId());
+            java.util.List<String> results = java.util.List.of(sendExpense(expense, category.get(), user.get()).getId());
 
             totalsService.updateTotals(expense.getPaidAt(), user.get().getId(), "expense");
             return results;
@@ -150,15 +150,15 @@ public class ExpenseService {
         return expenseMapper.toDto(expenseRepository.findById(id).orElse(null));
     }
 
-    public List<Expense> listAllByMonth(String userId, Date start, Date end) {
+    public java.util.List<Expense> listAllByMonth(String userId, Date start, Date end) {
 
-        Optional<List<Expense>> incomes = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, start, end);
+        Optional<java.util.List<Expense>> incomes = expenseRepository.findAllByUserIdAndPaidAtBetweenOrderByPaidAt(userId, start, end);
 
         return incomes.orElse(null);
 
     }
 
-    public void deleteBucket(List<String> ids) {
+    public void deleteBucket(java.util.List<String> ids) {
         for(String id : ids) {
             Expense expense = expenseRepository.findById(id).orElse(null);
             if(expense != null) {
@@ -166,5 +166,23 @@ public class ExpenseService {
                 totalsService.updateTotals(expense.getPaidAt(), expense.getUser().getId(), "expense");
             }
         }
+    }
+
+    public Boolean addExpenseWithList(ExpenseListDto dto) {
+
+        ExpenseDto expense = dto;
+        java.util.List<ListItemDto> list = dto.getList();
+
+        addExpense(expense);
+
+        List listDto = new List();
+        listDto.setList(list);
+        listDto.setUser(expense.getUser());
+        listDto.setCreatedAt(LocalDateTime.now());
+        listDto.setDescription(expense.getDescription());
+
+        listRepository.save(listDto);
+
+        return true;
     }
 }

@@ -16,6 +16,8 @@ export const submitActivity = async (data: any) => {
 
     if (type === 'Income') {
         result = await axios.post(url + '/income', data)
+    } else if (data.list) {
+        result = await axios.post(url + '/expense/list', data)
     } else {
         result = await axios.post(url + '/expense', data)
     }

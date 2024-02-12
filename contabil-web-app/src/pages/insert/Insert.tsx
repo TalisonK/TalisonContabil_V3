@@ -10,7 +10,9 @@ import {
     MenuItem,
     OutlinedInput,
     Select,
+    Switch,
     TextField,
+    Tooltip,
 } from '@mui/material'
 import {
     DateCalendar,
@@ -24,8 +26,20 @@ import { categoryList, submitActivity } from '../../api/insert'
 import Category from '../../interfaces/Category'
 import User from '../../interfaces/User'
 import { VariantType, useSnackbar } from 'notistack'
+import CategoryInput from './CategoryInput'
+import PaymentMethodInput from './PaymentMethodInput'
+import ParcelsInput from './ParcelsInput'
+import DescricaoInput from './DescricaoInput'
+import ValueInput from './ValueInput'
+import CalendarInput from './CalendarInput'
+import TypeInput from './TypeInput'
+import ListInput from './ListInput'
 
-const numericOnly = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ',']
+interface item {
+    id: number
+    name: string
+    price: string
+}
 
 const Insert = () => {
     const { enqueueSnackbar } = useSnackbar()
@@ -39,14 +53,10 @@ const Insert = () => {
     const [paymentMethod, setPaymentMethod] = useState<string>('')
     const [actualParcel, setActualParcel] = useState<number>(1)
     const [totalParcel, setTotalParcel] = useState<number>(1)
+    const [list, setList] = useState<boolean>(false)
+    const [listItens, setListItens] = useState<item[]>([])
 
     const [categories, setCategories] = useState<Category[]>([])
-    const [paymentMethods, _] = useState<string[]>([
-        'CREDIT_CARD',
-        'DEBIT_CARD',
-        'MONEY',
-        'PIX',
-    ])
 
     //Errors
 
@@ -73,6 +83,10 @@ const Insert = () => {
             window.location.href = '/'
         }
     }, [])
+
+    useEffect(() => {
+        console.log(list)
+    }, [list])
 
     const handleNotificationVariant = (
         messagee: string,
@@ -111,6 +125,14 @@ const Insert = () => {
             validated = false
         }
 
+        if (list && listItens.length === 0) {
+            handleNotificationVariant(
+                'Please fill in at least one list item!',
+                'error'
+            )
+            validated = false
+        }
+
         return validated
     }
 
@@ -121,6 +143,7 @@ const Insert = () => {
         setPaymentMethod('')
         setActualParcel(1)
         setTotalParcel(1)
+        setList(false)
     }
 
     const submit = () => {
@@ -136,21 +159,24 @@ const Insert = () => {
             description,
             user: user.name,
             value: parseFloat(value.replace(',', '.')),
-            paidAt,
-            category,
-            paymentMethod,
-            actualParcel,
-            totalParcel,
             type,
         }
 
-        if (type === 'Income') {
+        if (type === 'Expense') {
+            data = {
+                ...data,
+                category,
+                paymentMethod,
+                actualParcel,
+                totalParcel,
+                paidAt,
+            }
+        } else {
             data = { ...data, receivedAt: paidAt }
-            delete data.paidAt
-            delete data.actualParcel
-            delete data.totalParcel
-            delete data.paymentMethod
-            delete data.category
+        }
+
+        if (list) {
+            data = { ...data, list: listItens }
         }
 
         submitActivity(data).then((res) => {
@@ -162,60 +188,9 @@ const Insert = () => {
         })
     }
 
-    const ValueHandler = (event: any) => {
-        event.preventDefault()
-        const { target } = event
-        let valuest = target.value
-
-        if (!valuest.split('').includes(',')) return
-
-        const [real, cents] = valuest.split(',')
-
-        for (let i = 0; i < valuest.length; i++) {
-            if (!numericOnly.includes(valuest[i])) {
-                return
-            }
-        }
-
-        if (valuest.match(/,/g)?.length === 2) {
-            const extensionStart = target.value.indexOf(',')
-            setTimeout(() => {
-                target.focus()
-                target.setSelectionRange(extensionStart + 1, extensionStart + 1)
-            }, 50)
-            return
-        }
-
-        if (cents.length > 2) {
-            const centsArray = cents.split('')
-            centsArray.splice(2, 1)
-
-            valuest = real.concat(',', centsArray.join(''))
-            const extensionStart = target.value.indexOf(',')
-            setTimeout(() => {
-                target.focus()
-                target.setSelectionRange(extensionStart + 2, extensionStart + 2)
-            }, 20)
-        }
-
-        if (cents.length < 2) {
-            for (let i = cents.length; i < 2; i++) {
-                cents.concat('0')
-            }
-
-            valuest = real.concat(',', cents)
-        }
-
-        if (valuest[valuest.length - 1] === ',') return
-        setValue(valuest)
-    }
-
-    const valueStart = (event: any) => {
-        event.preventDefault()
-        const { target } = event
-        const extensionStart = target.value.indexOf(',')
-        target.focus()
-        target.setSelectionRange(0, extensionStart)
+    const activityChange = (event: any) => {
+        setType(event.target.value)
+        resetValues()
     }
 
     return (
@@ -235,25 +210,15 @@ const Insert = () => {
                 card={true}
                 justifyContent="center"
             >
-                <Select
-                    style={{
-                        height: '80%',
-                        alignSelf: 'center',
-                        width: '200px',
-                        textAlign: 'center',
-                    }}
-                    labelId="demo-simple-select-label"
-                    id="demo-simple-select"
-                    value={type}
-                    label="Type"
-                    notched={false}
-                    onChange={(e) => setType(e.target.value)}
-                >
-                    <MenuItem value={'Expense'}>Expense</MenuItem>
-                    <MenuItem value={'Income'}>Income</MenuItem>
-                </Select>
+                <TypeInput type={type} activityChange={activityChange} />
             </DisplayFlex>
-            <DisplayFlex direction="row" width="100%" height="100%">
+            <DisplayFlex
+                direction="row"
+                width="100%"
+                height="100%"
+                style={{ minHeight: '1000px' }}
+            >
+                {/*ESQUERDA*/}
                 <DisplayFlex
                     width={type === 'Expense' ? '50%' : '100%'}
                     height="100%"
@@ -261,69 +226,36 @@ const Insert = () => {
                     justifyContent="space-evenly"
                     marginTop="40px"
                 >
-                    <TextFieldStyled
-                        id="outlined-basic"
-                        label="Description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        variant="outlined"
+                    <DescricaoInput
+                        description={description}
+                        error={descriptionError}
+                        list={list}
+                        setDescription={setDescription}
+                        setList={setList}
+                        type={type}
+                    />
+
+                    <DisplayFlex
                         marginRight="70px"
                         marginLeft="70px"
-                        error={descriptionError}
-                    />
-                    <FormControl
-                        style={{
-                            marginRight: '70px',
-                            marginLeft: '70px',
-                            marginTop: '50px',
-                            marginBottom: '50px',
-                        }}
+                        marginTop="50px"
+                        marginBottom="50px"
                     >
-                        <InputLabel
-                            style={{ marginLeft: '7px' }}
-                            error={valueError}
-                        >
-                            Value
-                        </InputLabel>
-                        <OutlinedFieldStyled
-                            onFocus={(event) => {
-                                valueStart(event)
-                            }}
+                        <ValueInput
                             error={valueError}
                             value={value}
-                            onChange={(e) => ValueHandler(e)}
-                            id="outlined-adornment-amount"
-                            startAdornment={
-                                <InputAdornment position="start">
-                                    R$
-                                </InputAdornment>
-                            }
-                            label="Amount"
+                            setter={setValue}
                         />
-                    </FormControl>
-                    <DisplayFlex direction="column" width="100%">
-                        <DisplayFlex
-                            width="100%"
-                            justifyContent="center"
-                            marginBottom="20px"
-                        >
-                            {paidAt.toLocaleDateString()}
-                        </DisplayFlex>
-                        <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DateCalendar
-                                value={dayjs(paidAt)}
-                                onChange={(newValue: any) =>
-                                    setPaidAt(newValue.toDate())
-                                }
-                            />
-                        </LocalizationProvider>
                     </DisplayFlex>
+
+                    <CalendarInput paidAt={paidAt} setter={setPaidAt} />
                 </DisplayFlex>
                 {type === 'Expense' ? (
                     <Divider orientation="vertical" flexItem />
                 ) : (
                     <></>
                 )}
+                {/*DIREITA*/}
                 {type === 'Expense' ? (
                     <>
                         <DisplayFlex
@@ -333,101 +265,26 @@ const Insert = () => {
                             height="100%"
                             marginTop="50px"
                         >
-                            <FormControl
-                                style={{
-                                    marginRight: '70px',
-                                    marginLeft: '70px',
-                                }}
+                            <CategoryInput
                                 error={categoryError}
-                            >
-                                <InputLabel id="demo-simple-select-label">
-                                    Category
-                                </InputLabel>
-                                <Select
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value={category}
-                                    label="Category"
-                                    onChange={(e) =>
-                                        setCategory(e.target.value)
-                                    }
-                                >
-                                    {categories.map((category) => (
-                                        <MenuItem value={category.name}>
-                                            {category.name}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
+                                category={category}
+                                setter={setCategory}
+                                categories={categories}
+                            />
 
-                            <FormControl
-                                style={{
-                                    marginRight: '70px',
-                                    marginLeft: '70px',
-                                    marginTop: '70px',
-                                    marginBottom: `${
-                                        paymentMethod === 'CREDIT_CARD'
-                                            ? '0px'
-                                            : '55px'
-                                    }`,
-                                }}
+                            <PaymentMethodInput
                                 error={paymentMethodError}
-                            >
-                                <InputLabel id="demo-simple-select-label">
-                                    Payment Method
-                                </InputLabel>
-                                <Select
-                                    labelId="demo-simple-select-label"
-                                    id="demo-simple-select"
-                                    value={paymentMethod}
-                                    label="paymentMethod"
-                                    onChange={(e) =>
-                                        setPaymentMethod(e.target.value)
-                                    }
-                                >
-                                    {paymentMethods.map((paymentMethod) => (
-                                        <MenuItem value={paymentMethod}>
-                                            {paymentMethod}
-                                        </MenuItem>
-                                    ))}
-                                </Select>
-                            </FormControl>
-                            <DisplayFlex
-                                justifyContent="center"
-                                marginBottom="250px"
-                                marginTop="150px"
-                            >
-                                {paymentMethod === 'CREDIT_CARD' ? (
-                                    <>
-                                        <TextField
-                                            id="outlined-basic"
-                                            label="Actual Parcel"
-                                            variant="outlined"
-                                            value={actualParcel}
-                                            onChange={(e) =>
-                                                setActualParcel(
-                                                    parseInt(e.target.value)
-                                                )
-                                            }
-                                            style={{ width: '200px' }}
-                                        />
-                                        <TextField
-                                            id="outlined-basic"
-                                            label="Total Parcel"
-                                            variant="outlined"
-                                            value={totalParcel}
-                                            onChange={(e) =>
-                                                setTotalParcel(
-                                                    parseInt(e.target.value)
-                                                )
-                                            }
-                                            style={{ width: '200px' }}
-                                        />
-                                    </>
-                                ) : (
-                                    <></>
-                                )}
-                            </DisplayFlex>
+                                paymentMethod={paymentMethod}
+                                setter={setPaymentMethod}
+                            />
+
+                            <ParcelsInput
+                                paymentMethod={paymentMethod}
+                                actualParcel={actualParcel}
+                                setActualParcel={setActualParcel}
+                                totalParcel={totalParcel}
+                                setTotalParcel={setTotalParcel}
+                            />
                         </DisplayFlex>
                     </>
                 ) : (
@@ -435,6 +292,12 @@ const Insert = () => {
                 )}
             </DisplayFlex>
             <Divider variant="middle" flexItem />
+
+            {list ? (
+                <ListInput rows={listItens} setRows={setListItens} />
+            ) : (
+                <></>
+            )}
             <Button
                 variant="contained"
                 style={{
@@ -453,24 +316,3 @@ const Insert = () => {
 }
 
 export default Insert
-
-/*
-    private LocalDateTime paidAt;
-    private String category;
-    private EnumPaymentMethod paymentMethod;
-    private Integer actualParcel;
-    private Integer totalParcel;
-
-
-
-    private String user;
-
-    private String description;
-    private Double value;
-
-
-
-
-
-
-*/
