@@ -11,13 +11,19 @@ import Dashboard from './pages/dashboard/Dashboard'
 import Insert from './pages/insert/Insert'
 import ListPage from './pages/list/ListPage'
 
-export const RouterApp = () => {
+export const RouterApp = (props: any) => {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path="/" Component={Dashboard} />
-                <Route path="/insert" Component={Insert} />
-                <Route path="/list" Component={ListPage} />
+                <Route path="/" element={<Dashboard theme={props.theme} />} />
+                <Route
+                    path="/insert"
+                    element={<Insert theme={props.theme} />}
+                />
+                <Route
+                    path="/list"
+                    element={<ListPage theme={props.theme} />}
+                />
             </Routes>
         </BrowserRouter>
     )

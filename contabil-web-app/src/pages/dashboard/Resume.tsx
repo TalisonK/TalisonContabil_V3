@@ -30,7 +30,11 @@ const Resume = (props: Props) => {
                     R$ {Number.parseInt(props.entradas[1].value.toFixed(4))}
                 </Text>
             </DisplayFlex>
-            <DisplayFlex>
+            <DisplayFlex
+                direction="column"
+                justifyContent="center"
+                marginTop="20px"
+            >
                 <Text fontSize="1em" style={{ alignSelf: 'center' }}>
                     {Number.isNaN(getPercentage())
                         ? ''

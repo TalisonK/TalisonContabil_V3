@@ -18,7 +18,7 @@ const columns: GridColDef[] = [
     { field: 'createdAt', headerName: 'Created At', width: 250 },
 ]
 
-const ListPage = () => {
+const ListPage = (props: any) => {
     const [rows, setRows] = useState<Activity[]>([])
 
     const [selectionModel, setSelectionModel] = useState<any[]>([])
@@ -54,6 +54,7 @@ const ListPage = () => {
             height="90vh"
             overflow="auto"
             style={{ alignItems: 'center' }}
+            className={props.theme === 'dark' ? 'theme-dinamic' : ''}
         >
             <DisplayFlex direction="column" width="80%" marginTop="30px">
                 <DisplayFlex
@@ -66,6 +67,14 @@ const ListPage = () => {
                         <Button
                             color="warning"
                             disabled={!(selectionModel.length === 1)}
+                            style={{
+                                color: `${
+                                    props.theme === 'dark' &&
+                                    selectionModel.length !== 1
+                                        ? '#ffffff30'
+                                        : 'black'
+                                }`,
+                            }}
                         >
                             Edit
                         </Button>
@@ -73,6 +82,14 @@ const ListPage = () => {
                             color="error"
                             onClick={deleteSelected}
                             disabled={!(selectionModel.length >= 1)}
+                            style={{
+                                color: `${
+                                    props.theme === 'dark' &&
+                                    selectionModel.length === 0
+                                        ? '#ffffff30'
+                                        : 'black'
+                                }`,
+                            }}
                         >
                             Delete
                         </Button>
@@ -82,6 +99,9 @@ const ListPage = () => {
                     showCellVerticalBorder={true}
                     rows={rows}
                     columns={columns}
+                    style={{
+                        color: `${props.theme === 'dark' ? 'white' : 'black'}`,
+                    }}
                     initialState={{
                         pagination: {
                             paginationModel: { page: 0, pageSize: 10 },

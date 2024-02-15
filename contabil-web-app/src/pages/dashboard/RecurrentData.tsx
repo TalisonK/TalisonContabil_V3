@@ -9,6 +9,7 @@ const fixedFee = ['energia', 'agua', 'internet', 'vivo']
 interface Props {
     contas: Activity[]
     streaming: Activity[]
+    theme: string
 }
 
 const RecurrentData = (props: Props) => {
@@ -32,7 +33,12 @@ const RecurrentData = (props: Props) => {
             height="100%"
             justifyContent="center"
         >
-            <DisplayFlex width="100%" height="50px" card={true}>
+            <DisplayFlex
+                width="100%"
+                height="50px"
+                card={true}
+                dark={props.theme === 'dark'}
+            >
                 <Text fontSize="1.3em" margin="10px">
                     Reccurent fees
                 </Text>
@@ -51,7 +57,11 @@ const RecurrentData = (props: Props) => {
                     style={{ alignItems: 'center', flexFlow: 'row wrap' }}
                 >
                     {fixedFee.map((fee) => (
-                        <ResumeFee conta={feeShuffler(fee)} size="large" />
+                        <ResumeFee
+                            theme={props.theme}
+                            conta={feeShuffler(fee)}
+                            size="large"
+                        />
                     ))}
                 </DisplayFlex>
 
@@ -65,7 +75,11 @@ const RecurrentData = (props: Props) => {
                     }}
                 >
                     {props.streaming.map((stream) => (
-                        <ResumeFee conta={stream} size="small" />
+                        <ResumeFee
+                            theme={props.theme}
+                            conta={stream}
+                            size="small"
+                        />
                     ))}
                 </DisplayFlex>
             </DisplayFlex>

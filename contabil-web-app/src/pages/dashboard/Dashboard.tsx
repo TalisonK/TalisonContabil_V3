@@ -14,7 +14,7 @@ import ExpensePie from './ExpensePie'
 import PaymentPie from './PaymentPie'
 import RecurrentData from './RecurrentData'
 
-const Dashboard = () => {
+const Dashboard = (props: any) => {
     const [user, setUser] = useState<User>({} as User)
     const [date, setDate] = useState<Date>(new Date())
 
@@ -25,6 +25,10 @@ const Dashboard = () => {
     useEffect(() => {
         updater()
     }, [date])
+
+    useEffect(() => {
+        console.log(props.theme)
+    }, [props.theme])
 
     const updater = () => {
         setSkeleton(true)
@@ -101,6 +105,7 @@ const Dashboard = () => {
                             height="60px"
                             marginBottom="10px"
                             card={true}
+                            dark={props.theme === 'dark'}
                             style={{
                                 alignItems: 'center',
                             }}
@@ -123,13 +128,22 @@ const Dashboard = () => {
                                 marginLeft="auto"
                                 marginRight="5px"
                                 width={isNow(date) ? '135px' : '199px'}
+                                dark={props.theme === 'dark'}
+                                className={
+                                    props.theme === 'dark'
+                                        ? 'date-picker-dashboard'
+                                        : ''
+                                }
                             >
                                 <LocalizationProvider
                                     dateAdapter={AdapterDayjs}
                                 >
                                     {!isNow(date) ? (
                                         <Button
-                                            style={{ padding: 0, margin: 0 }}
+                                            style={{
+                                                padding: 0,
+                                                margin: 0,
+                                            }}
                                             onClick={() => {
                                                 setDate(new Date())
                                             }}
@@ -165,6 +179,7 @@ const Dashboard = () => {
                                             width="32%"
                                             height="100px"
                                             card={true}
+                                            dark={props.theme === 'dark'}
                                         >
                                             <Resume
                                                 entradas={
@@ -185,6 +200,7 @@ const Dashboard = () => {
                                             width="32%"
                                             height="100px"
                                             card={true}
+                                            dark={props.theme === 'dark'}
                                         >
                                             <Resume
                                                 entradas={
@@ -205,6 +221,7 @@ const Dashboard = () => {
                                             width="32%"
                                             height="100px"
                                             card={true}
+                                            dark={props.theme === 'dark'}
                                         >
                                             <Resume
                                                 entradas={
@@ -236,6 +253,7 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
+                                            dark={props.theme === 'dark'}
                                         >
                                             <IncomeExpense
                                                 lista={bundle.incomeVSexpense}
@@ -255,6 +273,7 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
+                                            dark={props.theme === 'dark'}
                                         >
                                             <ExpensePie
                                                 data={bundle.expenseByCategory}
@@ -284,6 +303,7 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
+                                            dark={props.theme === 'dark'}
                                         >
                                             <PaymentPie
                                                 data={bundle.expenseByMethod}
@@ -303,6 +323,7 @@ const Dashboard = () => {
                                             height="100%"
                                             card={true}
                                             marginRight="10px"
+                                            dark={props.theme === 'dark'}
                                         >
                                             <RecurrentData
                                                 contas={
@@ -313,6 +334,7 @@ const Dashboard = () => {
                                                     bundle.fixatedExpenses
                                                         .streaming
                                                 }
+                                                theme={props.theme}
                                             />
                                         </DisplayFlex>
                                     ) : (
@@ -333,6 +355,7 @@ const Dashboard = () => {
                                     width="35%"
                                     height="1100px"
                                     card={true}
+                                    dark={props.theme === 'dark'}
                                 >
                                     <Text
                                         fontSize="1.5em"
