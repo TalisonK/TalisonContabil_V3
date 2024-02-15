@@ -34,3 +34,43 @@
 .description-input-space .MuiInputBase-input {
     padding-right: 60px;
 }
+
+.date-picker-dashboard .MuiInputBase-input {
+    color: white !important;
+}
+
+.date-picker-dashboard .MuiButtonBase-root {
+    color: white !important;
+}
+
+.theme-dinamic .MuiOutlinedInput-notchedOutline {
+    border-color: #ffffff2c;
+}
+
+.theme-dinamic .MuiInputBase-input {
+    color: white !important;
+}
+
+.theme-dinamic .MuiFormLabel-root {
+    color: white !important;
+}
+
+.theme-dinamic .MuiTypography-root {
+    color: white !important;
+}
+
+.theme-dinamic .MuiPickersDay-root {
+    color: white !important;
+}
+
+.theme-dinamic .MuiSvgIcon-root {
+    color: white !important;
+}
+
+.theme-dinamic .MuiTablePagination-displayedRows {
+    color: white !important;
+}
+
+.theme-dinamic .MuiTablePagination-selectLabel {
+    color: white !important;
+}

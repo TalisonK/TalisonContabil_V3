@@ -9,6 +9,7 @@ interface Props {
     type: string
     list: boolean
     setList: (value: boolean) => void
+    theme?: string
 }
 
 const DescricaoInput = (props: Props) => {
@@ -17,6 +18,7 @@ const DescricaoInput = (props: Props) => {
             marginRight="70px"
             marginLeft="70px"
             style={{ alignItems: 'center' }}
+            dark={props.theme === 'dark'}
         >
             <TextFieldStyled
                 id="outlined-basic"
@@ -27,6 +29,9 @@ const DescricaoInput = (props: Props) => {
                 error={props.error}
                 width="100%"
                 className="description-input-space"
+                style={{
+                    color: props.theme === 'dark' ? 'white!important' : 'black',
+                }}
             />
             {props.type === 'Expense' ? (
                 <DisplayFlex marginLeft="-60px">

@@ -7,6 +7,7 @@ import { ICONS } from '../../constants/ICONS'
 interface Props {
     conta: any
     size: string
+    theme?: string
 }
 
 const ResumeFee = (props: Props) => {
@@ -18,6 +19,7 @@ const ResumeFee = (props: Props) => {
             marginTop={props.size === 'large' ? '20px' : '0px'}
             marginBottom="20px"
             card={true}
+            dark={props.theme === 'dark'}
             style={{
                 borderRadius: '10px',
                 textOverflow: 'clip',
@@ -48,6 +50,7 @@ const ResumeFee = (props: Props) => {
                 justifyContent="center"
                 width="100%"
                 height="100%"
+                dark={props.theme === 'dark'}
                 style={{
                     borderRadius: '10px',
                     alignItems: 'center',

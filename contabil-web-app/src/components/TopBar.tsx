@@ -13,8 +13,15 @@ import {
     Tooltip,
     Typography,
 } from '@mui/material'
+import { ThemeSwitch } from './styles'
+import { DisplayFlex } from '../styles'
 
-const TopBar = () => {
+interface TopBarProps {
+    theme: string
+    setTheme: (theme: boolean) => void
+}
+
+const TopBar = (props: TopBarProps) => {
     const pages = ['Insert', 'List']
     const settings = ['Profile', 'Logout']
 
@@ -47,7 +54,13 @@ const TopBar = () => {
     }
 
     return (
-        <AppBar position="static" id="sidebar">
+        <AppBar
+            position="static"
+            id="sidebar"
+            style={{
+                backgroundColor: props.theme === 'dark' ? 'rgb(16 15 47)' : '',
+            }}
+        >
             <Container maxWidth="xl">
                 <Toolbar disableGutters>
                     <Typography
@@ -122,6 +135,14 @@ const TopBar = () => {
                             open={Boolean(anchorElUser)}
                             onClose={handleCloseUserMenu}
                         >
+                            <DisplayFlex justifyContent="center">
+                                <ThemeSwitch
+                                    checked={props.theme === 'dark'}
+                                    onChange={(e) => {
+                                        props.setTheme(e.target.checked)
+                                    }}
+                                />
+                            </DisplayFlex>
                             {settings.map((setting) => (
                                 <MenuItem
                                     key={setting}

@@ -27,6 +27,7 @@ interface FlexAtributes extends Margin, Size, Overflow {
     justifyContent?: string
     backgroundColor?: string
     card?: boolean
+    dark?: boolean
 }
 
 interface TextProps extends Margin {
@@ -67,6 +68,13 @@ export const DisplayFlex = styled.div<FlexAtributes>`
         `
         background-color: #fff;
         box-shadow: 0px 2px 5px 0px rgba(0,0,0,0.20);
+    `}
+
+    ${(props) =>
+        props.dark &&
+        `
+        background-color: rgb(35 35 35)!important;
+        color: #fff!important;
     `}
 `
 

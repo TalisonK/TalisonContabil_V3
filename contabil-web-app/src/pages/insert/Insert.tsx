@@ -41,7 +41,7 @@ interface item {
     price: string
 }
 
-const Insert = () => {
+const Insert = (props: any) => {
     const { enqueueSnackbar } = useSnackbar()
 
     const [user, setUser] = useState<User>({} as User)
@@ -203,14 +203,21 @@ const Insert = () => {
             marginTop="10px"
             style={{ alignSelf: 'center' }}
             overflow="auto"
+            dark={props.theme === 'dark'}
+            className={props.theme === 'dark' ? 'theme-dinamic' : ''}
         >
             <DisplayFlex
                 width="100%"
                 height="80px"
                 card={true}
                 justifyContent="center"
+                dark={props.theme === 'dark'}
             >
-                <TypeInput type={type} activityChange={activityChange} />
+                <TypeInput
+                    theme={props.theme}
+                    type={type}
+                    activityChange={activityChange}
+                />
             </DisplayFlex>
             <DisplayFlex
                 direction="row"
@@ -233,6 +240,7 @@ const Insert = () => {
                         setDescription={setDescription}
                         setList={setList}
                         type={type}
+                        theme={props.theme}
                     />
 
                     <DisplayFlex
@@ -242,6 +250,7 @@ const Insert = () => {
                         marginBottom="50px"
                     >
                         <ValueInput
+                            theme={props.theme}
                             error={valueError}
                             value={value}
                             setter={setValue}
@@ -294,7 +303,11 @@ const Insert = () => {
             <Divider variant="middle" flexItem />
 
             {list ? (
-                <ListInput rows={listItens} setRows={setListItens} />
+                <ListInput
+                    theme={props.theme}
+                    rows={listItens}
+                    setRows={setListItens}
+                />
             ) : (
                 <></>
             )}

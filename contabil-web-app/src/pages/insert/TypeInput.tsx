@@ -4,6 +4,7 @@ import React from 'react'
 interface Props {
     type: string
     activityChange: (e: any) => void
+    theme?: string
 }
 
 const TypeInput = (props: Props) => {
@@ -14,6 +15,8 @@ const TypeInput = (props: Props) => {
                 alignSelf: 'center',
                 width: '200px',
                 textAlign: 'center',
+                color: props.theme === 'dark' ? 'white' : 'black',
+                borderColor: props.theme === 'dark' ? 'white' : 'black',
             }}
             labelId="demo-simple-select-label"
             id="demo-simple-select"

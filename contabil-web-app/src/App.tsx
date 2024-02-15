@@ -8,11 +8,16 @@ import './style.css'
 
 function App() {
     const [user, setUser] = useState(null)
+    const [theme, setTheme] = useState('light')
 
     useEffect(() => {
         const userStorage = localStorage.getItem('user')
+        const themeStorage = localStorage.getItem('theme')
         if (userStorage) {
             setUser(JSON.parse(userStorage))
+        }
+        if (themeStorage) {
+            setTheme(themeStorage)
         }
     }, [])
 
@@ -23,15 +28,33 @@ function App() {
         }
     }
 
+    const updateTheme = (theme: boolean) => {
+        if (theme) {
+            setTheme('dark')
+            localStorage.setItem('theme', 'dark')
+        }
+        if (!theme) {
+            setTheme('light')
+            localStorage.setItem('theme', 'light')
+        }
+    }
+
     return (
         <SnackbarProvider maxSnack={3} autoHideDuration={3000}>
             <AppContainer>
                 {!localStorage.getItem('user') ? (
                     <Login update={updateUser} />
                 ) : (
-                    <DisplayFlex direction="column" overflow="hidden">
-                        <TopBar />
-                        <RouterApp />
+                    <DisplayFlex
+                        direction="column"
+                        overflow="hidden"
+                        height="100vh"
+                        backgroundColor={
+                            theme === 'light' ? '#f5f5f5' : '#1b1b1b'
+                        }
+                    >
+                        <TopBar theme={theme} setTheme={updateTheme} />
+                        <RouterApp theme={theme} />
                     </DisplayFlex>
                 )}
             </AppContainer>

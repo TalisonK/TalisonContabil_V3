@@ -19,6 +19,7 @@ interface item {
 interface ListInputProps {
     rows: item[]
     setRows: (value: item[]) => void
+    theme?: string
 }
 
 const ListInput = (props: ListInputProps) => {
@@ -60,6 +61,7 @@ const ListInput = (props: ListInputProps) => {
                 height="50px"
                 justifyContent="center"
                 card={true}
+                dark={props.theme === 'dark'}
             >
                 <Text style={{ fontWeight: 'bold' }}>List of Itens</Text>
             </DisplayFlex>
@@ -109,7 +111,10 @@ const ListInput = (props: ListInputProps) => {
                 <DataGrid
                     rows={props.rows}
                     columns={columns}
-                    style={{ minHeight: '200px' }}
+                    style={{
+                        minHeight: '200px',
+                        color: `${props.theme === 'dark' ? 'white' : 'black'}`,
+                    }}
                     initialState={{
                         pagination: {
                             paginationModel: { page: 0, pageSize: 5 },
