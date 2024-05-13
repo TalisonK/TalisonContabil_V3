@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/TalisonK/media-storager/src/config"
-	"github.com/TalisonK/media-storager/src/database"
-	"github.com/TalisonK/media-storager/src/routes"
+	"github.com/TalisonK/TalisonContabil/src/config"
+	"github.com/TalisonK/TalisonContabil/src/database"
+	"github.com/TalisonK/TalisonContabil/src/routes"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -19,14 +19,21 @@ func main() {
 		os.Exit(2)
 	}
 
-	err = database.OpenConnection()
+	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco de dados")
+		log.Fatal("Erro ao conectar ao banco de dados local")
 		os.Exit(2)
 	}
 
-	defer database.CloseConnection()
+	err = database.OpenConnectionCloud()
+
+	if err != nil {
+		log.Fatal("Erro ao conectar ao banco de dados na nuvem")
+		os.Exit(2)
+	}
+
+	defer database.CloseConnections()
 
 	app := fiber.New()
 

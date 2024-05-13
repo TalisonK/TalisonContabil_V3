@@ -1,4 +1,4 @@
-module github.com/TalisonK/media-storager
+module github.com/TalisonK/TalisonContabil
 
 go 1.22.2
 

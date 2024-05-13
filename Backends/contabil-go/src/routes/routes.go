@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/TalisonK/media-storager/src/handler"
+	"github.com/TalisonK/TalisonContabil/src/handler"
 	"github.com/gofiber/fiber/v3"
 )
 

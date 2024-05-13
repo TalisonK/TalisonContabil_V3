@@ -51,15 +51,15 @@ func Load() error {
 	cfg.DBLocal = DBConfig{
 		Host:     databaseLocal.GetString("host"),
 		Port:     databaseLocal.GetString("port"),
-		User:     databaseLocal.GetString("username"),
-		Pass:     databaseLocal.GetString("password"),
+		User:     databaseLocal.GetString("user"),
+		Pass:     databaseLocal.GetString("pass"),
 		Database: databaseLocal.GetString("database"),
 	}
 
 	cfg.DBCloud = DBConfig{
 		Host:     databaseCloud.GetString("host"),
-		User:     databaseCloud.GetString("username"),
-		Pass:     databaseCloud.GetString("password"),
+		User:     databaseCloud.GetString("user"),
+		Pass:     databaseCloud.GetString("pass"),
 		Database: databaseCloud.GetString("database"),
 	}
 
