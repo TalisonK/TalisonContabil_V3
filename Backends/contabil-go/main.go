@@ -6,12 +6,13 @@ import (
 
 	"github.com/TalisonK/media-storager/src/config"
 	"github.com/TalisonK/media-storager/src/database"
+	"github.com/TalisonK/media-storager/src/routes"
 	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
 
-    err := config.Load()
+	err := config.Load()
 
 	if err != nil {
 		log.Fatal("Erro ao carregar as configurações")
@@ -27,10 +28,10 @@ func main() {
 
 	defer database.CloseConnection()
 
-    app := fiber.New()
+	app := fiber.New()
 
-    Router(app)
+	routes.Router(app)
 
-    // Start the server on port 3000
-    log.Fatal(app.Listen(":3000"))
+	// Start the server on port 3000
+	log.Fatal(app.Listen(":3000"))
 }

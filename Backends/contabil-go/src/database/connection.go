@@ -17,13 +17,11 @@ type DBInstance struct {
 
 var DB DBInstance
 
-func OpenConnection() error {
+func OpenConnectionLocal() error {
 
-	conf := config.GetDB()
+	conf := config.GetLocalDB()
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", conf.User, conf.Pass, conf.Host, conf.Port, conf.Database)
-
-	
 
 	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Info),

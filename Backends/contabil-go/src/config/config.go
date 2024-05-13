@@ -5,8 +5,9 @@ import (
 )
 
 type config struct {
-	API APIConfig
-	DB  DBConfig
+	API     APIConfig
+	DBLocal DBConfig
+	DBCloud DBConfig
 }
 
 type APIConfig struct {
@@ -25,11 +26,6 @@ var cfg *config
 
 func init() {
 	viper.SetDefault("api.port", "3033")
-	viper.SetDefault("database.host", "localhost")
-	viper.SetDefault("database.port", "3306")
-	viper.SetDefault("database.user", "user")
-	viper.SetDefault("database.pass", "1122")
-	viper.SetDefault("database.name", "base")
 }
 
 func Load() error {
@@ -49,19 +45,33 @@ func Load() error {
 		Port: viper.GetString("api.port"),
 	}
 
-	cfg.DB = DBConfig{
-		Host:     viper.GetString("database.host"),
-		Port:     viper.GetString("database.port"),
-		User:     viper.GetString("database.user"),
-		Pass:     viper.GetString("database.pass"),
-		Database: viper.GetString("database.name"),
+	databaseLocal := viper.Sub("database.mysql")
+	databaseCloud := viper.Sub("database.mongodb")
+
+	cfg.DBLocal = DBConfig{
+		Host:     databaseLocal.GetString("host"),
+		Port:     databaseLocal.GetString("port"),
+		User:     databaseLocal.GetString("username"),
+		Pass:     databaseLocal.GetString("password"),
+		Database: databaseLocal.GetString("database"),
+	}
+
+	cfg.DBCloud = DBConfig{
+		Host:     databaseCloud.GetString("host"),
+		User:     databaseCloud.GetString("username"),
+		Pass:     databaseCloud.GetString("password"),
+		Database: databaseCloud.GetString("database"),
 	}
 
 	return nil
 }
 
-func GetDB() DBConfig {
-	return cfg.DB
+func GetLocalDB() DBConfig {
+	return cfg.DBLocal
+}
+
+func GetCloudDB() DBConfig {
+	return cfg.DBCloud
 }
 
 func GetServerPort() string {
