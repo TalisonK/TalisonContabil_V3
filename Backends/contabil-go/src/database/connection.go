@@ -3,10 +3,10 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/model"
+	"github.com/TalisonK/TalisonContabil/src/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,12 +15,16 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-type DBInstance struct {
-	Db *gorm.DB
+type CloudCollections struct {
+	User     *mongo.Collection
+	Category *mongo.Collection
+	Income   *mongo.Collection
+	Expense  *mongo.Collection
+	List     *mongo.Collection
 }
 
-var DBlocal DBInstance
-var DBCloud *mongo.Client
+var DBlocal *gorm.DB
+var DBCloud CloudCollections
 
 func OpenConnectionLocal() error {
 
@@ -31,15 +35,15 @@ func OpenConnectionLocal() error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", conf.User, conf.Pass, conf.Host, conf.Port, conf.Database)
 
 	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logger.Error),
 	})
 
 	if err != nil {
-		log.Fatalln("Failed to connect to database.", err)
+		util.LogHandler("Failed to connect to database.", err, "OpenConnectionLocal")
 		return err
 	}
 
-	log.Println("Connected to database!")
+	util.LogHandler("Connected to database!", nil, "OpenConnectionLocal")
 	conn.Logger = logger.Default.LogMode(logger.Info)
 
 	conn.AutoMigrate(&model.Category{})
@@ -48,9 +52,7 @@ func OpenConnectionLocal() error {
 	conn.AutoMigrate(&model.Expense{})
 	conn.AutoMigrate(&model.List{})
 
-	DBlocal = DBInstance{
-		Db: conn,
-	}
+	DBlocal = conn
 
 	return nil
 }
@@ -68,39 +70,61 @@ func OpenConnectionCloud() error {
 	client, err := mongo.Connect(context.TODO(), opts)
 
 	if err != nil {
-		log.Fatalln("Failed to connect to cloud database.", err)
+		util.LogHandler("Failed to connect to cloud database.", err, "OpenConnectionCloud")
 		return err
 	}
 
 	// enviando um ping para confirmar conexão
 	err = client.Database("admin").RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err()
 
-	test := client.Database("contabil").Collection("category")
-
-	curs, err := test.Find(context.TODO(), bson.D{})
-
-	for curs.Next(context.TODO()) {
-		var result bson.M
-		curs.Decode(&result)
-		fmt.Println(result)
-	}
-
 	if err != nil {
-		log.Fatalln("Failed to ping cloud database.", err)
+		util.LogHandler("Failed to ping cloud database.", err, "OpenConnectionCloud")
 		return err
 	}
 
-	DBCloud = client
+	DBCloud.User = client.Database("contabil").Collection("user")
+	DBCloud.Category = client.Database("contabil").Collection("category")
+	DBCloud.Income = client.Database("contabil").Collection("income")
+	DBCloud.Expense = client.Database("contabil").Collection("expense")
+	DBCloud.List = client.Database("contabil").Collection("list")
 
 	return nil
 }
 
+func CheckLocalDB() bool {
+	section, err := DBlocal.DB()
+
+	if err != nil {
+		util.LogHandler("Failed to connect to local database.", err, "checkLocalDB")
+		return false
+	}
+
+	err = section.Ping()
+
+	if err != nil {
+		util.LogHandler("Failed to ping local database.", err, "checkLocalDB")
+		return false
+	}
+	return true
+
+}
+
+func CheckCloudDB() bool {
+	err := DBCloud.Expense.FindOne(context.TODO(), bson.D{}).Err()
+
+	if err != nil {
+		util.LogHandler("Failed to ping cloud database.", err, "checkCloudDB")
+		return false
+	}
+	return true
+}
+
 func CloseConnections() {
-	db, _ := DBlocal.Db.DB()
+	db, _ := DBlocal.DB()
 
 	err := db.Close()
 
 	if err != nil {
-		log.Fatalln("Failed to close local database.", err)
+		util.LogHandler("Failed to close local database connection.", err, "CloseConnections")
 	}
 }
