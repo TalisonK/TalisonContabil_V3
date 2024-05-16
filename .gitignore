@@ -68,4 +68,3 @@ testem.log
 .DS_Store
 Thumbs.db
 *config.toml
-*launch.json
