@@ -10,4 +10,6 @@ const baseUrl = "/user"
 func UserRouter(app *fiber.App) {
 	app.Get(baseUrl, handler.GetUsers)
 
+	app.Post(baseUrl, handler.CreateUser)
+
 }

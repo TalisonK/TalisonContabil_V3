@@ -110,6 +110,11 @@ func CheckLocalDB() bool {
 }
 
 func CheckCloudDB() bool {
+	if DBCloud.Expense == nil {
+		util.LogHandler("Failed to ping cloud database.", nil, "checkCloudDB")
+		return false
+	}
+
 	err := DBCloud.Expense.FindOne(context.TODO(), bson.D{}).Err()
 
 	if err != nil {
