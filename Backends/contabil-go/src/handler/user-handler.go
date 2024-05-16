@@ -104,8 +104,8 @@ func CreateUser(c fiber.Ctx) error {
 	if database.CheckLocalDB() {
 		user.ID = newId
 		now := time.Now()
-		user.CreatedAt = now.Local().Format("2023-10-23T20:49:22.723+00:00")
-		user.UpdatedAt = now.Local().Format("2023-10-23T20:49:22.723+00:00")
+		user.CreatedAt = now.Format(time.RFC3339)
+		user.UpdatedAt = now.Format(time.RFC3339)
 		result := database.DBlocal.Create(user)
 		if result.Error != nil {
 			util.LogHandler("Failed to create user in local database.", result.Error, "createUser")
