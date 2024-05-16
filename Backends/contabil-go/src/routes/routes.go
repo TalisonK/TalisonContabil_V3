@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"github.com/TalisonK/media-storager/src/handler"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -10,5 +9,5 @@ func Router(app *fiber.App) {
 		return c.SendString("Hello, World!")
 	})
 
-	app.Post("/media", handler.StoreMedia)
+	UserRouter(app)
 }
