@@ -244,6 +244,56 @@ func DeleteUser(c fiber.Ctx) error {
 	return c.Status(500).JSON("Failed to delete user.")
 }
 
+func Login(c fiber.Ctx) error {
+	// Get user from request
+	user := new(model.User)
+	raw := c.Body()
+
+	err := json.Unmarshal(raw, user)
+
+	if err != nil {
+		util.LogHandler("Failed to parse body.", err, "login")
+		return c.Status(400).JSON("Failed to parse body.")
+	}
+
+	if user.Name == "" || user.Password == "" {
+		util.LogHandler("Failed to parse body.", err, "login")
+		return c.Status(400).JSON("Failed to parse body.")
+	}
+
+	if database.CheckCloudDB() {
+		filter := bson.M{"name": user.Name, "password": user.Password}
+
+		result := primitive.M{}
+		database.DBCloud.User.FindOne(context.Background(), filter).Decode(&result)
+
+		if len(result) == 0 {
+			util.LogHandler("Failed to find user in cloud database.", nil, "login")
+			return c.Status(400).JSON("Failed to find user.")
+		} else {
+			user := primToUser(result)
+			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", user.ID), nil, "login")
+			return c.Status(200).JSON(user)
+		}
+	}
+
+	if database.CheckLocalDB() {
+		result := database.DBlocal.First(&user, "name = ? AND password = ?", user.Name, user.Password)
+
+		if result.Error != nil {
+			util.LogHandler("Failed to find user in local database.", result.Error, "login")
+			return c.Status(400).JSON("Failed to find user.")
+		} else {
+			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", user.ID), nil, "login")
+			return c.Status(200).JSON(user)
+		}
+	}
+
+	util.LogHandler("No database connection available.", nil, "login")
+	return c.Status(500).JSON("No database connection available.")
+
+}
+
 // findUserById retrieves a user by its ID
 func findUserById(id string) (model.User, error) {
 	var user model.User
