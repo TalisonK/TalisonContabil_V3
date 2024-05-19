@@ -6,12 +6,20 @@ import (
 
 type config struct {
 	API     APIConfig
+	Auth    AuthConfig
 	DBLocal DBConfig
 	DBCloud DBConfig
 }
 
+type AuthConfig struct {
+	Key                  string
+	Google_Client_id     string
+	Google_Client_Secret string
+}
+
 type APIConfig struct {
-	Port string
+	Port   string
+	IsProd bool
 }
 
 type DBConfig struct {
@@ -28,6 +36,7 @@ func init() {
 	viper.SetDefault("api.port", "3033")
 }
 
+// Load reads the configuration from the file config.toml
 func Load() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
@@ -42,7 +51,8 @@ func Load() error {
 	cfg = new(config)
 
 	cfg.API = APIConfig{
-		Port: viper.GetString("api.port"),
+		Port:   viper.GetString("api.port"),
+		IsProd: viper.GetBool("api.is_prod"),
 	}
 
 	databaseLocal := viper.Sub("database.mysql")
@@ -63,6 +73,12 @@ func Load() error {
 		Database: databaseCloud.GetString("database"),
 	}
 
+	cfg.Auth = AuthConfig{
+		Key:                  viper.GetString("auth.key"),
+		Google_Client_id:     viper.GetString("auth.google_client_id"),
+		Google_Client_Secret: viper.GetString("auth.google_client_secret"),
+	}
+
 	return nil
 }
 
@@ -72,6 +88,14 @@ func GetLocalDB() DBConfig {
 
 func GetCloudDB() DBConfig {
 	return cfg.DBCloud
+}
+
+func GetAuthConfig() AuthConfig {
+	return cfg.Auth
+}
+
+func IsProd() bool {
+	return cfg.API.IsProd
 }
 
 func GetServerPort() string {

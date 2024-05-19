@@ -26,6 +26,7 @@ type CloudCollections struct {
 var DBlocal *gorm.DB
 var DBCloud CloudCollections
 
+// OpenConnectionLocal starts a connection with the local database
 func OpenConnectionLocal() error {
 
 	conf := config.GetLocalDB()
@@ -57,6 +58,7 @@ func OpenConnectionLocal() error {
 	return nil
 }
 
+// OpenConnectionCloud starts a connection with the cloud database
 func OpenConnectionCloud() error {
 
 	conf := config.GetCloudDB()
@@ -91,6 +93,7 @@ func OpenConnectionCloud() error {
 	return nil
 }
 
+// CheckLocalDB checks if the local database is connected
 func CheckLocalDB() bool {
 	section, err := DBlocal.DB()
 
@@ -109,6 +112,7 @@ func CheckLocalDB() bool {
 
 }
 
+// CheckCloudDB checks if the cloud database is connected
 func CheckCloudDB() bool {
 	if DBCloud.Expense == nil {
 		util.LogHandler("Failed to ping cloud database.", nil, "checkCloudDB")
@@ -124,6 +128,7 @@ func CheckCloudDB() bool {
 	return true
 }
 
+// CloseConnections closes the connections with the databases
 func CloseConnections() {
 	db, _ := DBlocal.DB()
 

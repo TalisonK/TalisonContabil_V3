@@ -1,14 +1,15 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/routes"
 	"github.com/TalisonK/TalisonContabil/src/util"
-	"github.com/gofiber/fiber/v3"
 )
 
 func main() {
@@ -35,10 +36,10 @@ func main() {
 
 	defer database.CloseConnections()
 
-	app := fiber.New()
+	// Create a new Chi router
 
-	routes.Router(app)
+	r := routes.Router()
 
-	// Start the server on port 3000
-	log.Fatal(app.Listen(":3000"))
+	http.ListenAndServe(fmt.Sprintf(":%s", config.GetServerPort()), r)
+
 }

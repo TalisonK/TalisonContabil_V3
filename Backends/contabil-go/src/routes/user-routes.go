@@ -1,21 +1,23 @@
 package routes
 
 import (
-	"fmt"
+	"net/http"
 
 	"github.com/TalisonK/TalisonContabil/src/handler"
-	"github.com/gofiber/fiber/v3"
+	"github.com/go-chi/chi/v5"
 )
 
-const baseUrl = "/user"
+func UserRouter() http.Handler {
 
-func UserRouter(app *fiber.App) {
-	app.Get(baseUrl, handler.GetUsers)
+	r := chi.NewRouter()
 
-	app.Post(baseUrl, handler.CreateUser)
+	r.Get("/", handler.GetUsers)
 
-	app.Put(baseUrl, handler.UpdateUser)
+	r.Post("/", handler.CreateUser)
 
-	app.Delete(fmt.Sprint(baseUrl, "/:id"), handler.DeleteUser)
+	r.Put("/", handler.UpdateUser)
 
+	r.Delete("/{id}", handler.DeleteUser)
+
+	return r
 }

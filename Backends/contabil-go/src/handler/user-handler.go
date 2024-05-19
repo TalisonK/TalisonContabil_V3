@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"encoding/json"
@@ -16,7 +17,7 @@ import (
 )
 
 // GetUsers retrieves all users from both databases
-func GetUsers(c fiber.Ctx) error {
+func GetUsers(w http.ResponseWriter, r *http.Request) {
 	// Get users from database
 	if database.CheckCloudDB() {
 		// Get users from cloud
@@ -25,7 +26,11 @@ func GetUsers(c fiber.Ctx) error {
 			util.LogHandler("Failed to get users from cloud database.", err, "getUsers")
 		} else {
 			util.LogHandler(fmt.Sprintf("Users successfully retrieved %d rows from cloud database.", len(result)), nil, "getUsers")
-			return c.Status(200).JSON(result)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(result)
+			return
 		}
 	}
 
@@ -36,25 +41,31 @@ func GetUsers(c fiber.Ctx) error {
 			util.LogHandler("Failed to get users from local database.", err, "getUsers")
 		} else {
 			util.LogHandler(fmt.Sprintf("Users successfully retrieved %d rows from local database.", len(result)), nil, "getUsers")
-			return c.Status(200).JSON(result)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(result)
+			return
 		}
 	}
 
 	util.LogHandler("No database connection available.", nil, "getUsers")
-	return c.Status(500).JSON("No database connection available.")
+	w.WriteHeader(http.StatusInternalServerError)
+	fmt.Fprintln(w, "No database connection available.")
 }
 
 // CreateUser creates a user in both databases
-func CreateUser(c fiber.Ctx) error {
+func CreateUser(w http.ResponseWriter, r *http.Request) {
 	// Get user from request
 	user := new(model.User)
-	raw := c.Body()
 
-	err := json.Unmarshal(raw, user)
+	err := json.NewDecoder(r.Body).Decode(user)
 
 	if err != nil {
 		util.LogHandler("Failed to parse body.", err, "createUser")
-		return c.Status(400).JSON("Failed to parse body.")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "Failed to parse body")
+		return
 	}
 
 	user.Role = "ROLE_USER"
@@ -85,7 +96,9 @@ func CreateUser(c fiber.Ctx) error {
 		users, err := getLocalUsers()
 		if err != nil {
 			util.LogHandler("Failed to get users from local database.", err, "createUser")
-			return c.Status(500).JSON("Failed to get users from local database.")
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "Failed to get users from local database.")
+			return
 		}
 		for {
 			newId = primitive.NewObjectID().String()
@@ -113,7 +126,9 @@ func CreateUser(c fiber.Ctx) error {
 			util.LogHandler("Failed to create user in local database.", result.Error, "createUser")
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully created in local database.", user.ID), nil, "createUser")
-			return c.Status(201).JSON(user)
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(user.ID)
+			return
 		}
 
 	}
@@ -121,18 +136,17 @@ func CreateUser(c fiber.Ctx) error {
 	if !database.CheckCloudDB() && !database.CheckLocalDB() {
 
 		util.LogHandler("No database connection available.", nil, "createUser")
-		return c.Status(500).JSON("No database connection available.")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "No database connection available.")
 	}
-	return c.Status(500).JSON("Failed to create user.")
 }
 
 // UpdateUser updates a user by id in both databases
-func UpdateUser(c fiber.Ctx) error {
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// Get user from request
 	user := new(model.User)
-	raw := c.Body()
 
-	err := json.Unmarshal(raw, user)
+	json.NewDecoder(r.Body).Decode(user)
 
 	baseUser, err := findUserById(user.ID)
 
@@ -151,7 +165,9 @@ func UpdateUser(c fiber.Ctx) error {
 
 	if err != nil {
 		util.LogHandler("Failed to find user.", err, "updateUser")
-		return c.Status(400).JSON("Failed to find user.")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Failed to find user.")
+		return
 	}
 
 	// Update user in cloud
@@ -184,33 +200,37 @@ func UpdateUser(c fiber.Ctx) error {
 			util.LogHandler("Failed to update user in local database.", result.Error, "updateUser")
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully updated in local database.", user.ID), nil, "updateUser")
-			return c.Status(200).JSON(user)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(user.ID)
 		}
 	}
 
 	if !database.CheckCloudDB() && !database.CheckLocalDB() {
 		util.LogHandler("No database connection available.", nil, "updateUser")
-		return c.Status(500).JSON("No database connection available.")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "No database connection available.")
 	}
-
-	return c.Status(500).JSON("Failed to update user.")
 }
 
 // DeleteUser deletes a user by id in both databases
-func DeleteUser(c fiber.Ctx) error {
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	// Get user from request
-	id := c.Params("id")
+	id := r.PathValue("id")
 
 	if id == "" {
 		util.LogHandler("Empty id passed.", nil, "deleteUser")
-		return c.Status(400).JSON("Failed to parse user ID.")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Empty id passed.")
+		return
 	}
 
 	idParse, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		util.LogHandler(fmt.Sprintf("Failed to parse user ID %s.", id), err, "deleteUser")
-		return c.Status(400).JSON("Failed to parse user ID.")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Empty id passed.")
 	}
 
 	// Delete user in cloud
@@ -232,16 +252,17 @@ func DeleteUser(c fiber.Ctx) error {
 			util.LogHandler("Failed to delete user in local database.", result.Error, "deleteUser")
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully deleted in local database.", id), nil, "deleteUser")
-			return c.Status(200).JSON("User successfully deleted.")
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			fmt.Fprintln(w, "User successfully deleted")
 		}
 	}
 
 	if !database.CheckCloudDB() && !database.CheckLocalDB() {
 		util.LogHandler("No database connection available.", nil, "deleteUser")
-		return c.Status(500).JSON("No database connection available.")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "No database connection available.")
 	}
-
-	return c.Status(500).JSON("Failed to delete user.")
 }
 
 func Login(c fiber.Ctx) error {

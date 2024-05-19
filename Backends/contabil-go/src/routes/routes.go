@@ -1,13 +1,20 @@
 package routes
 
 import (
-	"github.com/gofiber/fiber/v3"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func Router(app *fiber.App) {
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+func Router() *chi.Mux {
+
+	r := chi.NewRouter()
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, World!"))
 	})
 
-	UserRouter(app)
+	r.Mount("/user", UserRouter())
+
+	return r
 }
