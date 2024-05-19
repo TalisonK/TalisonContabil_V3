@@ -1,4 +1,4 @@
-package model
+package domain
 
 import (
 	_ "gorm.io/gorm"

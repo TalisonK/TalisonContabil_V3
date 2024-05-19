@@ -13,6 +13,8 @@ func UserRouter() http.Handler {
 
 	r.Get("/", handler.GetUsers)
 
+	r.Post("/login", handler.Login)
+
 	r.Post("/", handler.CreateUser)
 
 	r.Put("/", handler.UpdateUser)

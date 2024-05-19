@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/TalisonK/TalisonContabil/src/config"
-	"github.com/TalisonK/TalisonContabil/src/model"
+	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -47,11 +47,11 @@ func OpenConnectionLocal() error {
 	util.LogHandler("Connected to database!", nil, "OpenConnectionLocal")
 	conn.Logger = logger.Default.LogMode(logger.Info)
 
-	conn.AutoMigrate(&model.Category{})
-	conn.AutoMigrate(&model.User{})
-	conn.AutoMigrate(&model.Income{})
-	conn.AutoMigrate(&model.Expense{})
-	conn.AutoMigrate(&model.List{})
+	conn.AutoMigrate(&domain.Category{})
+	conn.AutoMigrate(&domain.User{})
+	conn.AutoMigrate(&domain.Income{})
+	conn.AutoMigrate(&domain.Expense{})
+	conn.AutoMigrate(&domain.List{})
 
 	DBlocal = conn
 
