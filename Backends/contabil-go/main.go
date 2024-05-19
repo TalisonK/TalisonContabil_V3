@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/TalisonK/TalisonContabil/src/auth"
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/routes"
@@ -15,6 +16,8 @@ import (
 func main() {
 
 	err := config.Load()
+
+	auth.NewAuth()
 
 	if err != nil {
 		log.Fatal("Erro ao carregar as configurações, certifique-se de que o arquivo de configuração está correto.")

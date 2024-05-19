@@ -1,14 +1,19 @@
 package routes
 
 import (
+	"net/http"
+
 	"github.com/TalisonK/TalisonContabil/src/handler"
-	"github.com/gofiber/fiber/v3"
+	"github.com/go-chi/chi/v5"
 )
 
-func AuthRouter(app *fiber.App) {
+func AuthRouter() http.Handler {
 
-	app.Get("/auth/:provider", handler.AuthProvider)
-	app.Get("/auth/:provider/callback", handler.AuthProviderCallback)
-	app.Get("/auth/:provider/logout", handler.LogoutProvider)
+	r := chi.NewRouter()
 
+	r.Get("/auth/{provider}", handler.AuthProvider)
+	r.Get("/auth/{provider}/callback", handler.AuthProviderCallback)
+	r.Get("/auth/{provider}/logout", handler.LogoutProvider)
+
+	return r
 }

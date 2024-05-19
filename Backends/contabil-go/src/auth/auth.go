@@ -10,7 +10,7 @@ import (
 	"github.com/markbates/goth/providers/google"
 )
 
-var params = config.GetAuthConfig()
+var params config.AuthConfig
 
 const (
 	MaxAge = 86400 * 30
@@ -18,6 +18,8 @@ const (
 )
 
 func NewAuth() {
+
+	params = config.GetAuthConfig()
 
 	store := sessions.NewCookieStore([]byte(params.Key))
 

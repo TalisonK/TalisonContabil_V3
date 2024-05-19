@@ -6,90 +6,51 @@ import (
 	"net/http"
 
 	"github.com/TalisonK/TalisonContabil/src/util"
-	"github.com/gofiber/fiber/v3"
 	"github.com/markbates/goth/gothic"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
-type fiberResponseWriter struct {
-	ctx fiber.Ctx
-}
+func AuthProviderCallback(w http.ResponseWriter, r *http.Request) {
 
-func (w *fiberResponseWriter) Header() http.Header {
-	return http.Header{}
-}
+	provider := r.PathValue("provider")
+	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
 
-func (w *fiberResponseWriter) Write(b []byte) (int, error) {
-	return w.ctx.Write(b)
-}
-
-func (w *fiberResponseWriter) WriteHeader(statusCode int) {
-	w.ctx.Status(statusCode)
-}
-
-func createHTTPResponseWriterFromFiberCtx(c fiber.Ctx) http.ResponseWriter {
-	return &fiberResponseWriter{ctx: c}
-}
-
-func AuthProviderCallback(c fiber.Ctx) error {
-
-	provider := c.Params("provider")
-
-	req := fasthttpToHttp(c)
-
-	req = req.WithContext(context.WithValue(req.Context(), "provider", provider))
-
-	res := createHTTPResponseWriterFromFiberCtx(c)
-
-	user, err := gothic.CompleteUserAuth(res, req)
+	user, err := gothic.CompleteUserAuth(w, r)
 
 	if err != nil {
-		return c.SendStatus(fiber.StatusUnauthorized)
+		util.LogHandler("Erro ao autenticar usuário", err, "AuthProviderCallback")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, err.Error())
+		return
 	}
 
 	fmt.Println(user)
 
 	util.LogHandler("Usuário autenticado com sucesso", nil, "AuthProviderCallback")
 
-	c.Redirect().Status(fiber.StatusFound).To("/")
-
-	return nil
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func LogoutProvider(c fiber.Ctx) error {
-	provider := c.Params("provider")
+func LogoutProvider(w http.ResponseWriter, r *http.Request) {
+	provider := r.PathValue("provider")
 
-	req := fasthttpToHttp(c)
+	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
 
-	req = req.WithContext(context.WithValue(req.Context(), "provider", provider))
+	gothic.Logout(w, r)
 
-	res := createHTTPResponseWriterFromFiberCtx(c)
-
-	gothic.Logout(res, req)
-
-	c.Redirect().Status(fiber.StatusFound).To("/")
-
-	return nil
+	http.Redirect(w, r, "/", http.StatusFound)
 }
 
-func AuthProvider(c fiber.Ctx) error {
+func AuthProvider(w http.ResponseWriter, r *http.Request) {
 
-	provider := c.Params("provider")
+	provider := r.PathValue("provider")
 
-	req := fasthttpToHttp(c)
+	r = r.WithContext(context.WithValue(r.Context(), "provider", provider))
 
-	req = req.WithContext(context.WithValue(req.Context(), "provider", provider))
+	if gothUser, err := gothic.CompleteUserAuth(w, r); err == nil {
 
-	res := createHTTPResponseWriterFromFiberCtx(c)
-
-	gothic.BeginAuthHandler(res, req)
-	c.SendStatus(fiber.StatusOK)
-
-	return nil
-}
-
-func fasthttpToHttp(c fiber.Ctx) *http.Request {
-	var req *http.Request
-	fasthttpadaptor.ConvertRequest(c.Context(), req, true)
-	return req
+		fmt.Println(gothUser)
+		http.Redirect(w, r, "/", http.StatusFound)
+	} else {
+		gothic.BeginAuthHandler(w, r)
+	}
 }

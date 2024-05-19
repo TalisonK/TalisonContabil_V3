@@ -57,6 +57,7 @@ func Load() error {
 
 	databaseLocal := viper.Sub("database.mysql")
 	databaseCloud := viper.Sub("database.mongodb")
+	auth := viper.Sub("auth")
 
 	cfg.DBLocal = DBConfig{
 		Host:     databaseLocal.GetString("host"),
@@ -74,9 +75,9 @@ func Load() error {
 	}
 
 	cfg.Auth = AuthConfig{
-		Key:                  viper.GetString("auth.key"),
-		Google_Client_id:     viper.GetString("auth.google_client_id"),
-		Google_Client_Secret: viper.GetString("auth.google_client_secret"),
+		Key:                  auth.GetString("key"),
+		Google_Client_id:     auth.GetString("google_client_id"),
+		Google_Client_Secret: auth.GetString("google_client_secret"),
 	}
 
 	return nil
