@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -16,7 +17,7 @@ import (
 	_ "gorm.io/gorm"
 )
 
-func CreateUser(user *domain.User) (*domain.User, error) {
+func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	if user.Name == "" || user.Password == "" {
 		util.LogHandler("User name or password is empty.", nil, "model.CreateUser")
@@ -64,13 +65,13 @@ func CreateUser(user *domain.User) (*domain.User, error) {
 			return nil, result.Error
 		}
 		util.LogHandler("User successfully inserted in local database.", nil, "model.CreateUser")
-		return user, nil
+		return ToDTO(user), nil
 	}
 
 	return nil, fmt.Errorf("algo deu errado")
 }
 
-func UpdateUser(user *domain.User) (*domain.User, error) {
+func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	statusDbLocal := database.CheckLocalDB()
 	statusDbCloud := database.CheckCloudDB()
@@ -134,7 +135,7 @@ func UpdateUser(user *domain.User) (*domain.User, error) {
 		}
 	}
 
-	return user, nil
+	return ToDTO(user), nil
 }
 
 func DeleteUser(id string) error {
@@ -198,7 +199,15 @@ func LoginUser(user domain.User) (domain.User, error) {
 			util.LogHandler(fmt.Sprintf("User %s not found in cloud database.", user.Name), nil, "model.LoginUser")
 		} else {
 			userCloud := PrimToUser(result)
-			if Compare(user.Password, []byte(userCloud.Salt), userCloud.Password) {
+
+			salt, err := base64.StdEncoding.DecodeString(userCloud.Salt)
+
+			if err != nil {
+				util.LogHandler("Failed to decode salt.", err, "model.LoginUser")
+				return domain.User{}, err
+			}
+
+			if Compare(user.Password, salt, userCloud.Password) {
 				util.LogHandler(fmt.Sprintf("User %s successfully logged in cloud database.", user.Name), nil, "model.LoginUser")
 				return userCloud, nil
 			} else {
@@ -359,21 +368,32 @@ func Encrypt(password string) ([]byte, []byte, error) {
 
 	hash := hasher(password, salt)
 
-	return []byte(hash), salt, nil
+	return hash, salt, nil
 }
 
-// Compare the password with the hash
 func Compare(password string, salt []byte, origin string) bool {
 
-	hash := base64.StdEncoding.EncodeToString(hasher(password, salt))
+	hash := hasher(password, salt)
 
-	if hash == origin {
-		return false
-	} else {
+	old, _ := base64.StdEncoding.DecodeString(origin)
+
+	if bytes.Equal(hash, old) {
 		return true
+	} else {
+		return false
 	}
 }
 
 func hasher(password string, salt []byte) []byte {
 	return argon2.IDKey([]byte(password), salt, 1, 128*1024, 4, 64)
+}
+
+func ToDTO(user *domain.User) *domain.UserDTO {
+	return &domain.UserDTO{
+		ID:        user.ID,
+		Name:      user.Name,
+		Role:      user.Role,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
 }

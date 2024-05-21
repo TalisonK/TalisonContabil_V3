@@ -2,20 +2,22 @@ package handler
 
 import (
 	"bytes"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/handler"
 	"github.com/TalisonK/TalisonContabil/src/util"
-	"github.com/gofiber/fiber/v3"
-	"github.com/magiconair/properties/assert"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestGetUsers(t *testing.T) {
 
-	testApp := fiber.New()
+	r := chi.NewRouter()
 
-	testApp.Get("/user", handler.GetUsers)
+	r.Get("/user", handler.GetUsers)
 
 	req, err := http.NewRequest(http.MethodGet, "/user", nil)
 
@@ -24,25 +26,22 @@ func TestGetUsers(t *testing.T) {
 		t.Fatalf("Erro ao criar requisição")
 	}
 
-	resp, err := testApp.Test(req)
+	rr := httptest.NewRecorder()
 
-	if err != nil {
-		util.LogHandler("Erro ao testar rota", err, "TestGetUsers")
-		t.Fatalf("Erro ao testar rota")
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
 	}
-
-	assert.Equal(t, resp.StatusCode, 200)
-
 }
 
 func TestCreateUser(t *testing.T) {
-	// Test your function
+	r := chi.NewRouter()
 
-	testApp := fiber.New()
+	r.Get("/user", handler.GetUsers)
 
-	testApp.Post("/user", handler.CreateUser)
-
-	user := []byte(`{"name": "Talison", "password":"123456"}`)
+	user := []byte(`{"name": "teste", "password":"123456"}`)
 
 	req, err := http.NewRequest(http.MethodPost, "/user", bytes.NewReader(user))
 
@@ -51,14 +50,18 @@ func TestCreateUser(t *testing.T) {
 		t.Fatalf("Erro ao criar requisição")
 	}
 
-	resp, err := testApp.Test(req)
+	rr := httptest.NewRecorder()
 
-	if err != nil {
-		util.LogHandler("Erro ao testar rota", err, "TestCreateUser")
-		t.Fatalf("Erro ao testar rota")
+	r.ServeHTTP(rr, req)
+
+	var body *domain.UserDTO
+
+	json.NewDecoder(rr.Body).Decode(body)
+
+	if status := rr.Code; status != http.StatusCreated {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
 	}
-
-	assert.Equal(t, resp.StatusCode, 200)
 }
 
 func TestUpdateUser(t *testing.T) {
