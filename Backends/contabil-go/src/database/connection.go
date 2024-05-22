@@ -95,6 +95,12 @@ func OpenConnectionCloud() error {
 
 // CheckLocalDB checks if the local database is connected
 func CheckLocalDB() bool {
+
+	if DBlocal == nil {
+		util.LogHandler("Failed to ping local database, database not started.", nil, "checkCloudDB")
+		return false
+	}
+
 	section, err := DBlocal.DB()
 
 	if err != nil {
@@ -115,7 +121,7 @@ func CheckLocalDB() bool {
 // CheckCloudDB checks if the cloud database is connected
 func CheckCloudDB() bool {
 	if DBCloud.Expense == nil {
-		util.LogHandler("Failed to ping cloud database.", nil, "checkCloudDB")
+		util.LogHandler("Failed to ping cloud database, database not started.", nil, "checkCloudDB")
 		return false
 	}
 

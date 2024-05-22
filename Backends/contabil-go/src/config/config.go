@@ -1,6 +1,10 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
+
+	"github.com/TalisonK/TalisonContabil/src/util"
 	"github.com/spf13/viper"
 )
 
@@ -40,8 +44,16 @@ func init() {
 func Load() error {
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
-	viper.AddConfigPath(".")
-	err := viper.ReadInConfig()
+
+	configPath, err := findConfigFile()
+
+	if err != nil {
+		util.LogHandler("Fail to find the config file", err, "config.Load")
+		return err
+	}
+
+	viper.AddConfigPath(configPath)
+	err = viper.ReadInConfig()
 	if err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			return err
@@ -101,4 +113,29 @@ func IsProd() bool {
 
 func GetServerPort() string {
 	return cfg.API.Port
+}
+
+// FindConfigFile searches for the "config.toml" file in the parent directories
+// until it finds the file or reaches the root directory.
+func findConfigFile() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		configPath := filepath.Join(dir, "config.toml")
+		_, err := os.Stat(configPath)
+		if err == nil {
+			return dir, nil
+		}
+
+		parentDir := filepath.Dir(dir)
+		if parentDir == dir {
+			break
+		}
+		dir = parentDir
+	}
+
+	return "", os.ErrNotExist
 }

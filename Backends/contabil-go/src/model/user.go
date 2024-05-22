@@ -32,6 +32,11 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 		return nil, fmt.Errorf("no database connection available")
 	}
 
+	if _, err := FindUserByName(user.Name); err == nil {
+		util.LogHandler(fmt.Sprintf("User %s already exists.", user.Name), nil, "model.CreateUser")
+		return nil, fmt.Errorf("user already exists")
+	}
+
 	// Encrypt the password
 	hash, salt, err := Encrypt(user.Password)
 
@@ -92,13 +97,16 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 		baseUser.Name = user.Name
 	}
 	if user.Password != "" {
+
 		hash, salt, err := Encrypt(user.Password)
+
 		if err != nil {
 			util.LogHandler("Fail to encrypt new password", err, "model.UpdateUser")
 			return nil, fmt.Errorf("fail to encrypt new password")
 		}
-		baseUser.Password = string(hash)
-		baseUser.Salt = string(salt)
+
+		baseUser.Password = base64.StdEncoding.EncodeToString(hash)
+		baseUser.Salt = base64.StdEncoding.EncodeToString(salt)
 	}
 	if user.Role != "" {
 		baseUser.Role = user.Role
@@ -200,14 +208,7 @@ func LoginUser(user domain.User) (domain.User, error) {
 		} else {
 			userCloud := PrimToUser(result)
 
-			salt, err := base64.StdEncoding.DecodeString(userCloud.Salt)
-
-			if err != nil {
-				util.LogHandler("Failed to decode salt.", err, "model.LoginUser")
-				return domain.User{}, err
-			}
-
-			if Compare(user.Password, salt, userCloud.Password) {
+			if Compare(user.Password, userCloud.Salt, userCloud.Password) {
 				util.LogHandler(fmt.Sprintf("User %s successfully logged in cloud database.", user.Name), nil, "model.LoginUser")
 				return userCloud, nil
 			} else {
@@ -275,6 +276,46 @@ func FindUserById(id string) (domain.User, error) {
 			//TODO: equalize bases de users
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", id), nil, "findUserById")
+			return user, nil
+		}
+	}
+
+	return user, fmt.Errorf("user not found")
+}
+
+func FindUserByName(name string) (domain.User, error) {
+	var user domain.User = domain.User{}
+
+	statusDbLocal := database.CheckLocalDB()
+	statusDbCloud := database.CheckCloudDB()
+
+	if !statusDbLocal && !statusDbCloud {
+		util.LogHandler("No database connection available.", nil, "findUserByName")
+		return user, fmt.Errorf("no database connection available")
+	}
+
+	if statusDbCloud {
+		filter := bson.M{"name": name}
+		result := primitive.M{}
+		database.DBCloud.User.FindOne(context.Background(), filter).Decode(&result)
+
+		if len(result) == 0 {
+			util.LogHandler(fmt.Sprintf("User %s not found in cloud database.", name), nil, "findUserByName")
+		} else {
+			user = PrimToUser(result)
+			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", name), nil, "findUserByName")
+			return user, nil
+		}
+	}
+
+	if database.CheckLocalDB() {
+		result := database.DBlocal.First(&user, "name = ?", name)
+
+		if result.Error != nil {
+			util.LogHandler("Failed to find user in local database.", result.Error, "findUserByName")
+			return user, result.Error
+		} else {
+			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", name), nil, "findUserByName")
 			return user, nil
 		}
 	}
@@ -371,9 +412,16 @@ func Encrypt(password string) ([]byte, []byte, error) {
 	return hash, salt, nil
 }
 
-func Compare(password string, salt []byte, origin string) bool {
+func Compare(password string, salt string, origin string) bool {
 
-	hash := hasher(password, salt)
+	salter, err := base64.StdEncoding.DecodeString(salt)
+
+	if err != nil {
+		util.LogHandler("Failed to decode salt.", err, "model.Compare")
+		return false
+	}
+
+	hash := hasher(password, salter)
 
 	old, _ := base64.StdEncoding.DecodeString(origin)
 
