@@ -6,7 +6,6 @@ import (
 
 	"encoding/json"
 
-	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
 	"github.com/TalisonK/TalisonContabil/src/util"
@@ -15,39 +14,21 @@ import (
 // GetUsers retrieves all users from both databases
 func GetUsers(w http.ResponseWriter, r *http.Request) {
 	// Get users from database
-	if database.CheckCloudDB() {
-		// Get users from cloud
-		result, err := model.GetCloudUsers()
-		if err != nil {
-			util.LogHandler("Failed to get users from cloud database.", err, "getUsers")
-		} else {
-			util.LogHandler(fmt.Sprintf("Users successfully retrieved %d rows from cloud database.", len(result)), nil, "getUsers")
 
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(result)
-			return
-		}
+	users, err := model.GetUsers()
+
+	if err != nil {
+		util.LogHandler("Failed to get users", err, "handler.GetUsers")
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "Failed to get users")
+		return
+	} else {
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(users)
+		return
 	}
 
-	// Get users from local
-	if database.CheckLocalDB() {
-		result, err := model.GetLocalUsers()
-		if err != nil {
-			util.LogHandler("Failed to get users from local database.", err, "getUsers")
-		} else {
-			util.LogHandler(fmt.Sprintf("Users successfully retrieved %d rows from local database.", len(result)), nil, "getUsers")
-
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(result)
-			return
-		}
-	}
-
-	util.LogHandler("No database connection available.", nil, "getUsers")
-	w.WriteHeader(http.StatusInternalServerError)
-	fmt.Fprintln(w, "No database connection available.")
 }
 
 // CreateUser creates a user in both databases

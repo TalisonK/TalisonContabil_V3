@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/TalisonK/TalisonContabil/src/config"
@@ -26,11 +27,37 @@ type TestUserId struct {
 	Password string `json:"password"`
 }
 
-func TestGetUsers(t *testing.T) {
+func TestMain(m *testing.M) {
 
-	start()
+	err := config.Load()
+
+	if err != nil {
+		util.LogHandler("Erro ao carregar as configurações", err, "TestCreateUser")
+		return
+	}
+
+	err = database.OpenConnectionLocal()
+
+	if err != nil {
+		util.LogHandler("Erro ao conectar ao banco de dados local", err, "main")
+		return
+	}
+
+	err = database.OpenConnectionCloud()
+
+	if err != nil {
+		util.LogHandler("Erro ao conectar ao banco de dados em nuvem", err, "main")
+		return
+	}
+
+	exitVal := m.Run()
 
 	defer database.CloseConnections()
+
+	os.Exit(exitVal)
+}
+
+func TestGetUsers(t *testing.T) {
 
 	// rr := httptest.NewRecorder()
 	// req := httptest.NewRequest(http.MethodGet, "/user", nil)
@@ -38,10 +65,6 @@ func TestGetUsers(t *testing.T) {
 }
 
 func TestCreateUser(t *testing.T) {
-
-	start()
-
-	defer database.CloseConnections()
 
 	body := TestUser{
 		Name:     "Teste",
@@ -106,9 +129,6 @@ func TestCreateUser(t *testing.T) {
 }
 
 func TestUpdateUser(t *testing.T) {
-	start()
-
-	defer database.CloseConnections()
 
 	example := domain.User{
 		Name:     "testUpdate",
@@ -143,28 +163,71 @@ func TestUpdateUser(t *testing.T) {
 
 	UpdateUser(rr, req)
 
+	if status := rr.Code; status != http.StatusCreated {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusCreated)
+	}
+
+	response, err := io.ReadAll(rr.Body)
+
+	if err != nil {
+		util.LogHandler("Erro ao ler resposta", err, "TestCreateUser")
+		t.Fatalf("Erro ao ler resposta")
+	}
+
+	expected := domain.UserDTO{
+		Name: "newUserName",
+	}
+
+	var result domain.UserDTO
+	err = json.Unmarshal(response, &result)
+
+	if err != nil {
+		util.LogHandler("Erro ao deserializar resposta", err, "TestCreateUser")
+		t.Fatalf("Erro ao deserializar resposta")
+	}
+
+	if result.Name != expected.Name {
+		t.Errorf("handler returned wrong name: got %v want %v",
+			result.Name, expected.Name)
+	}
+
 }
 
 func TestDeleteUser(t *testing.T) {
-	// Test your function
-}
 
-func start() {
-	err := config.Load()
+	//TOFIX
+	// example := domain.User{
+	// 	Name:     "testUpdate",
+	// 	Password: "123",
+	// }
 
-	if err != nil {
-		util.LogHandler("Erro ao carregar as configurações", err, "TestCreateUser")
-	}
+	// userInBase, err := model.CreateUser(&example)
 
-	err = database.OpenConnectionLocal()
+	// if err != nil {
+	// 	util.LogHandler("Fail to create user for update test", err, "TestUpdateUser")
+	// 	t.Errorf("Fail to create user for update test")
+	// }
 
-	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados local", err, "main")
-	}
+	// u, err := url.Parse("/user")
 
-	err = database.OpenConnectionCloud()
+	// if err != nil {
+	// 	util.LogHandler("Fail to parse url", err, "TestDeleteUser")
+	// 	t.Errorf("Fail to parse url")
+	// }
 
-	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados em nuvem", err, "main")
-	}
+	// q := u.Query()
+	// q.Set("id", userInBase.ID)
+	// u.RawQuery = q.Encode()
+
+	// rr := httptest.NewRecorder()
+	// req := httptest.NewRequest(http.MethodDelete, u.String(), nil)
+
+	// DeleteUser(rr, req)
+
+	// if status := rr.Code; status != http.StatusOK {
+	// 	t.Errorf("handler returned wrong status code: got %v want %v",
+	// 		status, http.StatusOK)
+	// }
+
 }

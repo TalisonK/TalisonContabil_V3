@@ -17,6 +17,44 @@ import (
 	_ "gorm.io/gorm"
 )
 
+func GetUsers() ([]domain.UserDTO, error) {
+
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+
+	if !statusDbLocal && !statusDbCloud {
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
+		return nil, fmt.Errorf("no database connection available")
+	}
+
+	var users []domain.UserDTO
+
+	if statusDbCloud {
+		usersCloud, err := GetCloudUsers()
+
+		if err != nil {
+			util.LogHandler("Failed to get users from cloud database.", err, "model.GetUsers")
+			return nil, err
+		}
+
+		users = append(users, usersCloud...)
+		return users, nil
+	}
+
+	if statusDbLocal {
+		usersLocal, err := GetLocalUsers()
+
+		if err != nil {
+			util.LogHandler("Failed to get users from local database.", err, "model.GetUsers")
+			return nil, err
+		}
+
+		users = append(users, usersLocal...)
+		return users, nil
+	}
+
+	return nil, fmt.Errorf("algo deu errado")
+}
+
 func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	if user.Name == "" || user.Password == "" {
@@ -24,8 +62,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 		return nil, fmt.Errorf("user name or password is empty")
 	}
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -78,11 +115,10 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.UpdateUser")
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
 		return nil, fmt.Errorf("no database connection available")
 	}
 
@@ -148,11 +184,10 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 func DeleteUser(id string) error {
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.DeleteUser")
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
 		return fmt.Errorf("no database connection available")
 	}
 
@@ -187,14 +222,13 @@ func DeleteUser(id string) error {
 	return nil
 }
 
-func LoginUser(user domain.User) (domain.User, error) {
+func LoginUser(user domain.User) (*domain.User, error) {
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.LoginUser")
-		return domain.User{}, fmt.Errorf("no database connection available")
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
+		return nil, fmt.Errorf("no database connection available")
 	}
 
 	if statusDbCloud {
@@ -210,9 +244,9 @@ func LoginUser(user domain.User) (domain.User, error) {
 
 			if Compare(user.Password, userCloud.Salt, userCloud.Password) {
 				util.LogHandler(fmt.Sprintf("User %s successfully logged in cloud database.", user.Name), nil, "model.LoginUser")
-				return userCloud, nil
+				return &userCloud, nil
 			} else {
-				return domain.User{}, fmt.Errorf("wrong password")
+				return nil, fmt.Errorf("wrong password")
 			}
 		}
 	}
@@ -235,15 +269,14 @@ func LoginUser(user domain.User) (domain.User, error) {
 }
 
 // findUserById retrieves a user by its ID
-func FindUserById(id string) (domain.User, error) {
+func FindUserById(id string) (*domain.User, error) {
 	var user domain.User = domain.User{}
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "findUserById")
-		return user, fmt.Errorf("no database connection available")
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
+		return nil, fmt.Errorf("no database connection available")
 	}
 
 	if statusDbCloud {
@@ -251,7 +284,7 @@ func FindUserById(id string) (domain.User, error) {
 
 		if err != nil {
 			util.LogHandler(fmt.Sprintf("Failed to parse user ID %s.", id), err, "findUserById")
-			return user, err
+			return &user, err
 		}
 
 		filter := bson.M{"_id": idParse}
@@ -263,7 +296,7 @@ func FindUserById(id string) (domain.User, error) {
 		} else {
 			user = PrimToUser(result)
 			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", id), nil, "findUserById")
-			return user, nil
+			return &user, nil
 		}
 	}
 
@@ -272,26 +305,25 @@ func FindUserById(id string) (domain.User, error) {
 
 		if result.Error != nil {
 			util.LogHandler("Failed to find user in local database.", result.Error, "findUserById")
-			return user, result.Error
+			return &user, result.Error
 			//TODO: equalize bases de users
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", id), nil, "findUserById")
-			return user, nil
+			return &user, nil
 		}
 	}
 
-	return user, fmt.Errorf("user not found")
+	return nil, fmt.Errorf("user not found")
 }
 
-func FindUserByName(name string) (domain.User, error) {
+func FindUserByName(name string) (*domain.User, error) {
 	var user domain.User = domain.User{}
 
-	statusDbLocal := database.CheckLocalDB()
-	statusDbCloud := database.CheckCloudDB()
+	statusDbLocal, statusDbCloud := util.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "findUserByName")
-		return user, fmt.Errorf("no database connection available")
+		util.LogHandler("No database connection available.", nil, "model.CreateUser")
+		return nil, fmt.Errorf("no database connection available")
 	}
 
 	if statusDbCloud {
@@ -304,7 +336,7 @@ func FindUserByName(name string) (domain.User, error) {
 		} else {
 			user = PrimToUser(result)
 			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", name), nil, "findUserByName")
-			return user, nil
+			return &user, nil
 		}
 	}
 
@@ -313,21 +345,21 @@ func FindUserByName(name string) (domain.User, error) {
 
 		if result.Error != nil {
 			util.LogHandler("Failed to find user in local database.", result.Error, "findUserByName")
-			return user, result.Error
+			return &user, result.Error
 		} else {
 			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", name), nil, "findUserByName")
-			return user, nil
+			return &user, nil
 		}
 	}
 
-	return user, fmt.Errorf("user not found")
+	return nil, fmt.Errorf("user not found")
 }
 
 // getCloudUsers retrieves all users from the cloud database
-func GetCloudUsers() ([]domain.User, error) {
+func GetCloudUsers() ([]domain.UserDTO, error) {
 	colect, err := database.DBCloud.User.Find(context.TODO(), &bson.D{})
 
-	result := []domain.User{}
+	result := []domain.UserDTO{}
 
 	//colect.All(context.Background(), &result)
 
@@ -335,7 +367,9 @@ func GetCloudUsers() ([]domain.User, error) {
 		var user bson.M
 		colect.Decode(&user)
 
-		result = append(result, PrimToUser(user))
+		u := PrimToUser(user)
+
+		result = append(result, *ToDTO(&u))
 	}
 
 	if err != nil {
@@ -343,6 +377,16 @@ func GetCloudUsers() ([]domain.User, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+// getLocalUsers retrieves all users from the local database
+func GetLocalUsers() ([]domain.UserDTO, error) {
+	var users []domain.UserDTO
+	result := database.DBlocal.Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
 }
 
 // primToUser converts a primitive.M to a User
@@ -383,16 +427,6 @@ func UserToPrim(user domain.User) primitive.M {
 	usuario["updatedAt"] = primitive.NewDateTimeFromTime(updatedAt)
 
 	return usuario
-}
-
-// getLocalUsers retrieves all users from the local database
-func GetLocalUsers() ([]domain.User, error) {
-	var users []domain.User
-	result := database.DBlocal.Find(&users)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return users, nil
 }
 
 // Hash the password
