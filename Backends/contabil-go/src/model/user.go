@@ -19,7 +19,7 @@ import (
 
 func GetUsers() ([]domain.UserDTO, error) {
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -62,7 +62,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 		return nil, fmt.Errorf("user name or password is empty")
 	}
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -115,7 +115,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -149,7 +149,7 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 	}
 	baseUser.UpdatedAt = time.Now().Format(time.RFC3339)
 
-	user = &baseUser
+	user = baseUser
 
 	if statusDbCloud {
 		userParse := UserToPrim(*user)
@@ -184,7 +184,7 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 func DeleteUser(id string) error {
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -224,7 +224,7 @@ func DeleteUser(id string) error {
 
 func LoginUser(user domain.User) (*domain.User, error) {
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -251,28 +251,28 @@ func LoginUser(user domain.User) (*domain.User, error) {
 		}
 	}
 
-	if database.CheckLocalDB() {
+	if statusDbLocal {
 		result := database.DBlocal.First(&user, "name = ?", user.Name)
 
 		if result.Error != nil {
 			util.LogHandler("Failed to find user in local database.", result.Error, "model.LoginUser")
-			return domain.User{}, result.Error
+			return nil, result.Error
 		} else {
 			if user.Password == user.Password {
 				util.LogHandler(fmt.Sprintf("User %s successfully logged in local database.", user.Name), nil, "model.LoginUser")
-				return user, nil
+				return &user, nil
 			}
 		}
 	}
 
-	return domain.User{}, fmt.Errorf("user not found")
+	return nil, fmt.Errorf("user not found")
 }
 
 // findUserById retrieves a user by its ID
 func FindUserById(id string) (*domain.User, error) {
 	var user domain.User = domain.User{}
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -300,7 +300,7 @@ func FindUserById(id string) (*domain.User, error) {
 		}
 	}
 
-	if database.CheckLocalDB() {
+	if statusDbLocal {
 		result := database.DBlocal.First(&user, "id = ?", id)
 
 		if result.Error != nil {
@@ -319,7 +319,7 @@ func FindUserById(id string) (*domain.User, error) {
 func FindUserByName(name string) (*domain.User, error) {
 	var user domain.User = domain.User{}
 
-	statusDbLocal, statusDbCloud := util.CheckDBStatus()
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
 		util.LogHandler("No database connection available.", nil, "model.CreateUser")
@@ -340,7 +340,7 @@ func FindUserByName(name string) (*domain.User, error) {
 		}
 	}
 
-	if database.CheckLocalDB() {
+	if statusDbLocal {
 		result := database.DBlocal.First(&user, "name = ?", name)
 
 		if result.Error != nil {
