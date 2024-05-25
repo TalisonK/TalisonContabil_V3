@@ -1,14 +1,25 @@
 package routes
 
 import (
-	"github.com/TalisonK/media-storager/src/handler"
-	"github.com/gofiber/fiber/v3"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-func Router(app *fiber.App) {
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+func Router() *chi.Mux {
+
+	r := chi.NewRouter()
+
+	r.Use(middleware.Logger)
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("Hello, World!"))
 	})
 
-	app.Post("/media", handler.StoreMedia)
+	r.Mount("/user", UserRouter())
+	r.Mount("/category", CategoryRouter())
+	r.Mount("/", AuthRouter())
+
+	return r
 }

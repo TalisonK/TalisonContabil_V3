@@ -1,37 +1,48 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net/http"
 	"os"
 
-	"github.com/TalisonK/media-storager/src/config"
-	"github.com/TalisonK/media-storager/src/database"
-	"github.com/TalisonK/media-storager/src/routes"
-	"github.com/gofiber/fiber/v3"
+	"github.com/TalisonK/TalisonContabil/src/auth"
+	"github.com/TalisonK/TalisonContabil/src/config"
+	"github.com/TalisonK/TalisonContabil/src/database"
+	"github.com/TalisonK/TalisonContabil/src/routes"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
 func main() {
 
 	err := config.Load()
 
+	auth.NewAuth()
+
 	if err != nil {
-		log.Fatal("Erro ao carregar as configurações")
+		log.Fatal("Erro ao carregar as configurações, certifique-se de que o arquivo de configuração está correto.")
+		logging.GenericError("Erro ao carregar as configurações", err, "main")
 		os.Exit(2)
 	}
 
-	err = database.OpenConnection()
+	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		log.Fatal("Erro ao conectar ao banco de dados")
-		os.Exit(2)
+		logging.FailedToOpenConnection("local", err, "main")
 	}
 
-	defer database.CloseConnection()
+	err = database.OpenConnectionCloud()
 
-	app := fiber.New()
+	if err != nil {
+		logging.FailedToOpenConnection("cloud", err, "main")
+	}
 
-	routes.Router(app)
+	defer database.CloseConnections()
 
-	// Start the server on port 3000
-	log.Fatal(app.Listen(":3000"))
+	// Create a new Chi router
+
+	r := routes.Router()
+
+	http.ListenAndServe(fmt.Sprintf(":%s", config.GetServerPort()), r)
+
 }
