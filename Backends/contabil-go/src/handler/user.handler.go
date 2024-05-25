@@ -8,7 +8,7 @@ import (
 
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
 // GetUsers retrieves all users from both databases
@@ -18,7 +18,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := model.GetUsers()
 
 	if err != nil {
-		util.LogHandler("Failed to get users", err, "handler.GetUsers")
+		logging.FailedToFindOnDB("All Users", "", err, "handler.GetUsers")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to get users")
 		return
@@ -38,7 +38,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(user)
 
 	if err != nil {
-		util.LogHandler("Failed to parse body.", err, "createUser")
+		logging.FailedToParseBody(err, "handler.CreateUser")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to parse body")
 		return
@@ -47,7 +47,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	result, err := model.CreateUser(user)
 
 	if err != nil {
-		util.LogHandler("Failed to add the new user", err, "handler.CreateUser")
+		logging.GenericError("Fail to create user", err, "handler.CreateUser")
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -64,7 +64,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(user)
 
 	if user.ID == "" {
-		util.LogHandler("Empty request body", nil, "updateUser")
+		logging.GenericError("Empty request body", nil, "handler.updateUser")
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty request body")
 		return
@@ -73,7 +73,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	result, err := model.UpdateUser(user)
 
 	if err != nil {
-		util.LogHandler("Failed to update user", err, "handler.UpdateUser")
+		logging.GenericError("Failed to update user", err, "handler.UpdateUser")
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -88,7 +88,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if id == "" {
-		util.LogHandler("Empty id passed.", nil, "deleteUser")
+		logging.GenericError("Empty id passed.", nil, "handler.DeleteUser")
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty id passed.")
 		return
@@ -97,7 +97,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := model.DeleteUser(id)
 
 	if err != nil {
-		util.LogHandler("Failed to delete user", err, "handler.DeleteUser")
+		logging.GenericError("Failed to delete user", err, "handler.DeleteUser")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to delete user")
 		return
@@ -114,7 +114,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(user)
 
 	if user.Name == "" || user.Password == "" {
-		util.LogHandler("Empty request body", nil, "login")
+		logging.GenericError("Empty request body", nil, "handler.Login")
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty request body")
 		return
@@ -123,7 +123,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	result, err := model.LoginUser(*user)
 
 	if err != nil {
-		util.LogHandler("Failed to login user", err, "handler.Login")
+		logging.GenericError("Failed to login user", err, "handler.handler.Login")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to login user")
 		return

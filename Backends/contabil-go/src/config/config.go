@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"github.com/spf13/viper"
 )
 
@@ -48,7 +48,7 @@ func Load() error {
 	configPath, err := findConfigFile()
 
 	if err != nil {
-		util.LogHandler("Fail to find the config file", err, "config.Load")
+		logging.GenericError("Failed to find config file", err, "config.Load")
 		return err
 	}
 

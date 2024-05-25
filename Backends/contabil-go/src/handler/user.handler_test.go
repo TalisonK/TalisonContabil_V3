@@ -13,7 +13,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
 type TestUser struct {
@@ -32,21 +32,21 @@ func TestMain(m *testing.M) {
 	err := config.Load()
 
 	if err != nil {
-		util.LogHandler("Erro ao carregar as configurações", err, "TestCreateUser")
+		logging.GenericError("Erro ao carregar configurações", err, "handler.Testmain")
 		return
 	}
 
 	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados local", err, "main")
+		logging.FailedToOpenConnection("local", err, "handler.Testmain")
 		return
 	}
 
 	err = database.OpenConnectionCloud()
 
 	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados em nuvem", err, "main")
+		logging.FailedToOpenConnection("cloud", err, "handler.Testmain")
 		return
 	}
 
@@ -76,7 +76,7 @@ func TestCreateUser(t *testing.T) {
 	err := json.NewEncoder(&b).Encode(body)
 
 	if err != nil {
-		util.LogHandler("Erro ao criar requisição", err, "TestCreateUser")
+		logging.GenericError("Erro ao criar requisição", err, "TestCreateUser")
 		t.Fatalf("Erro ao criar requisição")
 	}
 
@@ -93,7 +93,7 @@ func TestCreateUser(t *testing.T) {
 	response, err := io.ReadAll(rr.Body)
 
 	if err != nil {
-		util.LogHandler("Erro ao ler resposta", err, "TestCreateUser")
+		logging.GenericError("Erro ao ler resposta", err, "TestCreateUser")
 		t.Fatalf("Erro ao ler resposta")
 	}
 
@@ -106,7 +106,7 @@ func TestCreateUser(t *testing.T) {
 	err = json.Unmarshal(response, &result)
 
 	if err != nil {
-		util.LogHandler("Erro ao deserializar resposta", err, "TestCreateUser")
+		logging.GenericError("Erro ao deserializar resposta", err, "TestCreateUser")
 		t.Fatalf("Erro ao deserializar resposta")
 	}
 
@@ -138,7 +138,7 @@ func TestUpdateUser(t *testing.T) {
 	userInBase, err := model.CreateUser(&example)
 
 	if err != nil {
-		util.LogHandler("Fail to create user for update test", err, "TestUpdateUser")
+		logging.GenericError("Fail to create user for update test", err, "TestUpdateUser")
 		t.Errorf("Fail to create user for update test")
 	}
 
@@ -154,7 +154,7 @@ func TestUpdateUser(t *testing.T) {
 	err = json.NewEncoder(&b).Encode(body)
 
 	if err != nil {
-		util.LogHandler("Erro ao criar requisição", err, "TestCreateUser")
+		logging.GenericError("Erro ao criar requisição", err, "TestUpdateUser")
 		t.Fatalf("Erro ao criar requisição")
 	}
 
@@ -171,7 +171,7 @@ func TestUpdateUser(t *testing.T) {
 	response, err := io.ReadAll(rr.Body)
 
 	if err != nil {
-		util.LogHandler("Erro ao ler resposta", err, "TestCreateUser")
+		logging.GenericError("Erro ao ler resposta", err, "TestCreateUser")
 		t.Fatalf("Erro ao ler resposta")
 	}
 
@@ -183,7 +183,7 @@ func TestUpdateUser(t *testing.T) {
 	err = json.Unmarshal(response, &result)
 
 	if err != nil {
-		util.LogHandler("Erro ao deserializar resposta", err, "TestCreateUser")
+		logging.GenericError("Erro ao deserializar resposta", err, "TestCreateUser")
 		t.Fatalf("Erro ao deserializar resposta")
 	}
 

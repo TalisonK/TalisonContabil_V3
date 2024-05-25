@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/TalisonK/TalisonContabil/src/model"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
 func GetCategories(w http.ResponseWriter, r *http.Request) {
@@ -15,7 +15,7 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := model.GetCategories()
 
 	if err != nil {
-		util.LogHandler("Failed to get categories", err, "handler.GetCategories")
+		logging.FailedToFindOnDB("All Categories", "", err, "handler.GetCategories")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to get categories")
 		return

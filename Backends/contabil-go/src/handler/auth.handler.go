@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"github.com/markbates/goth/gothic"
 )
 
@@ -17,7 +17,7 @@ func AuthProviderCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := gothic.CompleteUserAuth(w, r)
 
 	if err != nil {
-		util.LogHandler("Erro ao autenticar usuário", err, "AuthProviderCallback")
+		logging.GenericError("Falha ao autenticar usuário", err, "AuthProviderCallback")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
 		return
@@ -25,7 +25,7 @@ func AuthProviderCallback(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(user)
 
-	util.LogHandler("Usuário autenticado com sucesso", nil, "AuthProviderCallback")
+	logging.GenericSuccess("Usuário autenticado com sucesso", "AuthProviderCallback")
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }

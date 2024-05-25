@@ -6,7 +6,7 @@ import (
 
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/domain"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -35,16 +35,13 @@ func OpenConnectionLocal() error {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", conf.User, conf.Pass, conf.Host, conf.Port, conf.Database)
 
-	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Error),
-	})
+	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
-		util.LogHandler("Failed to connect to database.", err, "OpenConnectionLocal")
-		return err
+		return fmt.Errorf(logging.FailedToOpenConnection("local", err, "database.OpenConnectionLocal"))
 	}
 
-	util.LogHandler("Connected to database!", nil, "OpenConnectionLocal")
+	logging.OpenedConnection("local", "database.OpenConnectionLocal")
 	conn.Logger = logger.Default.LogMode(logger.Info)
 
 	conn.AutoMigrate(&domain.Category{})
@@ -72,7 +69,7 @@ func OpenConnectionCloud() error {
 	client, err := mongo.Connect(context.TODO(), opts)
 
 	if err != nil {
-		util.LogHandler("Failed to connect to cloud database.", err, "OpenConnectionCloud")
+		logging.FailedToOpenConnection("cloud", err, "database.OpenConnectionCloud")
 		return err
 	}
 
@@ -80,7 +77,7 @@ func OpenConnectionCloud() error {
 	err = client.Database("admin").RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err()
 
 	if err != nil {
-		util.LogHandler("Failed to ping cloud database.", err, "OpenConnectionCloud")
+		logging.FailedToConnectToDB("cloud", err, "database.OpenConnectionCloud")
 		return err
 	}
 
@@ -97,21 +94,21 @@ func OpenConnectionCloud() error {
 func checkLocalDB() bool {
 
 	if DBlocal == nil {
-		util.LogHandler("Failed to ping local database, database not started.", nil, "checkCloudDB")
+		logging.FailedToPingDB("local", nil, "database.checkLocalDB")
 		return false
 	}
 
 	section, err := DBlocal.DB()
 
 	if err != nil {
-		util.LogHandler("Failed to connect to local database.", err, "checkLocalDB")
+		logging.FailedToConnectToDB("local", err, "database.checkLocalDB")
 		return false
 	}
 
 	err = section.Ping()
 
 	if err != nil {
-		util.LogHandler("Failed to ping local database.", err, "checkLocalDB")
+		logging.FailedToPingDB("local", err, "database.checkLocalDB")
 		return false
 	}
 	return true
@@ -121,14 +118,14 @@ func checkLocalDB() bool {
 // CheckCloudDB checks if the cloud database is connected
 func checkCloudDB() bool {
 	if DBCloud.Expense == nil {
-		util.LogHandler("Failed to ping cloud database, database not started.", nil, "checkCloudDB")
+		logging.FailedToPingDB("cloud", nil, "database.checkCloudDB")
 		return false
 	}
 
 	err := DBCloud.Expense.FindOne(context.TODO(), bson.D{}).Err()
 
 	if err != nil {
-		util.LogHandler("Failed to ping cloud database.", err, "checkCloudDB")
+		logging.FailedToPingDB("cloud", err, "database.checkCloudDB")
 		return false
 	}
 	return true
@@ -141,7 +138,7 @@ func CloseConnections() {
 	err := db.Close()
 
 	if err != nil {
-		util.LogHandler("Failed to close local database connection.", err, "CloseConnections")
+		logging.FailedToCloseConnection("local", err, "database.CloseConnections")
 	}
 }
 

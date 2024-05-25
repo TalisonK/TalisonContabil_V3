@@ -10,7 +10,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/routes"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
 func main() {
@@ -21,20 +21,20 @@ func main() {
 
 	if err != nil {
 		log.Fatal("Erro ao carregar as configurações, certifique-se de que o arquivo de configuração está correto.")
-		util.LogHandler("Erro ao carregar as configurações", err, "main")
+		logging.GenericError("Erro ao carregar as configurações", err, "main")
 		os.Exit(2)
 	}
 
 	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados local", err, "main")
+		logging.FailedToOpenConnection("local", err, "main")
 	}
 
 	err = database.OpenConnectionCloud()
 
 	if err != nil {
-		util.LogHandler("Erro ao conectar ao banco de dados em nuvem", err, "main")
+		logging.FailedToOpenConnection("cloud", err, "main")
 	}
 
 	defer database.CloseConnections()

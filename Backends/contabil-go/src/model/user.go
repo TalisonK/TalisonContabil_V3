@@ -10,7 +10,7 @@ import (
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
-	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/argon2"
@@ -22,29 +22,16 @@ func GetUsers() ([]domain.UserDTO, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.GetUsers"))
 	}
 
 	var users []domain.UserDTO
-
-	if statusDbCloud {
-		usersCloud, err := GetCloudUsers()
-
-		if err != nil {
-			util.LogHandler("Failed to get users from cloud database.", err, "model.GetUsers")
-			return nil, err
-		}
-
-		users = append(users, usersCloud...)
-		return users, nil
-	}
 
 	if statusDbLocal {
 		usersLocal, err := GetLocalUsers()
 
 		if err != nil {
-			util.LogHandler("Failed to get users from local database.", err, "model.GetUsers")
+			logging.FailedToFindOnDB("All Users", "Local", err, "model.GetUsers")
 			return nil, err
 		}
 
@@ -52,33 +39,42 @@ func GetUsers() ([]domain.UserDTO, error) {
 		return users, nil
 	}
 
-	return nil, fmt.Errorf("algo deu errado")
+	if statusDbCloud {
+		usersCloud, err := GetCloudUsers()
+
+		if err != nil {
+			logging.FailedToFindOnDB("All Users", "Cloud", err, "model.GetUsers")
+			return nil, err
+		}
+
+		users = append(users, usersCloud...)
+		return users, nil
+	}
+
+	return nil, fmt.Errorf(logging.ErrorOccurred("model.GetUsers"))
 }
 
 func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	if user.Name == "" || user.Password == "" {
-		util.LogHandler("User name or password is empty.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("user name or password is empty")
+		return nil, fmt.Errorf(logging.EmptyPassword("model.CreateUser"))
 	}
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.CreateUser"))
 	}
 
 	if _, err := FindUserByName(user.Name); err == nil {
-		util.LogHandler(fmt.Sprintf("User %s already exists.", user.Name), nil, "model.CreateUser")
-		return nil, fmt.Errorf("user already exists")
+		return nil, fmt.Errorf(logging.DuplicatedEntry(user.Name, "model.CreateUser"))
 	}
 
 	// Encrypt the password
-	hash, salt, err := Encrypt(user.Password)
+	hash, salt, err := Hash(user.Password)
 
 	if err != nil {
-		util.LogHandler("Failed to encrypt password.", err, "model.CreateUser")
+		logging.FailedToHashPassword(err, "model.CreateUser")
 		return nil, err
 	}
 
@@ -92,21 +88,21 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 		resultCloud, err := database.DBCloud.User.InsertOne(context.Background(), UserToPrim(*user))
 
 		if err != nil {
-			util.LogHandler("Failed to insert user in cloud database.", err, "model.CreateUser")
+			logging.FailedToCreateOnDB(user.Name, "Cloud", err, "model.CreateUser")
 			return nil, err
 		}
 		user.ID = resultCloud.InsertedID.(primitive.ObjectID).Hex()
-		util.LogHandler("User successfully inserted in cloud database.", nil, "model.CreateUser")
+		logging.CreatedOnDB(user.Name, "Cloud", "model.CreateUser")
 	}
 
 	if statusDbLocal && user.ID != "" {
 		result := database.DBlocal.Create(&user)
 
 		if result.Error != nil {
-			util.LogHandler("Failed to insert user in local database.", result.Error, "model.CreateUser")
+			logging.FailedToCreateOnDB(user.Name, "Local", result.Error, "model.CreateUser")
 			return nil, result.Error
 		}
-		util.LogHandler("User successfully inserted in local database.", nil, "model.CreateUser")
+		logging.CreatedOnDB(user.Name, "Local", "model.CreateUser")
 		return ToDTO(user), nil
 	}
 
@@ -118,15 +114,13 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.UpdateUser"))
 	}
 
 	baseUser, err := FindUserById(user.ID)
 
 	if err != nil {
-		util.LogHandler("Fail to find user", err, "model.UpdateUser")
-		return nil, fmt.Errorf("fail to find user")
+		return nil, fmt.Errorf(logging.FailedToFindOnDB(user.ID, "User", err, "model.UpdateUser"))
 	}
 
 	if user.Name != "" {
@@ -134,11 +128,10 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 	}
 	if user.Password != "" {
 
-		hash, salt, err := Encrypt(user.Password)
+		hash, salt, err := Hash(user.Password)
 
 		if err != nil {
-			util.LogHandler("Fail to encrypt new password", err, "model.UpdateUser")
-			return nil, fmt.Errorf("fail to encrypt new password")
+			return nil, fmt.Errorf(logging.FailedToHashPassword(err, "model.UpdateUser"))
 		}
 
 		baseUser.Password = base64.StdEncoding.EncodeToString(hash)
@@ -151,6 +144,16 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	user = baseUser
 
+	if statusDbLocal {
+		result := database.DBlocal.Save(user)
+		if result.Error != nil {
+			logging.FailedToUpdateOnDB(user.ID, "Local", result.Error, "model.UpdateUser")
+			return nil, result.Error
+		} else {
+			logging.UpdatedOnDB(user.ID, "Local", "model.UpdateUser")
+		}
+	}
+
 	if statusDbCloud {
 		userParse := UserToPrim(*user)
 
@@ -162,20 +165,10 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 		_, err = database.DBCloud.User.UpdateOne(context.Background(), filter, update)
 		if err != nil {
-			util.LogHandler("Failed to update user in cloud database.", err, "model.UpdateUser")
+			logging.FailedToUpdateOnDB(user.ID, "Cloud", err, "model.UpdateUser")
 			return nil, err
 		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully updated in cloud database.", user.ID), nil, "model.UpdateUser")
-		}
-	}
-
-	if statusDbLocal {
-		result := database.DBlocal.Save(user)
-		if result.Error != nil {
-			util.LogHandler("Failed to update user in local database.", result.Error, "model.UpdateUser")
-			return nil, result.Error
-		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully updated in local database.", user.ID), nil, "model.UpdateUser")
+			logging.UpdatedOnDB(user.ID, "Cloud", "model.UpdateUser")
 		}
 	}
 
@@ -187,15 +180,24 @@ func DeleteUser(id string) error {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return fmt.Errorf("no database connection available")
+		return fmt.Errorf(logging.NoDatabaseConnection("model.DeleteUser"))
 	}
 
 	idParse, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		util.LogHandler(fmt.Sprintf("Failed to parse user ID %s.", id), err, "model.DeleteUser")
+		logging.FailedToConvertPrimitive(err, "model.DeleteUser")
 		return err
+	}
+
+	if statusDbLocal {
+		result := database.DBlocal.Delete(&domain.User{}, "id = ?", id)
+		if result.Error != nil {
+			logging.FailedToDeleteOnDB(id, "Local", result.Error, "model.DeleteUser")
+			return result.Error
+		} else {
+			logging.DeletedOnDB(id, "Local", "model.DeleteUser")
+		}
 	}
 
 	if statusDbCloud {
@@ -203,19 +205,10 @@ func DeleteUser(id string) error {
 
 		_, err = database.DBCloud.User.DeleteOne(context.Background(), filter)
 		if err != nil {
-			util.LogHandler("Failed to delete user in cloud database.", err, "model.DeleteUser")
+			logging.FailedToDeleteOnDB(id, "Cloud", err, "model.DeleteUser")
 			return err
 		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully deleted in cloud database.", id), nil, "model.DeleteUser")
-		}
-	}
-
-	if statusDbLocal {
-		result := database.DBlocal.Delete(&domain.User{}, "id = ?", id)
-		if result.Error != nil {
-			util.LogHandler("Failed to delete user in local database.", result.Error, "model.DeleteUser")
-		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully deleted in local database.", id), nil, "model.DeleteUser")
+			logging.DeletedOnDB(id, "Cloud", "model.DeleteUser")
 		}
 	}
 
@@ -227,8 +220,26 @@ func LoginUser(user domain.User) (*domain.User, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.LoginUser"))
+	}
+
+	if user.Name == "" || user.Password == "" {
+		return nil, fmt.Errorf(logging.EmptyPassword("model.LoginUser"))
+	}
+
+	if statusDbLocal {
+		baseUser := domain.User{}
+		result := database.DBlocal.First(&baseUser, "name = ?", user.Name)
+
+		if result.Error != nil {
+			logging.FailedToAuthenticate(user.Name, "model.LoginUser")
+			return nil, result.Error
+		} else {
+			if user.Password == baseUser.Password {
+				logging.FoundOnDB(user.Name, "Local", "model.LoginUser")
+				return &user, nil
+			}
+		}
 	}
 
 	if statusDbCloud {
@@ -238,29 +249,15 @@ func LoginUser(user domain.User) (*domain.User, error) {
 		database.DBCloud.User.FindOne(context.Background(), filter).Decode(&result)
 
 		if len(result) == 0 {
-			util.LogHandler(fmt.Sprintf("User %s not found in cloud database.", user.Name), nil, "model.LoginUser")
+			logging.FailedToFindOnDB(user.Name, "Cloud", nil, "model.LoginUser")
 		} else {
 			userCloud := PrimToUser(result)
 
 			if Compare(user.Password, userCloud.Salt, userCloud.Password) {
-				util.LogHandler(fmt.Sprintf("User %s successfully logged in cloud database.", user.Name), nil, "model.LoginUser")
+				logging.FoundOnDB(user.Name, "Cloud", "model.LoginUser")
 				return &userCloud, nil
 			} else {
 				return nil, fmt.Errorf("wrong password")
-			}
-		}
-	}
-
-	if statusDbLocal {
-		result := database.DBlocal.First(&user, "name = ?", user.Name)
-
-		if result.Error != nil {
-			util.LogHandler("Failed to find user in local database.", result.Error, "model.LoginUser")
-			return nil, result.Error
-		} else {
-			if user.Password == user.Password {
-				util.LogHandler(fmt.Sprintf("User %s successfully logged in local database.", user.Name), nil, "model.LoginUser")
-				return &user, nil
 			}
 		}
 	}
@@ -275,15 +272,27 @@ func FindUserById(id string) (*domain.User, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.FindUserById"))
+	}
+
+	if statusDbLocal {
+		result := database.DBlocal.First(&user, "id = ?", id)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(id, "Local", result.Error, "model.FindUserById")
+			return &user, result.Error
+			//TODO: equalize bases de users
+		} else {
+			logging.FoundOnDB(id, "Local", "model.FindUserById")
+			return &user, nil
+		}
 	}
 
 	if statusDbCloud {
 		idParse, err := primitive.ObjectIDFromHex(id)
 
 		if err != nil {
-			util.LogHandler(fmt.Sprintf("Failed to parse user ID %s.", id), err, "findUserById")
+			logging.FailedToConvertPrimitive(err, "model.FindUserById")
 			return &user, err
 		}
 
@@ -292,23 +301,10 @@ func FindUserById(id string) (*domain.User, error) {
 		database.DBCloud.User.FindOne(context.Background(), filter).Decode(&result)
 
 		if len(result) == 0 {
-			util.LogHandler(fmt.Sprintf("User %s not found in cloud database.", id), nil, "findUserById")
+			logging.FailedToFindOnDB(id, "Cloud", nil, "model.FindUserById")
 		} else {
 			user = PrimToUser(result)
-			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", id), nil, "findUserById")
-			return &user, nil
-		}
-	}
-
-	if statusDbLocal {
-		result := database.DBlocal.First(&user, "id = ?", id)
-
-		if result.Error != nil {
-			util.LogHandler("Failed to find user in local database.", result.Error, "findUserById")
-			return &user, result.Error
-			//TODO: equalize bases de users
-		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", id), nil, "findUserById")
+			logging.FoundOnDB(id, "Cloud", "model.FindUserById")
 			return &user, nil
 		}
 	}
@@ -322,8 +318,19 @@ func FindUserByName(name string) (*domain.User, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		util.LogHandler("No database connection available.", nil, "model.CreateUser")
-		return nil, fmt.Errorf("no database connection available")
+		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.FindUserByName"))
+	}
+
+	if statusDbLocal {
+		result := database.DBlocal.First(&user, "name = ?", name)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(name, "Local", result.Error, "model.FindUserByName")
+			return &user, result.Error
+		} else {
+			logging.FoundOnDB(name, "Local", "model.FindUserByName")
+			return &user, nil
+		}
 	}
 
 	if statusDbCloud {
@@ -332,22 +339,10 @@ func FindUserByName(name string) (*domain.User, error) {
 		database.DBCloud.User.FindOne(context.Background(), filter).Decode(&result)
 
 		if len(result) == 0 {
-			util.LogHandler(fmt.Sprintf("User %s not found in cloud database.", name), nil, "findUserByName")
+			logging.FailedToFindOnDB(name, "Cloud", nil, "model.FindUserByName")
 		} else {
 			user = PrimToUser(result)
-			util.LogHandler(fmt.Sprintf("User %s successfully found in cloud database.", name), nil, "findUserByName")
-			return &user, nil
-		}
-	}
-
-	if statusDbLocal {
-		result := database.DBlocal.First(&user, "name = ?", name)
-
-		if result.Error != nil {
-			util.LogHandler("Failed to find user in local database.", result.Error, "findUserByName")
-			return &user, result.Error
-		} else {
-			util.LogHandler(fmt.Sprintf("User %s successfully found in local database.", name), nil, "findUserByName")
+			logging.FoundOnDB(name, "Cloud", "model.FindUserByName")
 			return &user, nil
 		}
 	}
@@ -373,7 +368,7 @@ func GetCloudUsers() ([]domain.UserDTO, error) {
 	}
 
 	if err != nil {
-		util.LogHandler("Failed to get users from cloud database.", err, "getUsers")
+		logging.FailedToFindOnDB("All Users", "Cloud", err, "model.GetCloudUsers")
 		return nil, err
 	}
 	return result, nil
@@ -430,14 +425,14 @@ func UserToPrim(user domain.User) primitive.M {
 }
 
 // Hash the password
-func Encrypt(password string) ([]byte, []byte, error) {
+func Hash(password string) ([]byte, []byte, error) {
 
 	salt := make([]byte, 16)
 
 	_, err := rand.Read(salt)
 
 	if err != nil {
-		util.LogHandler("Error creating cryptograpy steps", err, "hashPass")
+		logging.FailedToGenerateSalt(err, "model.Hash")
 		return nil, nil, err
 	}
 
@@ -451,7 +446,7 @@ func Compare(password string, salt string, origin string) bool {
 	salter, err := base64.StdEncoding.DecodeString(salt)
 
 	if err != nil {
-		util.LogHandler("Failed to decode salt.", err, "model.Compare")
+		logging.FailedToGenerateSalt(err, "model.Compare")
 		return false
 	}
 
