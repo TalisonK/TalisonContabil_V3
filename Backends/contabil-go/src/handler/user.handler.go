@@ -18,7 +18,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := model.GetUsers()
 
 	if err != nil {
-		logging.FailedToFindOnDB("All Users", "", err, "handler.GetUsers")
+		logging.FailedToFindOnDB("All Users", "", err.Inner, "handler.GetUsers")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to get users")
 		return
@@ -44,10 +44,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := model.CreateUser(user)
+	result, tagErr := model.CreateUser(user)
 
-	if err != nil {
-		logging.GenericError("Fail to create user", err, "handler.CreateUser")
+	if tagErr != nil {
+		logging.GenericError("Fail to create user", tagErr.Inner, "handler.CreateUser")
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -73,7 +73,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	result, err := model.UpdateUser(user)
 
 	if err != nil {
-		logging.GenericError("Failed to update user", err, "handler.UpdateUser")
+		logging.GenericError("Failed to update user", err.Inner, "handler.UpdateUser")
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -97,7 +97,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := model.DeleteUser(id)
 
 	if err != nil {
-		logging.GenericError("Failed to delete user", err, "handler.DeleteUser")
+		logging.GenericError("Failed to delete user", err.Inner, "handler.DeleteUser")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to delete user")
 		return
@@ -123,7 +123,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	result, err := model.LoginUser(*user)
 
 	if err != nil {
-		logging.GenericError("Failed to login user", err, "handler.handler.Login")
+		logging.GenericError("Failed to login user", err.Inner, "handler.handler.Login")
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to login user")
 		return

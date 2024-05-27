@@ -6,10 +6,12 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
+	"github.com/TalisonK/TalisonContabil/src/util"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,12 +19,12 @@ import (
 	_ "gorm.io/gorm"
 )
 
-func GetUsers() ([]domain.UserDTO, error) {
+func GetUsers() ([]domain.UserDTO, *util.TagError) {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.GetUsers"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.GetUsers"))
 	}
 
 	var users []domain.UserDTO
@@ -32,7 +34,7 @@ func GetUsers() ([]domain.UserDTO, error) {
 
 		if err != nil {
 			logging.FailedToFindOnDB("All Users", "Local", err, "model.GetUsers")
-			return nil, err
+			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 
 		users = append(users, usersLocal...)
@@ -44,30 +46,30 @@ func GetUsers() ([]domain.UserDTO, error) {
 
 		if err != nil {
 			logging.FailedToFindOnDB("All Users", "Cloud", err, "model.GetUsers")
-			return nil, err
+			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 
 		users = append(users, usersCloud...)
 		return users, nil
 	}
 
-	return nil, fmt.Errorf(logging.ErrorOccurred("model.GetUsers"))
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.GetUsers"))
 }
 
-func CreateUser(user *domain.User) (*domain.UserDTO, error) {
+func CreateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 
 	if user.Name == "" || user.Password == "" {
-		return nil, fmt.Errorf(logging.EmptyPassword("model.CreateUser"))
+		return nil, util.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.EmptyPassword("model.CreateUser")))
 	}
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.CreateUser"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.GetUsers"))
 	}
 
 	if _, err := FindUserByName(user.Name); err == nil {
-		return nil, fmt.Errorf(logging.DuplicatedEntry(user.Name, "model.CreateUser"))
+		return nil, util.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.DuplicatedEntry("category", "model.CreateUser")))
 	}
 
 	// Encrypt the password
@@ -75,7 +77,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 	if err != nil {
 		logging.FailedToHashPassword(err, "model.CreateUser")
-		return nil, err
+		return nil, util.GetTagError(http.StatusInternalServerError, err)
 	}
 
 	user.Password = base64.StdEncoding.EncodeToString(hash)
@@ -89,7 +91,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 		if err != nil {
 			logging.FailedToCreateOnDB(user.Name, "Cloud", err, "model.CreateUser")
-			return nil, err
+			return nil, util.GetTagError(http.StatusInternalServerError, err)
 		}
 		user.ID = resultCloud.InsertedID.(primitive.ObjectID).Hex()
 		logging.CreatedOnDB(user.Name, "Cloud", "model.CreateUser")
@@ -100,27 +102,27 @@ func CreateUser(user *domain.User) (*domain.UserDTO, error) {
 
 		if result.Error != nil {
 			logging.FailedToCreateOnDB(user.Name, "Local", result.Error, "model.CreateUser")
-			return nil, result.Error
+			return nil, util.GetTagError(http.StatusInternalServerError, result.Error)
 		}
 		logging.CreatedOnDB(user.Name, "Local", "model.CreateUser")
 		return ToDTO(user), nil
 	}
 
-	return nil, fmt.Errorf("algo deu errado")
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.CreateUser"))
 }
 
-func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
+func UpdateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.UpdateUser"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.UpdateUser"))
 	}
 
 	baseUser, err := FindUserById(user.ID)
 
 	if err != nil {
-		return nil, fmt.Errorf(logging.FailedToFindOnDB(user.ID, "User", err, "model.UpdateUser"))
+		return nil, util.GetTagError(http.StatusBadRequest, err.Inner)
 	}
 
 	if user.Name != "" {
@@ -131,7 +133,7 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 		hash, salt, err := Hash(user.Password)
 
 		if err != nil {
-			return nil, fmt.Errorf(logging.FailedToHashPassword(err, "model.UpdateUser"))
+			return nil, util.GetTagError(http.StatusInternalServerError, err)
 		}
 
 		baseUser.Password = base64.StdEncoding.EncodeToString(hash)
@@ -148,7 +150,7 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 		result := database.DBlocal.Save(user)
 		if result.Error != nil {
 			logging.FailedToUpdateOnDB(user.ID, "Local", result.Error, "model.UpdateUser")
-			return nil, result.Error
+			return nil, util.GetTagError(http.StatusInternalServerError, result.Error)
 		} else {
 			logging.UpdatedOnDB(user.ID, "Local", "model.UpdateUser")
 		}
@@ -163,10 +165,10 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 
 		update := bson.M{"$set": userParse}
 
-		_, err = database.DBCloud.User.UpdateOne(context.Background(), filter, update)
+		_, err := database.DBCloud.User.UpdateOne(context.Background(), filter, update)
 		if err != nil {
 			logging.FailedToUpdateOnDB(user.ID, "Cloud", err, "model.UpdateUser")
-			return nil, err
+			return nil, util.GetTagError(http.StatusInternalServerError, err)
 		} else {
 			logging.UpdatedOnDB(user.ID, "Cloud", "model.UpdateUser")
 		}
@@ -175,26 +177,26 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, error) {
 	return ToDTO(user), nil
 }
 
-func DeleteUser(id string) error {
+func DeleteUser(id string) *util.TagError {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return fmt.Errorf(logging.NoDatabaseConnection("model.DeleteUser"))
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.DeleteUser"))
 	}
 
 	idParse, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		logging.FailedToConvertPrimitive(err, "model.DeleteUser")
-		return err
+		return util.GetTagError(http.StatusInternalServerError, err)
 	}
 
 	if statusDbLocal {
 		result := database.DBlocal.Delete(&domain.User{}, "id = ?", id)
 		if result.Error != nil {
 			logging.FailedToDeleteOnDB(id, "Local", result.Error, "model.DeleteUser")
-			return result.Error
+			return util.GetTagError(http.StatusInternalServerError, result.Error)
 		} else {
 			logging.DeletedOnDB(id, "Local", "model.DeleteUser")
 		}
@@ -206,7 +208,7 @@ func DeleteUser(id string) error {
 		_, err = database.DBCloud.User.DeleteOne(context.Background(), filter)
 		if err != nil {
 			logging.FailedToDeleteOnDB(id, "Cloud", err, "model.DeleteUser")
-			return err
+			return util.GetTagError(http.StatusInternalServerError, err)
 		} else {
 			logging.DeletedOnDB(id, "Cloud", "model.DeleteUser")
 		}
@@ -215,16 +217,16 @@ func DeleteUser(id string) error {
 	return nil
 }
 
-func LoginUser(user domain.User) (*domain.User, error) {
+func LoginUser(user domain.User) (*domain.User, *util.TagError) {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.LoginUser"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.LoginUser"))
 	}
 
 	if user.Name == "" || user.Password == "" {
-		return nil, fmt.Errorf(logging.EmptyPassword("model.LoginUser"))
+		return nil, util.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.EmptyPassword("model.LoginUser")))
 	}
 
 	if statusDbLocal {
@@ -233,7 +235,7 @@ func LoginUser(user domain.User) (*domain.User, error) {
 
 		if result.Error != nil {
 			logging.FailedToAuthenticate(user.Name, "model.LoginUser")
-			return nil, result.Error
+			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
 			if user.Password == baseUser.Password {
 				logging.FoundOnDB(user.Name, "Local", "model.LoginUser")
@@ -257,22 +259,22 @@ func LoginUser(user domain.User) (*domain.User, error) {
 				logging.FoundOnDB(user.Name, "Cloud", "model.LoginUser")
 				return &userCloud, nil
 			} else {
-				return nil, fmt.Errorf("wrong password")
+				return nil, util.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.FailedToAuthenticate(user.Name, "model.LoginUser")))
 			}
 		}
 	}
 
-	return nil, fmt.Errorf("user not found")
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.LoginUser"))
 }
 
 // findUserById retrieves a user by its ID
-func FindUserById(id string) (*domain.User, error) {
+func FindUserById(id string) (*domain.User, *util.TagError) {
 	var user domain.User = domain.User{}
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.FindUserById"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.FindUserById"))
 	}
 
 	if statusDbLocal {
@@ -280,7 +282,7 @@ func FindUserById(id string) (*domain.User, error) {
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(id, "Local", result.Error, "model.FindUserById")
-			return &user, result.Error
+			return &user, util.GetTagError(http.StatusBadRequest, result.Error)
 			//TODO: equalize bases de users
 		} else {
 			logging.FoundOnDB(id, "Local", "model.FindUserById")
@@ -293,7 +295,7 @@ func FindUserById(id string) (*domain.User, error) {
 
 		if err != nil {
 			logging.FailedToConvertPrimitive(err, "model.FindUserById")
-			return &user, err
+			return &user, util.GetTagError(http.StatusInternalServerError, err)
 		}
 
 		filter := bson.M{"_id": idParse}
@@ -309,7 +311,7 @@ func FindUserById(id string) (*domain.User, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("user not found")
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.FindUserById"))
 }
 
 func FindUserByName(name string) (*domain.User, error) {
@@ -318,7 +320,7 @@ func FindUserByName(name string) (*domain.User, error) {
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return nil, fmt.Errorf(logging.NoDatabaseConnection("model.FindUserByName"))
+		return nil, logging.NoDatabaseConnection("model.FindUserByName")
 	}
 
 	if statusDbLocal {
