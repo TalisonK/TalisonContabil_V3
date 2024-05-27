@@ -239,8 +239,8 @@ func primToCategory(prim primitive.M) domain.Category {
 		ID:          prim["_id"].(primitive.ObjectID).Hex(),
 		Name:        prim["name"].(string),
 		Description: prim["description"].(string),
-		CreatedAt:   prim["createdAt"].(string),
-		UpdatedAt:   prim["updatedAt"].(string),
+		CreatedAt:   prim["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339),
+		UpdatedAt:   prim["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339),
 	}
 }
 
