@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
@@ -14,7 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func GetIncomes() ([]domain.Income, *util.TagError) {
+func GetFullIncomes() ([]domain.IncomeDTO, *util.TagError) {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
@@ -23,7 +22,7 @@ func GetIncomes() ([]domain.Income, *util.TagError) {
 	}
 
 	if !statusDBLocal {
-		incomes := []domain.Income{}
+		incomes := []domain.IncomeDTO{}
 		err := database.DBlocal.Find(&incomes).Error
 
 		if err != nil {
@@ -45,13 +44,13 @@ func GetIncomes() ([]domain.Income, *util.TagError) {
 			e := logging.FailedToFindOnDB("All Incomes", "Incomes", err, "model.GetIncomes")
 			return nil, util.GetTagError(http.StatusInternalServerError, fmt.Errorf(e))
 		}
-		incomes := []domain.Income{}
+		incomes := []domain.IncomeDTO{}
 
 		for cursor.Next(context.Background()) {
 			var income primitive.M
 			cursor.Decode(&income)
 
-			incomes = append(incomes, primToIncome(income))
+			incomes = append(incomes, domain.PrimToIncome(income).ToDTO())
 		}
 
 		logging.FoundOnDB("All Incomes", "Cloud", "model.GetIncomes")
@@ -62,20 +61,55 @@ func GetIncomes() ([]domain.Income, *util.TagError) {
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.GetIncomes"))
 }
 
-func primToIncome(income primitive.M) domain.Income {
-	newIncome := domain.Income{}
+func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 
-	newIncome.ID = income["_id"].(primitive.ObjectID).Hex()
-	newIncome.Value = income["value"].(float64)
-	newIncome.Description = income["description"].(string)
-	newIncome.ReceivedAt = income["receivedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-	user := income["user"].(primitive.M)
-	newIncome.UserID = user["_id"].(primitive.ObjectID).Hex()
-	newIncome.CreatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
-	if income["updatedAt"] != nil {
-		newIncome.UpdatedAt = income["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+	if !statusDBLocal && !statusDBCloud {
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.GetUserIncomes"))
 	}
 
-	return newIncome
+	if statusDBLocal {
+		incomes := []domain.Income{}
+
+		result := database.DBlocal.Where("user_id = ?", id).Find(&incomes)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(id, "Local", result.Error, "model.GetUserIncomes")
+			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		incomesDto := []domain.IncomeDTO{}
+
+		for _, income := range incomes {
+			incomesDto = append(incomesDto, income.ToDTO())
+		}
+
+		logging.FoundOnDB(id, "Local", "model.GetUserIncomes")
+		return incomesDto, nil
+	}
+
+	if statusDBCloud {
+		incomes := []domain.IncomeDTO{}
+
+		user := bson.M{"_id": id}
+		filter := bson.M{"user": user}
+
+		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToFindOnDB(id, "Cloud", err, "model.GetUserIncomes")
+			return nil, util.GetTagError(http.StatusBadRequest, err)
+		}
+
+		for cursor.Next(context.Background()) {
+			var aux bson.M
+			cursor.Decode(aux)
+			incomes = append(incomes, domain.PrimToIncome(aux).ToDTO())
+		}
+
+		logging.FoundOnDB(id, "Cloud", "model.GetUserIncomes")
+		return incomes, nil
+	}
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.GetUserIncomes"))
 }

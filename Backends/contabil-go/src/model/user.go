@@ -87,7 +87,7 @@ func CreateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 	user.UpdatedAt = time.Now().Format(time.RFC3339)
 
 	if statusDbCloud {
-		resultCloud, err := database.DBCloud.User.InsertOne(context.Background(), UserToPrim(*user))
+		resultCloud, err := database.DBCloud.User.InsertOne(context.Background(), user.ToPrim())
 
 		if err != nil {
 			logging.FailedToCreateOnDB(user.Name, "Cloud", err, "model.CreateUser")
@@ -105,7 +105,9 @@ func CreateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 			return nil, util.GetTagError(http.StatusInternalServerError, result.Error)
 		}
 		logging.CreatedOnDB(user.Name, "Local", "model.CreateUser")
-		return ToDTO(user), nil
+
+		dto := user.ToDTO()
+		return &dto, nil
 	}
 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.CreateUser"))
@@ -157,7 +159,7 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 	}
 
 	if statusDbCloud {
-		userParse := UserToPrim(*user)
+		userParse := user.ToPrim()
 
 		id, _ := primitive.ObjectIDFromHex(user.ID)
 
@@ -174,7 +176,9 @@ func UpdateUser(user *domain.User) (*domain.UserDTO, *util.TagError) {
 		}
 	}
 
-	return ToDTO(user), nil
+	dto := user.ToDTO()
+
+	return &dto, nil
 }
 
 func DeleteUser(id string) *util.TagError {
@@ -253,7 +257,7 @@ func LoginUser(user domain.User) (*domain.User, *util.TagError) {
 		if len(result) == 0 {
 			logging.FailedToFindOnDB(user.Name, "Cloud", nil, "model.LoginUser")
 		} else {
-			userCloud := PrimToUser(result)
+			userCloud := domain.PrimToUser(result)
 
 			if Compare(user.Password, userCloud.Salt, userCloud.Password) {
 				logging.FoundOnDB(user.Name, "Cloud", "model.LoginUser")
@@ -305,7 +309,7 @@ func FindUserById(id string) (*domain.User, *util.TagError) {
 		if len(result) == 0 {
 			logging.FailedToFindOnDB(id, "Cloud", nil, "model.FindUserById")
 		} else {
-			user = PrimToUser(result)
+			user = domain.PrimToUser(result)
 			logging.FoundOnDB(id, "Cloud", "model.FindUserById")
 			return &user, nil
 		}
@@ -343,7 +347,7 @@ func FindUserByName(name string) (*domain.User, error) {
 		if len(result) == 0 {
 			logging.FailedToFindOnDB(name, "Cloud", nil, "model.FindUserByName")
 		} else {
-			user = PrimToUser(result)
+			user = domain.PrimToUser(result)
 			logging.FoundOnDB(name, "Cloud", "model.FindUserByName")
 			return &user, nil
 		}
@@ -364,9 +368,9 @@ func GetCloudUsers() ([]domain.UserDTO, error) {
 		var user bson.M
 		colect.Decode(&user)
 
-		u := PrimToUser(user)
+		u := domain.PrimToUser(user)
 
-		result = append(result, *ToDTO(&u))
+		result = append(result, u.ToDTO())
 	}
 
 	if err != nil {
@@ -384,46 +388,6 @@ func GetLocalUsers() ([]domain.UserDTO, error) {
 		return nil, result.Error
 	}
 	return users, nil
-}
-
-// primToUser converts a primitive.M to a User
-func PrimToUser(user primitive.M) domain.User {
-	var usuario domain.User
-
-	usuario.ID = user["_id"].(primitive.ObjectID).Hex()
-	usuario.Name = user["name"].(string)
-	usuario.Password = user["password"].(string)
-	usuario.Role = user["role"].(string)
-	usuario.Salt = user["salt"].(string)
-	usuario.CreatedAt = user["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-	usuario.UpdatedAt = user["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-
-	return usuario
-}
-
-// userToPrim converts a User to a primitive.M
-func UserToPrim(user domain.User) primitive.M {
-	usuario := primitive.M{}
-
-	if user.ID != "" {
-		usuario["_id"], _ = primitive.ObjectIDFromHex(user.ID)
-	}
-	if user.Name != "" {
-		usuario["name"] = user.Name
-	}
-	if user.Password != "" {
-		usuario["password"] = user.Password
-	}
-	if user.Role != "" {
-		usuario["role"] = user.Role
-	}
-	createdAt, _ := time.Parse(time.RFC3339, user.CreatedAt)
-	usuario["salt"] = user.Salt
-	usuario["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
-	updatedAt, _ := time.Parse(time.RFC3339, user.UpdatedAt)
-	usuario["updatedAt"] = primitive.NewDateTimeFromTime(updatedAt)
-
-	return usuario
 }
 
 // Hash the password
@@ -465,14 +429,4 @@ func Compare(password string, salt string, origin string) bool {
 
 func hasher(password string, salt []byte) []byte {
 	return argon2.IDKey([]byte(password), salt, 1, 128*1024, 4, 64)
-}
-
-func ToDTO(user *domain.User) *domain.UserDTO {
-	return &domain.UserDTO{
-		ID:        user.ID,
-		Name:      user.Name,
-		Role:      user.Role,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-	}
 }

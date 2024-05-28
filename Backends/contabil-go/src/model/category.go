@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
@@ -47,7 +46,7 @@ func GetCategories() ([]domain.Category, *util.TagError) {
 			var category bson.M
 			result.Decode(&category)
 
-			cat := primToCategory(category)
+			cat := domain.PrimToCategory(category)
 
 			categories = append(categories, cat)
 		}
@@ -71,7 +70,7 @@ func CreateCategory(category domain.Category) *util.TagError {
 
 	if statusDBCloud {
 
-		pcat := categoryToPrim(category)
+		pcat := category.ToPrim()
 
 		resultCloud, err := database.DBCloud.Category.InsertOne(context.TODO(), pcat)
 
@@ -135,7 +134,7 @@ func UpdateCategory(category domain.Category) *util.TagError {
 
 	if statusDBCloud {
 
-		pcat := categoryToPrim(category)
+		pcat := category.ToPrim()
 
 		id, _ := primitive.ObjectIDFromHex(category.ID)
 
@@ -232,35 +231,4 @@ func FindCategoryByID(id string) (*domain.Category, *util.TagError) {
 	}
 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.FindCategoryByID"))
-}
-
-func primToCategory(prim primitive.M) domain.Category {
-	return domain.Category{
-		ID:          prim["_id"].(primitive.ObjectID).Hex(),
-		Name:        prim["name"].(string),
-		Description: prim["description"].(string),
-		CreatedAt:   prim["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339),
-		UpdatedAt:   prim["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339),
-	}
-}
-
-func categoryToPrim(category domain.Category) primitive.M {
-
-	pcat := primitive.M{}
-
-	if category.ID != "" {
-		id, _ := primitive.ObjectIDFromHex(category.ID)
-		pcat["_id"] = id
-	}
-
-	pcat["name"] = category.Name
-	pcat["description"] = category.Description
-
-	createdAt, _ := time.Parse(time.RFC3339, category.CreatedAt)
-	pcat["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
-
-	updatedAt, _ := time.Parse(time.RFC3339, category.UpdatedAt)
-	pcat["updatedAt"] = primitive.NewDateTimeFromTime(updatedAt)
-
-	return pcat
 }

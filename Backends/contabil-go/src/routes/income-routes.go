@@ -12,6 +12,7 @@ func IncomeRouter() http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/", handler.GetIncomes)
+	r.Get("/{id}", handler.GetUserIncomes)
 
 	return r
 
