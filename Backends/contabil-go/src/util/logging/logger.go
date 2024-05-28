@@ -26,6 +26,10 @@ func ErrorOccurred(function string) error {
 	return fmt.Errorf(logHandler("An error occurred.", nil, function))
 }
 
+func InvalidFields(function string) string {
+	return logHandler("Invalid fields.", nil, function)
+}
+
 // FAILED TO
 
 func FailedToOpenConnection(base string, err error, function string) string {

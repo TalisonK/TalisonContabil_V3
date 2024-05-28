@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
 )
 
@@ -41,4 +42,26 @@ func GetUserIncomes(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
+}
+
+func CreateIncome(w http.ResponseWriter, r *http.Request) {
+	var income domain.IncomeDTO
+
+	err := json.NewDecoder(r.Body).Decode(&income)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Invalid JSON")
+		return
+	}
+
+	tagErr := model.CreateIncome(income)
+
+	if tagErr != nil {
+		w.WriteHeader(tagErr.HtmlStatus)
+		fmt.Fprintln(w, tagErr.Inner.Error())
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 }

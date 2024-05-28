@@ -3,7 +3,6 @@ package domain
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "gorm.io/gorm"
 )
@@ -68,7 +67,7 @@ func (i *IncomeDTO) ToPrim() primitive.M {
 	pinc["createdAt"] = i.CreatedAt
 	pinc["updatedAt"] = i.UpdatedAt
 	pinc["receivedAt"] = i.ReceivedAt
-	pinc["user"] = bson.M{"_id": i.UserID}
+	pinc["userId"] = i.UserID
 
 	return pinc
 }
@@ -80,8 +79,7 @@ func PrimToIncome(income primitive.M) *Income {
 	newIncome.Value = income["value"].(float64)
 	newIncome.Description = income["description"].(string)
 	newIncome.ReceivedAt = income["receivedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-	user := income["user"].(primitive.M)
-	newIncome.UserID = user["_id"].(primitive.ObjectID).Hex()
+	newIncome.UserID = income["userId"].(primitive.ObjectID).Hex()
 	newIncome.CreatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
 	if income["updatedAt"] == nil {
 		newIncome.UpdatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)

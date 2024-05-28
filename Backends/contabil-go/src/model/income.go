@@ -113,3 +113,52 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 	}
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.GetUserIncomes"))
 }
+
+func CreateIncome(income domain.IncomeDTO) *util.TagError {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.CreateIncome"))
+	}
+
+	if income.Value == 0 || income.Description == "" || income.ReceivedAt == "" || income.UserID == "" {
+		return util.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.InvalidFields("model.CreateIncome")))
+	}
+
+	income.CreatedAt = util.GetTimeNow()
+	income.UpdatedAt = util.GetTimeNow()
+
+	if statusDBCloud {
+
+		raw := income.ToPrim()
+
+		result, err := database.DBCloud.Income.InsertOne(context.Background(), raw)
+
+		if err != nil {
+			logging.FailedToCreateOnDB(income.ID, "Cloud", err, "model.CreateIncome")
+			return util.GetTagError(http.StatusBadRequest, err)
+		}
+
+		income.ID = result.InsertedID.(primitive.ObjectID).Hex()
+
+		logging.CreatedOnDB(income.ID, "Cloud", "model.CreateIncome")
+	}
+
+	if statusDBLocal {
+
+		entity := income.ToEntity()
+
+		result := database.DBlocal.Create(&entity)
+
+		if result.Error != nil {
+			logging.FailedToCreateOnDB(income.ID, "Local", result.Error, "model.CreateIncome")
+			return util.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.CreatedOnDB(income.ID, "Local", "model.CreateIncome")
+		return nil
+	}
+
+	return util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.CreateIncome"))
+}

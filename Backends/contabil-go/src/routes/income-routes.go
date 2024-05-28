@@ -13,6 +13,7 @@ func IncomeRouter() http.Handler {
 
 	r.Get("/", handler.GetIncomes)
 	r.Get("/{id}", handler.GetUserIncomes)
+	r.Post("/", handler.CreateIncome)
 
 	return r
 
