@@ -120,9 +120,9 @@ func TestCreateUser(t *testing.T) {
 			result.Role, expected.Role)
 	}
 
-	err = model.DeleteUser(result.ID)
+	tagErr := model.DeleteUser(result.ID)
 
-	if err != nil {
+	if tagErr != nil {
 		t.Errorf("Error while cleaning databases")
 	}
 
@@ -135,10 +135,10 @@ func TestUpdateUser(t *testing.T) {
 		Password: "123",
 	}
 
-	userInBase, err := model.CreateUser(&example)
+	userInBase, tagErr := model.CreateUser(&example)
 
-	if err != nil {
-		logging.GenericError("Fail to create user for update test", err, "TestUpdateUser")
+	if tagErr != nil {
+		logging.GenericError("Fail to create user for update test", tagErr.Inner, "TestUpdateUser")
 		t.Errorf("Fail to create user for update test")
 	}
 
@@ -151,7 +151,7 @@ func TestUpdateUser(t *testing.T) {
 
 	var b bytes.Buffer
 
-	err = json.NewEncoder(&b).Encode(body)
+	err := json.NewEncoder(&b).Encode(body)
 
 	if err != nil {
 		logging.GenericError("Erro ao criar requisição", err, "TestUpdateUser")

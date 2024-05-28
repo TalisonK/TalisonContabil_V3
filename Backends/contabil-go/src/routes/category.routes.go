@@ -13,5 +13,11 @@ func CategoryRouter() http.Handler {
 
 	r.Get("/", handler.GetCategories)
 
+	r.Post("/", handler.CreateCategory)
+
+	r.Put("/", handler.UpdateCategory)
+
+	r.Delete("/{id}", handler.DeleteCategory)
+
 	return r
 }

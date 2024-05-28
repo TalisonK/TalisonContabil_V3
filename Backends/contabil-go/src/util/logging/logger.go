@@ -10,8 +10,8 @@ func logHandler(message string, err error, function string) string {
 	return message
 }
 
-func NoDatabaseConnection(function string) string {
-	return logHandler("No database connection available.", nil, function)
+func NoDatabaseConnection(function string) error {
+	return fmt.Errorf(logHandler("No database connection available.", nil, function))
 }
 
 func GenericError(message string, err error, function string) string {
@@ -22,8 +22,8 @@ func GenericSuccess(message string, function string) string {
 	return logHandler(message, nil, function)
 }
 
-func ErrorOccurred(function string) string {
-	return logHandler("An error occurred.", nil, function)
+func ErrorOccurred(function string) error {
+	return fmt.Errorf(logHandler("An error occurred.", nil, function))
 }
 
 // FAILED TO
