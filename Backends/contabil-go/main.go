@@ -21,20 +21,20 @@ func main() {
 
 	if err != nil {
 		log.Fatal("Erro ao carregar as configurações, certifique-se de que o arquivo de configuração está correto.")
-		logging.GenericError("Erro ao carregar as configurações", err, "main")
+		logging.GenericError("Erro ao carregar as configurações", err)
 		os.Exit(2)
 	}
 
 	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		logging.FailedToOpenConnection("local", err, "main")
+		logging.FailedToOpenConnection("local", err)
 	}
 
 	err = database.OpenConnectionCloud()
 
 	if err != nil {
-		logging.FailedToOpenConnection("cloud", err, "main")
+		logging.FailedToOpenConnection("cloud", err)
 	}
 
 	defer database.CloseConnections()

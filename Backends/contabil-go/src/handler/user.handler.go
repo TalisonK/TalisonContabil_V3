@@ -18,7 +18,7 @@ func GetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := model.GetUsers()
 
 	if err != nil {
-		logging.FailedToFindOnDB("All Users", "", err.Inner, "handler.GetUsers")
+		logging.FailedToFindOnDB("All Users", "", err.Inner)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to get users")
 		return
@@ -38,7 +38,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(user)
 
 	if err != nil {
-		logging.FailedToParseBody(err, "handler.CreateUser")
+		logging.FailedToParseBody(err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to parse body")
 		return
@@ -47,7 +47,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	result, tagErr := model.CreateUser(user)
 
 	if tagErr != nil {
-		logging.GenericError("Fail to create user", tagErr.Inner, "handler.CreateUser")
+		logging.GenericError("Fail to create user", tagErr.Inner)
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -64,7 +64,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(user)
 
 	if user.ID == "" {
-		logging.GenericError("Empty request body", nil, "handler.updateUser")
+		logging.GenericError("Empty request body", nil)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty request body")
 		return
@@ -73,7 +73,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	result, err := model.UpdateUser(user)
 
 	if err != nil {
-		logging.GenericError("Failed to update user", err.Inner, "handler.UpdateUser")
+		logging.GenericError("Failed to update user", err.Inner)
 	} else {
 		w.WriteHeader(http.StatusCreated)
 		w.Header().Set("Content-Type", "application/json")
@@ -88,7 +88,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 
 	if id == "" {
-		logging.GenericError("Empty id passed.", nil, "handler.DeleteUser")
+		logging.GenericError("Empty id passed.", nil)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty id passed.")
 		return
@@ -97,7 +97,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := model.DeleteUser(id)
 
 	if err != nil {
-		logging.GenericError("Failed to delete user", err.Inner, "handler.DeleteUser")
+		logging.GenericError("Failed to delete user", err.Inner)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to delete user")
 		return
@@ -114,7 +114,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(user)
 
 	if user.Name == "" || user.Password == "" {
-		logging.GenericError("Empty request body", nil, "handler.Login")
+		logging.GenericError("Empty request body", nil)
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintln(w, "Empty request body")
 		return
@@ -123,7 +123,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	result, err := model.LoginUser(*user)
 
 	if err != nil {
-		logging.GenericError("Failed to login user", err.Inner, "handler.handler.Login")
+		logging.GenericError("Failed to login user", err.Inner)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to login user")
 		return

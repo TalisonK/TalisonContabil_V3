@@ -17,17 +17,17 @@ func GetCategories() ([]domain.Category, *util.TagError) {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.GetCategory"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	if statusDBLocal {
 
 		var categories []domain.Category
 		if result := database.DBlocal.Find(&categories); result.Error != nil {
-			logging.FailedToFindOnDB("All Categories", "Local", result.Error, "model.GetCategories")
+			logging.FailedToFindOnDB("All Categories", "Local", result.Error)
 			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
-			logging.FoundOnDB("All Categories", "Local", "model.GetCategories")
+			logging.FoundOnDB("All Categories", "Local")
 			return categories, nil
 		}
 	}
@@ -36,7 +36,7 @@ func GetCategories() ([]domain.Category, *util.TagError) {
 		result, err := database.DBCloud.Category.Find(context.TODO(), &bson.M{})
 
 		if err != nil {
-			logging.FailedToFindOnDB("All Categories", "Cloud", err, "model.GetCategories")
+			logging.FailedToFindOnDB("All Categories", "Cloud", err)
 			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 
@@ -51,7 +51,7 @@ func GetCategories() ([]domain.Category, *util.TagError) {
 			categories = append(categories, cat)
 		}
 
-		logging.FoundOnDB("All Categories", "Cloud", "model.GetCategories")
+		logging.FoundOnDB("All Categories", "Cloud")
 		return categories, nil
 	}
 	return nil, nil
@@ -62,7 +62,7 @@ func CreateCategory(category domain.Category) *util.TagError {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.CreateCategory"))
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	category.CreatedAt = util.GetTimeNow()
@@ -75,20 +75,20 @@ func CreateCategory(category domain.Category) *util.TagError {
 		resultCloud, err := database.DBCloud.Category.InsertOne(context.TODO(), pcat)
 
 		if err != nil {
-			logging.FailedToCreateOnDB(category.ID, "Cloud", err, "model.CreateCategory")
+			logging.FailedToCreateOnDB(category.ID, "Cloud", err)
 			return util.GetTagError(http.StatusInternalServerError, err)
 		}
 		category.ID = resultCloud.InsertedID.(primitive.ObjectID).Hex()
-		logging.CreatedOnDB(category.ID, "Cloud", "model.CreateCategory")
+		logging.CreatedOnDB(category.ID, "Cloud")
 	}
 
 	if statusDBLocal {
 
 		if result := database.DBlocal.Create(&category); result.Error != nil {
-			logging.FailedToCreateOnDB(category.ID, "Local", result.Error, "model.CreateCategory")
+			logging.FailedToCreateOnDB(category.ID, "Local", result.Error)
 			return util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
-			logging.CreatedOnDB(category.ID, "Local", "model.CreateCategory")
+			logging.CreatedOnDB(category.ID, "Local")
 		}
 	}
 
@@ -99,13 +99,13 @@ func UpdateCategory(category domain.Category) *util.TagError {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.UpdateCategory"))
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	baseCategory, err := FindCategoryByID(category.ID)
 
 	if err != nil {
-		logging.FailedToFindOnDB(category.ID, "Local", err.Inner, "model.UpdateCategory")
+		logging.FailedToFindOnDB(category.ID, "Local", err.Inner)
 		return err
 	}
 
@@ -125,10 +125,10 @@ func UpdateCategory(category domain.Category) *util.TagError {
 	if statusDBLocal {
 
 		if result := database.DBlocal.Save(&category); result.Error != nil {
-			logging.FailedToUpdateOnDB(category.ID, "Local", result.Error, "model.UpdateCategory")
+			logging.FailedToUpdateOnDB(category.ID, "Local", result.Error)
 			return util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
-			logging.UpdatedOnDB(category.ID, "Local", "model.UpdateCategory")
+			logging.UpdatedOnDB(category.ID, "Local")
 		}
 	}
 
@@ -145,11 +145,11 @@ func UpdateCategory(category domain.Category) *util.TagError {
 		_, err := database.DBCloud.Category.UpdateOne(context.Background(), filter, update)
 
 		if err != nil {
-			logging.FailedToUpdateOnDB(category.ID, "Cloud", err, "model.UpdateCategory")
+			logging.FailedToUpdateOnDB(category.ID, "Cloud", err)
 			return util.GetTagError(http.StatusInternalServerError, err)
 		}
 
-		logging.UpdatedOnDB(category.ID, "Cloud", "model.UpdateCategory")
+		logging.UpdatedOnDB(category.ID, "Cloud")
 	}
 
 	return nil
@@ -160,13 +160,13 @@ func DeleteCategory(id string) *util.TagError {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.DeleteCategory"))
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	idParse, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		logging.FailedToConvertPrimitive(err, "model.DeleteUser")
+		logging.FailedToConvertPrimitive(err)
 		return util.GetTagError(http.StatusInternalServerError, err)
 	}
 
@@ -174,10 +174,10 @@ func DeleteCategory(id string) *util.TagError {
 		result := database.DBlocal.Delete(&domain.Category{}, "id=?", id)
 
 		if result.Error != nil {
-			logging.FailedToDeleteOnDB(id, "Local", result.Error, "model.DeleteCategory")
+			logging.FailedToDeleteOnDB(id, "Local", result.Error)
 			return util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
-			logging.DeletedOnDB(id, "Local", "model.DeleteCategory")
+			logging.DeletedOnDB(id, "Local")
 		}
 	}
 
@@ -187,11 +187,11 @@ func DeleteCategory(id string) *util.TagError {
 		_, err = database.DBCloud.Category.DeleteOne(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToDeleteOnDB(id, "Cloud", err, "model.DeleteCategory")
+			logging.FailedToDeleteOnDB(id, "Cloud", err)
 			return util.GetTagError(http.StatusInternalServerError, err)
 		}
 
-		logging.DeletedOnDB(id, "Cloud", "model.DeleteCategory")
+		logging.DeletedOnDB(id, "Cloud")
 	}
 	return nil
 }
@@ -201,7 +201,7 @@ func FindCategoryByID(id string) (*domain.Category, *util.TagError) {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection("model.FindCategoryByID"))
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	if statusDBLocal {
@@ -209,10 +209,10 @@ func FindCategoryByID(id string) (*domain.Category, *util.TagError) {
 		category := domain.Category{}
 		result := database.DBlocal.First(&category, "id = ?", id)
 		if result.Error != nil {
-			logging.FailedToFindOnDB(id, "Local", result.Error, "model.FindCategoryByID")
+			logging.FailedToFindOnDB(id, "Local", result.Error)
 			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		} else {
-			logging.FoundOnDB(id, "Local", "model.FindCategoryByID")
+			logging.FoundOnDB(id, "Local")
 			return &category, nil
 		}
 	}
@@ -222,13 +222,13 @@ func FindCategoryByID(id string) (*domain.Category, *util.TagError) {
 
 		var category domain.Category
 		if err := result.Decode(&category); err != nil {
-			logging.FailedToFindOnDB(id, "Cloud", err, "model.FindCategoryByID")
+			logging.FailedToFindOnDB(id, "Cloud", err)
 			return nil, util.GetTagError(http.StatusInternalServerError, err)
 		}
 
-		logging.FoundOnDB(id, "Cloud", "model.FindCategoryByID")
+		logging.FoundOnDB(id, "Cloud")
 		return &category, nil
 	}
 
-	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred("model.FindCategoryByID"))
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }

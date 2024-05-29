@@ -48,7 +48,7 @@ func Load() error {
 	configPath, err := findConfigFile()
 
 	if err != nil {
-		logging.GenericError("Failed to find config file", err, "config.Load")
+		logging.GenericError("Failed to find config file", err)
 		return err
 	}
 

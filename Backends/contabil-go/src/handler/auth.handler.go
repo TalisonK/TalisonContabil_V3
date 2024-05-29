@@ -17,7 +17,7 @@ func AuthProviderCallback(w http.ResponseWriter, r *http.Request) {
 	user, err := gothic.CompleteUserAuth(w, r)
 
 	if err != nil {
-		logging.GenericError("Falha ao autenticar usuário", err, "AuthProviderCallback")
+		logging.GenericError("Falha ao autenticar usuário", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, err.Error())
 		return
@@ -25,7 +25,7 @@ func AuthProviderCallback(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(user)
 
-	logging.GenericSuccess("Usuário autenticado com sucesso", "AuthProviderCallback")
+	logging.GenericSuccess("Usuário autenticado com sucesso")
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
