@@ -54,7 +54,7 @@ func (i *Income) ToDTO() IncomeDTO {
 	}
 }
 
-func (i *IncomeDTO) ToPrim() primitive.M {
+func (i *Income) ToPrim() primitive.M {
 	pinc := primitive.M{}
 
 	if i.ID != "" {

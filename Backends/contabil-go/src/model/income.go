@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
@@ -120,6 +121,60 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
+func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]domain.Income, *util.TagError) {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	incomes := []domain.Income{}
+
+	if statusDBLocal {
+
+		result := database.DBlocal.Where("User.id = ? AND receivedAt between ? AND ?", userId, startingDate, endingDate).Find(incomes)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), "Local", result.Error)
+		}
+
+		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud")
+		return incomes, nil
+	}
+
+	if statusDBCloud {
+
+		auxSD, _ := time.Parse(time.RFC3339, startingDate)
+		sd := primitive.NewDateTimeFromTime(auxSD)
+
+		auxED, _ := time.Parse(time.RFC3339, endingDate)
+		ed := primitive.NewDateTimeFromTime(auxED)
+
+		sdBson := bson.M{"$gt": sd, "$lt": ed}
+		filter := bson.M{"userID": userId, "receivedAt": sdBson}
+
+		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud", err)
+		}
+
+		for cursor.Next(context.Background()) {
+			var aux bson.M
+
+			cursor.Decode(aux)
+
+			incomes = append(incomes, *domain.PrimToIncome(aux))
+		}
+
+		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud")
+		return incomes, nil
+	}
+
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
 func CreateIncome(income domain.IncomeDTO) *util.TagError {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
@@ -137,7 +192,9 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 
 	if statusDBCloud {
 
-		raw := income.ToPrim()
+		entity := income.ToEntity()
+
+		raw := entity.ToPrim()
 
 		result, err := database.DBCloud.Income.InsertOne(context.Background(), raw)
 
@@ -169,19 +226,19 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 	return util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func UpdateIncome(income domain.IncomeDTO) *util.TagError {
+func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *util.TagError) {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	baseIncome, err := findIncomeById(income.ID)
 
 	if err != nil {
 		logging.FailedToFindOnDB(income.ID, "Local", err.Inner)
-		return err
+		return nil, err
 	}
 
 	baseIncome.UpdatedAt = util.GetTimeNow()
@@ -204,12 +261,72 @@ func UpdateIncome(income domain.IncomeDTO) *util.TagError {
 
 		if result.Error != nil {
 			logging.FailedToUpdateOnDB(baseIncome.ID, "Local", result.Error)
-			return util.GetTagError(http.StatusBadRequest, result.Error)
+			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		}
 		logging.UpdatedOnDB(baseIncome.ID, "Local")
 	}
 
-	return util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+	if statusDBCloud {
+
+		incomeParse := baseIncome.ToPrim()
+
+		id, _ := primitive.ObjectIDFromHex(income.ID)
+
+		filter := bson.M{"_id": id}
+
+		_, err := database.DBCloud.Income.ReplaceOne(context.Background(), filter, incomeParse)
+
+		if err != nil {
+			logging.FailedToUpdateOnDB(baseIncome.ID, "Cloud", err)
+			return nil, util.GetTagError(http.StatusBadRequest, err)
+		}
+
+		logging.UpdatedOnDB(baseIncome.ID, "Cloud")
+		dto := baseIncome.ToDTO()
+		return &dto, nil
+	}
+
+	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func DeleteIncome(id string) *util.TagError {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if statusDBLocal {
+
+		result := database.DBlocal.Delete(&domain.Income{}, "id = ?", id)
+
+		if result.Error != nil {
+			logging.FailedToDeleteOnDB(id, "Local", result.Error)
+			return util.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.DeletedOnDB(id, "Local")
+	}
+
+	if statusDBCloud {
+
+		idPrim, _ := primitive.ObjectIDFromHex(id)
+
+		filter := bson.M{"_id": idPrim}
+
+		_, err := database.DBCloud.Income.DeleteOne(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToDeleteOnDB(id, "Cloud", err)
+			return util.GetTagError(http.StatusBadRequest, err)
+		}
+
+		logging.DeletedOnDB(id, "Cloud")
+	}
+
+	return nil
+
 }
 
 func findIncomeById(id string) (*domain.Income, *util.TagError) {

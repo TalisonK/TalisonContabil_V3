@@ -111,6 +111,7 @@ func OpenConnectionCloud() error {
 	DBCloud.List = client.Database(base).Collection("list")
 	DBCloud.Totals = client.Database(base).Collection("total")
 
+	logging.OpenedConnection("cloud")
 	return nil
 }
 

@@ -2,13 +2,29 @@ package logging
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/TalisonK/TalisonContabil/src/util"
 )
 
 func logHandler(message string, err error) string {
 	fmt.Println(message, err, getFunctionName(), time.Now())
+
+	f, _ := os.OpenFile("talisoncontabil.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	defer f.Close()
+
+	if err == nil {
+		f.WriteString(fmt.Sprintf("%s, %s, %s, %s\n", util.GetTimeNow(), getFunctionName(), message, "No error"))
+	} else {
+		f.WriteString(fmt.Sprintf("%s, %s, %s, %s\n", util.GetTimeNow(), getFunctionName(), message, err))
+	}
+
+	f.Sync()
+
 	return message
 }
 
