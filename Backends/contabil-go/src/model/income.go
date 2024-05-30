@@ -133,7 +133,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("User.id = ? AND receivedAt between ? AND ?", userId, startingDate, endingDate).Find(incomes)
+		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Find(&incomes)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), "Local", result.Error)
@@ -199,7 +199,7 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 		result, err := database.DBCloud.Income.InsertOne(context.Background(), raw)
 
 		if err != nil {
-			logging.FailedToCreateOnDB(income.ID, "Cloud", err)
+			logging.FailedToCreateOnDB(income.Description, "Cloud", err)
 			return util.GetTagError(http.StatusBadRequest, err)
 		}
 
@@ -208,7 +208,7 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 		logging.CreatedOnDB(income.ID, "Cloud")
 	}
 
-	if statusDBLocal {
+	if statusDBLocal && income.ID != "" {
 
 		entity := income.ToEntity()
 

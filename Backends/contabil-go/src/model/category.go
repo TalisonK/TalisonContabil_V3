@@ -75,14 +75,14 @@ func CreateCategory(category domain.Category) *util.TagError {
 		resultCloud, err := database.DBCloud.Category.InsertOne(context.TODO(), pcat)
 
 		if err != nil {
-			logging.FailedToCreateOnDB(category.ID, "Cloud", err)
+			logging.FailedToCreateOnDB(category.Name, "Cloud", err)
 			return util.GetTagError(http.StatusInternalServerError, err)
 		}
 		category.ID = resultCloud.InsertedID.(primitive.ObjectID).Hex()
 		logging.CreatedOnDB(category.ID, "Cloud")
 	}
 
-	if statusDBLocal {
+	if statusDBLocal && category.ID != "" {
 
 		if result := database.DBlocal.Create(&category); result.Error != nil {
 			logging.FailedToCreateOnDB(category.ID, "Local", result.Error)

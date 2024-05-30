@@ -50,54 +50,67 @@ func InvalidFields() string {
 
 // FAILED TO
 
+// "Failed to open connection to %s database."
 func FailedToOpenConnection(base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to open connection to %s database.", base), err)
 }
 
+// "Failed to connect to %s database."
 func FailedToConnectToDB(base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to connect to %s database.", base), err)
 }
 
+// "Failed to find %s on %s database."
 func FailedToFindOnDB(id string, base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to find %s on %s database.", id, base), err)
 }
 
+// "Failed to create %s on %s database."
 func FailedToCreateOnDB(id string, base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to create %s on %s database.", id, base), err)
 }
 
+// "Failed to update %s on %s database."
 func FailedToUpdateOnDB(id string, base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to update %s on %s database.", id, base), err)
 }
 
+// "Failed to delete %s on %s database."
 func FailedToDeleteOnDB(id string, base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to delete %s on %s database.", id, base), err)
 }
 
+// "Failed to authenticate user %s."
 func FailedToAuthenticate(user string) string {
 	return logHandler(fmt.Sprintf("Failed to authenticate user %s.", user), nil)
 }
 
+// "Failed to hash password."
 func FailedToHashPassword(err error) string {
 	return logHandler("Failed to hash password.", err)
 }
 
+// "Failed to generate salt."
 func FailedToGenerateSalt(err error) string {
 	return logHandler("Failed to generate salt.", err)
 }
 
+// "Failed to compare passwords."
 func FailedToConvertPrimitive(err error) string {
 	return logHandler("Failed to convert primitive.", err)
 }
 
+// "Failed to ping %s database."
 func FailedToPingDB(base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to ping %s database.", base), err)
 }
 
+// "Failed to close connection to %s database."
 func FailedToCloseConnection(base string, err error) string {
 	return logHandler(fmt.Sprintf("Failed to close connection to %s database.", base), err)
 }
 
+// "Failed to parse body."
 func FailedToParseBody(err error) string {
 	return logHandler("Failed to parse body.", err)
 }

@@ -25,7 +25,7 @@ type CloudCollections struct {
 	Income   *mongo.Collection
 	List     *mongo.Collection
 	User     *mongo.Collection
-	Totals   *mongo.Collection
+	Total    *mongo.Collection
 }
 
 var DBlocal *gorm.DB
@@ -63,6 +63,7 @@ func OpenConnectionLocal() error {
 	conn.AutoMigrate(&domain.Income{})
 	conn.AutoMigrate(&domain.Expense{})
 	conn.AutoMigrate(&domain.List{})
+	conn.AutoMigrate(&domain.Total{})
 
 	DBlocal = conn
 
@@ -109,7 +110,7 @@ func OpenConnectionCloud() error {
 	DBCloud.Income = client.Database(base).Collection("income")
 	DBCloud.Expense = client.Database(base).Collection("expense")
 	DBCloud.List = client.Database(base).Collection("list")
-	DBCloud.Totals = client.Database(base).Collection("total")
+	DBCloud.Total = client.Database(base).Collection("total")
 
 	logging.OpenedConnection("cloud")
 	return nil

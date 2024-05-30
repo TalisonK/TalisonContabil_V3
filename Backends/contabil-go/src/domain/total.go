@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"github.com/TalisonK/TalisonContabil/src/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "gorm.io/gorm"
 )
@@ -14,7 +15,7 @@ type Total struct {
 	UpdatedAt  string  `json:"updatedAt" gorm:"type:varchar(255);not null;idx_total"`
 	TotalValue float64 `json:"totalValue" gorm:"type:float;not null;idx_total"`
 	Month      string  `json:"month" gorm:"type:varchar(255);not null;idx_total"`
-	Year       int32   `json:"year" gorm:"type:int;not null;idx_total"`
+	Year       int     `json:"year" gorm:"type:int;not null;idx_total"`
 	Type       string  `json:"type" gorm:"type:varchar(255);not null;idx_total"`
 }
 
@@ -29,14 +30,17 @@ func (t Total) ToPrim() primitive.M {
 	pt["userID"] = t.UserID
 
 	if t.CreatedAt == "" {
-		createdAt, _ := time.Parse(time.RFC3339, t.CreatedAt)
-		pt["createdAt"] = createdAt
+		pt["createdAt"] = util.GetTimeNow()
+	} else {
+		pt["createdAt"], _ = time.Parse(time.RFC3339, t.CreatedAt)
 	}
 
 	if t.UpdatedAt == "" {
-		updatedAt, _ := time.Parse(time.RFC3339, t.UpdatedAt)
-		pt["updatedAt"] = updatedAt
+		pt["updatedAt"] = util.GetTimeNow()
+	} else {
+		pt["updatedAt"], _ = time.Parse(time.RFC3339, t.UpdatedAt)
 	}
+
 	pt["totalValue"] = t.TotalValue
 	pt["month"] = t.Month
 	pt["year"] = t.Year
@@ -65,7 +69,7 @@ func PrimToTotal(pt primitive.M) Total {
 	t.TotalValue = pt["totalValue"].(float64)
 	t.Month = pt["month"].(string)
 	year, _ := pt["year"].(int32)
-	t.Year = year
+	t.Year = int(year)
 	t.Type = pt["type"].(string)
 
 	return t
