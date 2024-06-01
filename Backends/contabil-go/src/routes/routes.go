@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 
-	"github.com/TalisonK/TalisonContabil/src/handler"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -18,11 +17,10 @@ func Router() *chi.Mux {
 		w.Write([]byte("Hello, World!"))
 	})
 
-	r.Post("/total", handler.CreateTotal)
-
 	r.Mount("/user", UserRouter())
 	r.Mount("/category", CategoryRouter())
 	r.Mount("/income", IncomeRouter())
+	r.Mount("/total", TotalRouter())
 	r.Mount("/", AuthRouter())
 
 	return r

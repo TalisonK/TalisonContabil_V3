@@ -9,6 +9,7 @@ import (
 
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/domain"
+	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -52,10 +53,10 @@ func OpenConnectionLocal() error {
 	conn, err := gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: newLogger})
 
 	if err != nil {
-		return fmt.Errorf(logging.FailedToOpenConnection("local", err))
+		return fmt.Errorf(logging.FailedToOpenConnection(constants.LOCAL, err))
 	}
 
-	logging.OpenedConnection("local")
+	logging.OpenedConnection(constants.LOCAL)
 	conn.Logger = logger.Default.LogMode(logger.Info)
 
 	conn.AutoMigrate(&domain.Category{})
@@ -84,7 +85,7 @@ func OpenConnectionCloud() error {
 	client, err := mongo.Connect(context.TODO(), opts)
 
 	if err != nil {
-		logging.FailedToOpenConnection("cloud", err)
+		logging.FailedToOpenConnection(constants.CLOUD, err)
 		return err
 	}
 
@@ -92,7 +93,7 @@ func OpenConnectionCloud() error {
 	err = client.Database("admin").RunCommand(context.TODO(), bson.D{{Key: "ping", Value: 1}}).Err()
 
 	if err != nil {
-		logging.FailedToConnectToDB("cloud", err)
+		logging.FailedToConnectToDB(constants.CLOUD, err)
 		return err
 	}
 
@@ -107,12 +108,12 @@ func OpenConnectionCloud() error {
 	DBCloud.Base = client
 	DBCloud.User = client.Database(base).Collection("user")
 	DBCloud.Category = client.Database(base).Collection("category")
-	DBCloud.Income = client.Database(base).Collection("income")
-	DBCloud.Expense = client.Database(base).Collection("expense")
+	DBCloud.Income = client.Database(base).Collection(constants.INCOME)
+	DBCloud.Expense = client.Database(base).Collection(constants.EXPENSE)
 	DBCloud.List = client.Database(base).Collection("list")
 	DBCloud.Total = client.Database(base).Collection("total")
 
-	logging.OpenedConnection("cloud")
+	logging.OpenedConnection(constants.CLOUD)
 	return nil
 }
 
@@ -120,21 +121,21 @@ func OpenConnectionCloud() error {
 func checkLocalDB() bool {
 
 	if DBlocal == nil {
-		logging.FailedToPingDB("local", nil)
+		logging.FailedToPingDB(constants.LOCAL, nil)
 		return false
 	}
 
 	section, err := DBlocal.DB()
 
 	if err != nil {
-		logging.FailedToConnectToDB("local", err)
+		logging.FailedToConnectToDB(constants.LOCAL, err)
 		return false
 	}
 
 	err = section.Ping()
 
 	if err != nil {
-		logging.FailedToPingDB("local", err)
+		logging.FailedToPingDB(constants.LOCAL, err)
 		return false
 	}
 	return true
@@ -147,7 +148,7 @@ func checkCloudDB() bool {
 	err := DBCloud.Base.Ping(context.Background(), nil)
 
 	if err != nil {
-		logging.FailedToPingDB("cloud", nil)
+		logging.FailedToPingDB(constants.CLOUD, nil)
 		return false
 	}
 
@@ -161,7 +162,7 @@ func CloseConnections() {
 	err := db.Close()
 
 	if err != nil {
-		logging.FailedToCloseConnection("local", err)
+		logging.FailedToCloseConnection(constants.LOCAL, err)
 	}
 }
 

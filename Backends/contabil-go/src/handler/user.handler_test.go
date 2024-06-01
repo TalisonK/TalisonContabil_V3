@@ -13,6 +13,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
+	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
@@ -39,14 +40,14 @@ func TestMain(m *testing.M) {
 	err = database.OpenConnectionLocal()
 
 	if err != nil {
-		logging.FailedToOpenConnection("local", err)
+		logging.FailedToOpenConnection(constants.LOCAL, err)
 		return
 	}
 
 	err = database.OpenConnectionCloud()
 
 	if err != nil {
-		logging.FailedToOpenConnection("cloud", err)
+		logging.FailedToOpenConnection(constants.CLOUD, err)
 		return
 	}
 

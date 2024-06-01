@@ -9,6 +9,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/util"
+	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -37,7 +38,7 @@ func GetFullIncomes() ([]domain.IncomeDTO, *util.TagError) {
 			incomeDto = append(incomeDto, incomes[i].ToDTO())
 		}
 
-		logging.FoundOnDB("All Incomes", "Local")
+		logging.FoundOnDB("All Incomes", constants.LOCAL)
 		return incomeDto, nil
 	}
 
@@ -60,7 +61,7 @@ func GetFullIncomes() ([]domain.IncomeDTO, *util.TagError) {
 			incomes = append(incomes, domain.PrimToIncome(income).ToDTO())
 		}
 
-		logging.FoundOnDB("All Incomes", "Cloud")
+		logging.FoundOnDB("All Incomes", constants.CLOUD)
 
 		return incomes, nil
 
@@ -82,7 +83,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 		result := database.DBlocal.Where("user_id = ?", id).Find(&incomes)
 
 		if result.Error != nil {
-			logging.FailedToFindOnDB(id, "Local", result.Error)
+			logging.FailedToFindOnDB(id, constants.LOCAL, result.Error)
 			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
@@ -92,7 +93,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 			incomesDto = append(incomesDto, income.ToDTO())
 		}
 
-		logging.FoundOnDB(id, "Local")
+		logging.FoundOnDB(id, constants.LOCAL)
 		return incomesDto, nil
 	}
 
@@ -105,7 +106,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToFindOnDB(id, "Cloud", err)
+			logging.FailedToFindOnDB(id, constants.CLOUD, err)
 			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 
@@ -115,7 +116,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 			incomes = append(incomes, domain.PrimToIncome(aux).ToDTO())
 		}
 
-		logging.FoundOnDB(id, "Cloud")
+		logging.FoundOnDB(id, constants.CLOUD)
 		return incomes, nil
 	}
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
@@ -136,10 +137,10 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Find(&incomes)
 
 		if result.Error != nil {
-			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), "Local", result.Error)
+			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.LOCAL, result.Error)
 		}
 
-		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud")
+		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.CLOUD)
 		return incomes, nil
 	}
 
@@ -157,7 +158,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud", err)
+			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.CLOUD, err)
 		}
 
 		for cursor.Next(context.Background()) {
@@ -168,7 +169,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 			incomes = append(incomes, *domain.PrimToIncome(aux))
 		}
 
-		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), "Cloud")
+		logging.FoundOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.CLOUD)
 		return incomes, nil
 	}
 
@@ -199,13 +200,13 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 		result, err := database.DBCloud.Income.InsertOne(context.Background(), raw)
 
 		if err != nil {
-			logging.FailedToCreateOnDB(income.Description, "Cloud", err)
+			logging.FailedToCreateOnDB(income.Description, constants.CLOUD, err)
 			return util.GetTagError(http.StatusBadRequest, err)
 		}
 
 		income.ID = result.InsertedID.(primitive.ObjectID).Hex()
 
-		logging.CreatedOnDB(income.ID, "Cloud")
+		logging.CreatedOnDB(income.ID, constants.CLOUD)
 	}
 
 	if statusDBLocal && income.ID != "" {
@@ -215,11 +216,11 @@ func CreateIncome(income domain.IncomeDTO) *util.TagError {
 		result := database.DBlocal.Create(&entity)
 
 		if result.Error != nil {
-			logging.FailedToCreateOnDB(income.ID, "Local", result.Error)
+			logging.FailedToCreateOnDB(income.ID, constants.LOCAL, result.Error)
 			return util.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
-		logging.CreatedOnDB(income.ID, "Local")
+		logging.CreatedOnDB(income.ID, constants.LOCAL)
 		return nil
 	}
 
@@ -237,7 +238,7 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *util.TagError) {
 	baseIncome, err := findIncomeById(income.ID)
 
 	if err != nil {
-		logging.FailedToFindOnDB(income.ID, "Local", err.Inner)
+		logging.FailedToFindOnDB(income.ID, constants.LOCAL, err.Inner)
 		return nil, err
 	}
 
@@ -260,10 +261,10 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *util.TagError) {
 		result := database.DBlocal.Save(baseIncome)
 
 		if result.Error != nil {
-			logging.FailedToUpdateOnDB(baseIncome.ID, "Local", result.Error)
+			logging.FailedToUpdateOnDB(baseIncome.ID, constants.LOCAL, result.Error)
 			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		}
-		logging.UpdatedOnDB(baseIncome.ID, "Local")
+		logging.UpdatedOnDB(baseIncome.ID, constants.LOCAL)
 	}
 
 	if statusDBCloud {
@@ -277,11 +278,11 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *util.TagError) {
 		_, err := database.DBCloud.Income.ReplaceOne(context.Background(), filter, incomeParse)
 
 		if err != nil {
-			logging.FailedToUpdateOnDB(baseIncome.ID, "Cloud", err)
+			logging.FailedToUpdateOnDB(baseIncome.ID, constants.CLOUD, err)
 			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 
-		logging.UpdatedOnDB(baseIncome.ID, "Cloud")
+		logging.UpdatedOnDB(baseIncome.ID, constants.CLOUD)
 		dto := baseIncome.ToDTO()
 		return &dto, nil
 	}
@@ -302,11 +303,11 @@ func DeleteIncome(id string) *util.TagError {
 		result := database.DBlocal.Delete(&domain.Income{}, "id = ?", id)
 
 		if result.Error != nil {
-			logging.FailedToDeleteOnDB(id, "Local", result.Error)
+			logging.FailedToDeleteOnDB(id, constants.LOCAL, result.Error)
 			return util.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
-		logging.DeletedOnDB(id, "Local")
+		logging.DeletedOnDB(id, constants.LOCAL)
 	}
 
 	if statusDBCloud {
@@ -318,11 +319,11 @@ func DeleteIncome(id string) *util.TagError {
 		_, err := database.DBCloud.Income.DeleteOne(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToDeleteOnDB(id, "Cloud", err)
+			logging.FailedToDeleteOnDB(id, constants.CLOUD, err)
 			return util.GetTagError(http.StatusBadRequest, err)
 		}
 
-		logging.DeletedOnDB(id, "Cloud")
+		logging.DeletedOnDB(id, constants.CLOUD)
 	}
 
 	return nil
@@ -344,11 +345,11 @@ func findIncomeById(id string) (*domain.Income, *util.TagError) {
 		result := database.DBlocal.Find(&income, "id = ?", id)
 
 		if result.Error != nil {
-			logging.FailedToFindOnDB(id, "Local", result.Error)
+			logging.FailedToFindOnDB(id, constants.LOCAL, result.Error)
 			return nil, util.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
-		logging.FoundOnDB(id, "Local")
+		logging.FoundOnDB(id, constants.LOCAL)
 		return &income, nil
 	}
 
@@ -361,7 +362,7 @@ func findIncomeById(id string) (*domain.Income, *util.TagError) {
 		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToFindOnDB(id, "Local", err)
+			logging.FailedToFindOnDB(id, constants.LOCAL, err)
 			return nil, util.GetTagError(http.StatusBadRequest, err)
 		}
 

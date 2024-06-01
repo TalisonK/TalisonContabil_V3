@@ -3,6 +3,7 @@ package domain
 import (
 	"time"
 
+	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "gorm.io/gorm"
 )
@@ -84,6 +85,19 @@ func (i *Income) ToPrim() primitive.M {
 	pinc["userId"] = i.UserID
 
 	return pinc
+}
+
+func (i *Income) ToActivity() Activity {
+	return Activity{
+		ID:           i.ID,
+		Description:  i.Description,
+		Value:        i.Value,
+		CreatedAt:    i.CreatedAt,
+		UpdatedAt:    i.UpdatedAt,
+		ActivityDate: i.ReceivedAt,
+		UserID:       i.UserID,
+		Type:         constants.INCOME,
+	}
 }
 
 func PrimToIncome(income primitive.M) *Income {
