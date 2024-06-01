@@ -33,70 +33,40 @@ func CreateIncomeTotal(userId string, month string, year int) (*domain.Total, *u
 	incomes, tagError := GetIncomesByDate(userId, startingDate, endingDate)
 
 	if tagError != nil {
-		logging.FailedToFindOnDB(userId, "Income", tagError.Inner)
+		logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), "Income", tagError.Inner)
 		return nil, tagError
 	}
 
-	fmt.Println(incomes)
+	total := mountTotal(month, year, userId, incomes)
 
-	total := domain.Total{}
+	old, tagError := findTotalByMonthAndYear(month, year)
 
-	total.CreatedAt = util.GetTimeNow()
-	total.UpdatedAt = util.GetTimeNow()
-	total.Type = "Income"
-	total.Month = month
-	total.Year = year
-	total.UserID = userId
-
-	for _, income := range incomes {
-		total.TotalValue += income.Value
+	if tagError != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Totals for user %s", userId), "Total", tagError.Inner)
+		return nil, tagError
 	}
 
-	total.TotalValue = util.ToFixed(total.TotalValue, 2)
+	if old.ID != "" {
+		total.CreatedAt = old.CreatedAt
+	}
 
 	if statusDBCloud {
 
-		raw := total.ToPrim()
-
-		old, tagErr := findTotalByMonthAndYear(month, year)
-
-		if tagErr != nil {
-			logging.FailedToCreateOnDB(fmt.Sprintf("Total for income from %s/%d", month, year), "Local", tagErr.Inner)
-			return nil, tagErr
+		if old.ID == "" {
+			total, tagError = createTotal(total)
+		} else {
+			total, tagError = updateTotal(total, *old)
 		}
 
-		if old.ID == "" {
-			inserted, err := database.DBCloud.Total.InsertOne(context.Background(), raw)
-			if err != nil {
-				logging.FailedToCreateOnDB(fmt.Sprintf("Total for income from %s/%d", month, year), "Cloud", err)
-				return nil, util.GetTagError(http.StatusInternalServerError, err)
-			}
-
-			total.ID = inserted.InsertedID.(primitive.ObjectID).Hex()
-			logging.CreatedOnDB(total.ID, "Cloud")
-		} else {
-
-			total.ID = old.ID
-
-			filter := bson.M{"_id": total.ID}
-
-			parser := bson.M{"$set": total.ToPrim()}
-
-			_, err := database.DBCloud.Total.UpdateOne(context.Background(), filter, parser)
-
-			if err != nil {
-				logging.FailedToUpdateOnDB(fmt.Sprintf("Total for income from %s/%d", month, year), "Cloud", err)
-				return nil, util.GetTagError(http.StatusInternalServerError, err)
-			}
-
-			logging.UpdatedOnDB(total.ID, "Cloud")
-
+		if tagError != nil {
+			logging.FailedToCreateOnDB(fmt.Sprintf("Total for income from %s/%d", month, year), "Local", tagError.Inner)
+			return nil, tagError
 		}
 
 	}
 
 	if statusDBLocal && total.ID != "" {
-		result := database.DBlocal.Create(&total)
+		result := database.DBlocal.Save(&total)
 
 		if result.Error != nil {
 			logging.FailedToCreateOnDB(fmt.Sprintf("Total for income from %s/%d", month, year), "Local", result.Error)
@@ -108,6 +78,42 @@ func CreateIncomeTotal(userId string, month string, year int) (*domain.Total, *u
 	}
 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func createTotal(total domain.Total) (domain.Total, *util.TagError) {
+
+	raw := total.ToPrim()
+
+	inserted, err := database.DBCloud.Total.InsertOne(context.Background(), raw)
+	if err != nil {
+		logging.FailedToCreateOnDB(fmt.Sprintf("Total for income from %s/%d", total.Month, total.Year), "Cloud", err)
+		return domain.Total{}, util.GetTagError(http.StatusInternalServerError, err)
+	}
+
+	total.ID = inserted.InsertedID.(primitive.ObjectID).Hex()
+	logging.CreatedOnDB(total.ID, "Cloud")
+	return total, nil
+}
+
+func updateTotal(total domain.Total, old domain.Total) (domain.Total, *util.TagError) {
+
+	total.ID = old.ID
+
+	total.UpdatedAt = util.GetTimeNow()
+
+	filter := bson.M{"_id": total.ID}
+
+	parser := bson.M{"$set": total.ToPrim()}
+
+	_, err := database.DBCloud.Total.UpdateOne(context.Background(), filter, parser)
+
+	if err != nil {
+		logging.FailedToUpdateOnDB(fmt.Sprintf("Total for income from %s/%d", total.Month, total.Year), "Cloud", err)
+		return domain.Total{}, util.GetTagError(http.StatusInternalServerError, err)
+	}
+
+	logging.UpdatedOnDB(total.ID, "Cloud")
+	return total, nil
 }
 
 func findTotalByMonthAndYear(month string, year int) (*domain.Total, *util.TagError) {
@@ -134,4 +140,23 @@ func findTotalByMonthAndYear(month string, year int) (*domain.Total, *util.TagEr
 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 
+}
+
+func mountTotal(month string, year int, userId string, incomes []domain.Income) domain.Total {
+	total := domain.Total{}
+
+	total.CreatedAt = util.GetTimeNow()
+	total.UpdatedAt = util.GetTimeNow()
+	total.Type = "Income"
+	total.Month = month
+	total.Year = year
+	total.UserID = userId
+
+	for _, income := range incomes {
+		total.TotalValue += income.Value
+	}
+
+	total.TotalValue = util.ToFixed(total.TotalValue, 2)
+
+	return total
 }
