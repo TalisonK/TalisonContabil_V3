@@ -7,8 +7,9 @@ type DashboardPacket struct {
 	UpdatedAt         string                `json:"updatedAt"`
 	Timeline          []Activity            `json:"timeline"`
 	Resume            map[string][]Total    `json:"resume"`
-	ExpensevsCategory map[string]float64    `json:"expensevsCategory"`
-	ExpensevsMethod   map[string]float64    `json:"expensevsMethod"`
+	ExpenseByCategory map[string]float64    `json:"expenseByCategory"`
+	IncomevsExpense   []IncomevsExpense     `json:"incomeVSexpense"`
+	ExpenseByMethod   map[string]float64    `json:"expenseByMethod"`
 	FixatedExpenses   map[string][]Activity `json:"fixatedExpenses"`
 }
 

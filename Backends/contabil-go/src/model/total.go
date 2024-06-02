@@ -96,21 +96,21 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func TotalRanger(entry domain.Total) ([]domain.IncomevsExpense, *util.TagError) {
+func TotalRanger(userID string, originMonth string, originYear int) ([]domain.IncomevsExpense, *util.TagError) {
 
 	// creating arrays with pre-loaded size
 	grathData := make([]domain.IncomevsExpense, 13)
 	errors := make(chan *util.TagError, 13)
 
 	// Get starting date
-	month, year := util.MonthSubtractorByJump(entry.Month, entry.Year, 6)
+	month, year := util.MonthSubtractorByJump(originMonth, originYear, 6)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 13; i++ {
 		wg.Add(1)
 		go func(i int, month string, year int) {
 			defer wg.Done()
-			actual, err := mountInvsEx(entry.UserID, month, year)
+			actual, err := mountInvsEx(userID, month, year)
 			if err != nil {
 				logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
 				errors <- err
