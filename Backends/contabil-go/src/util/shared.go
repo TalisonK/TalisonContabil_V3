@@ -35,6 +35,41 @@ func MonthToNumber(month string) int {
 	return months.IndexOf(month) + 1
 }
 
+func MonthSubtractor(month string, year int) (string, int) {
+
+	index := MonthToNumber(month) - 1
+
+	if (index - 1) == 0 {
+		m := months[11]
+		y := year - 1
+
+		return m, y
+	} else {
+		m := months[index-1]
+		return m, year
+	}
+}
+
+func MonthSubtractorByJump(month string, year int, jump int) (string, int) {
+	for i := 0; i < jump; i++ {
+		month, year = MonthSubtractor(month, year)
+	}
+	return month, year
+}
+
+func MonthAdder(month string, year int) (string, int) {
+	index := MonthToNumber(month) - 1
+
+	if (index + 1) == 12 {
+		month = months[0]
+		year = year + 1
+	} else {
+		month = months[index+1]
+	}
+
+	return month, year
+}
+
 func NumberToMonth(number int) string {
 	return months[number-1]
 }

@@ -8,7 +8,6 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/domain"
 	"github.com/TalisonK/TalisonContabil/src/model"
 	"github.com/TalisonK/TalisonContabil/src/util"
-	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 )
 
@@ -18,24 +17,15 @@ func GetTotalRange(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&entry)
 
-	income, err := model.CreateUpdateTotal(entry.UserID, entry.Month, entry.Year, constants.INCOME)
+	result, err := model.TotalRanger(entry)
 
 	if err != nil {
-		fail(w, constants.INCOME, *err, entry)
+		fail(w, "range", *err, entry)
+		return
 	}
-
-	expense, err := model.CreateUpdateTotal(entry.UserID, entry.Month, entry.Year, constants.EXPENSE)
-
-	if err != nil {
-		fail(w, constants.EXPENSE, *err, entry)
-	}
-
-	results := []domain.Total{}
-
-	results = append(results, *expense, *income)
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(results)
+	json.NewEncoder(w).Encode(result)
 
 }
 

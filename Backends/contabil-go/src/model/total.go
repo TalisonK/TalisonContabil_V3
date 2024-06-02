@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
@@ -70,7 +71,7 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 		if old.ID == "" {
 			total, tagError = createTotalInDB(total)
 		} else {
-			total, tagError = updateTotalInDB(total, *old)
+			total, tagError = updateTotalInDB(total)
 		}
 
 		if tagError != nil {
@@ -95,6 +96,42 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
+func TotalRanger(entry domain.Total) ([]domain.IncomevsExpense, *util.TagError) {
+
+	// creating arrays with pre-loaded size
+	grathData := make([]domain.IncomevsExpense, 13)
+	errors := make(chan *util.TagError, 13)
+
+	// Get starting date
+	month, year := util.MonthSubtractorByJump(entry.Month, entry.Year, 6)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 13; i++ {
+		wg.Add(1)
+		go func(i int, month string, year int) {
+			defer wg.Done()
+			actual, err := mountInvsEx(entry.UserID, month, year)
+			if err != nil {
+				logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
+				errors <- err
+				return
+			}
+			grathData[i] = actual
+			month, year = util.MonthAdder(month, year)
+		}(i, month, year)
+		month, year = util.MonthAdder(month, year)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	if len(errors) > 0 {
+		return nil, <-errors
+	}
+
+	return grathData, nil
+}
+
 // createTotalInDB creates the total in the database
 func createTotalInDB(total domain.Total) (domain.Total, *util.TagError) {
 
@@ -112,7 +149,7 @@ func createTotalInDB(total domain.Total) (domain.Total, *util.TagError) {
 }
 
 // updateTotalInDB updates the total in the database
-func updateTotalInDB(total domain.Total, old domain.Total) (domain.Total, *util.TagError) {
+func updateTotalInDB(total domain.Total) (domain.Total, *util.TagError) {
 
 	total.UpdatedAt = util.GetTimeNow()
 
@@ -212,4 +249,29 @@ func mountTotal(month string, year int, userId string, totalType string, activit
 	total.TotalValue = util.ToFixed(total.TotalValue, 2)
 
 	return total
+}
+
+func mountInvsEx(userID string, month string, year int) (domain.IncomevsExpense, *util.TagError) {
+	actual := domain.IncomevsExpense{}
+
+	income, err := CreateUpdateTotal(userID, month, year, constants.INCOME)
+
+	if err != nil {
+		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.INCOME, userID), constants.ALL, err.Inner)
+		return domain.IncomevsExpense{}, err
+	}
+
+	expense, err := CreateUpdateTotal(userID, month, year, constants.EXPENSE)
+
+	if err != nil {
+		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.EXPENSE, userID), constants.ALL, err.Inner)
+		return domain.IncomevsExpense{}, err
+	}
+
+	actual.Income = income.TotalValue
+	actual.Expense = expense.TotalValue
+	actual.Month = month
+	actual.Year = year
+
+	return actual, nil
 }
