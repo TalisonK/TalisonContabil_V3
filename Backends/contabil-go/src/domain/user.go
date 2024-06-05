@@ -55,6 +55,8 @@ func (u *User) ToPrim() primitive.M {
 
 	pinc["name"] = u.Name
 	pinc["role"] = u.Role
+	pinc["password"] = u.Password
+	pinc["salt"] = u.Salt
 	pinc["createdAt"] = u.CreatedAt
 	pinc["updatedAt"] = u.UpdatedAt
 

@@ -16,7 +16,7 @@ func GetCategories(w http.ResponseWriter, r *http.Request) {
 	categories, err := model.GetCategories()
 
 	if err != nil {
-		logging.FailedToFindOnDB("All Categories", "", err.Inner, "handler.GetCategories")
+		logging.FailedToFindOnDB("All Categories", "", err.Inner)
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprintln(w, "Failed to get categories")
 		return
@@ -39,7 +39,7 @@ func CreateCategory(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		logging.GenericError("Fail to create a category", err.Inner, "handler.CreateCategories")
+		logging.GenericError("Fail to create a category", err.Inner)
 		w.WriteHeader(err.HtmlStatus)
 		fmt.Fprintln(w, err.Inner.Error())
 		return
@@ -60,7 +60,7 @@ func UpdateCategory(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		logging.GenericError("Fail to update a category", err.Inner, "handler.UpdateCategory")
+		logging.GenericError("Fail to update a category", err.Inner)
 		w.WriteHeader(err.HtmlStatus)
 		fmt.Fprintln(w, err.Inner.Error())
 		return
@@ -79,7 +79,7 @@ func DeleteCategory(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 
-		logging.GenericError("Fail to delete a category", err.Inner, "handler.DeleteCategory")
+		logging.GenericError("Fail to delete a category", err.Inner)
 		w.WriteHeader(err.HtmlStatus)
 		fmt.Fprintln(w, err.Inner.Error())
 		return

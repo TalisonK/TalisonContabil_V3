@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
+	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "gorm.io/gorm"
 )
@@ -55,7 +55,7 @@ func (i *Income) ToDTO() IncomeDTO {
 	}
 }
 
-func (i *IncomeDTO) ToPrim() primitive.M {
+func (i *Income) ToPrim() primitive.M {
 	pinc := primitive.M{}
 
 	if i.ID != "" {
@@ -65,23 +65,55 @@ func (i *IncomeDTO) ToPrim() primitive.M {
 
 	pinc["description"] = i.Description
 	pinc["value"] = i.Value
-	pinc["createdAt"] = i.CreatedAt
-	pinc["updatedAt"] = i.UpdatedAt
-	pinc["receivedAt"] = i.ReceivedAt
-	pinc["user"] = bson.M{"_id": i.UserID}
+	createdAt, err := time.Parse(time.RFC3339, i.CreatedAt)
+	if err != nil {
+		createdAt = time.Now()
+	}
+	pinc["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
+	updatedAt, err := time.Parse(time.RFC3339, i.UpdatedAt)
+
+	if err != nil {
+		updatedAt = createdAt
+	}
+	pinc["updatedAt"] = updatedAt
+
+	receivedAt, err := time.Parse(time.RFC3339, i.ReceivedAt)
+	if err != nil {
+		receivedAt = time.Now()
+	}
+	pinc["receivedAt"] = receivedAt
+	pinc["userId"] = i.UserID
 
 	return pinc
+}
+
+func (i *Income) ToActivity() Activity {
+	return Activity{
+		ID:           i.ID,
+		Description:  i.Description,
+		Value:        i.Value,
+		CreatedAt:    i.CreatedAt,
+		UpdatedAt:    i.UpdatedAt,
+		ActivityDate: i.ReceivedAt,
+		UserID:       i.UserID,
+		Type:         constants.INCOME,
+	}
 }
 
 func PrimToIncome(income primitive.M) *Income {
 	newIncome := Income{}
 
 	newIncome.ID = income["_id"].(primitive.ObjectID).Hex()
-	newIncome.Value = income["value"].(float64)
+
+	if value, ok := income["value"].(int32); ok {
+		newIncome.Value = float64(value)
+	} else {
+		newIncome.Value = income["value"].(float64)
+	}
+
 	newIncome.Description = income["description"].(string)
 	newIncome.ReceivedAt = income["receivedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-	user := income["user"].(primitive.M)
-	newIncome.UserID = user["_id"].(primitive.ObjectID).Hex()
+	newIncome.UserID = income["userId"].(string)
 	newIncome.CreatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
 	if income["updatedAt"] == nil {
 		newIncome.UpdatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)

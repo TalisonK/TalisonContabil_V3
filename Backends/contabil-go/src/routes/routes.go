@@ -20,6 +20,8 @@ func Router() *chi.Mux {
 	r.Mount("/user", UserRouter())
 	r.Mount("/category", CategoryRouter())
 	r.Mount("/income", IncomeRouter())
+	r.Mount("/total", TotalRouter())
+	r.Mount("/dashboard", DashboardRouter())
 	r.Mount("/", AuthRouter())
 
 	return r
