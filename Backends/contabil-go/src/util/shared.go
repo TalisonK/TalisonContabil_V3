@@ -39,7 +39,7 @@ func MonthSubtractor(month string, year int) (string, int) {
 
 	index := MonthToNumber(month) - 1
 
-	if (index - 1) == 0 {
+	if (index - 1) <= 0 {
 		m := months[11]
 		y := year - 1
 

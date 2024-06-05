@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
 	"github.com/TalisonK/TalisonContabil/src/domain"
@@ -130,6 +131,76 @@ func TotalRanger(userID string, originMonth string, originYear int) ([]domain.In
 	}
 
 	return grathData, nil
+}
+
+func Timeline(userId string, month string, year int) ([]domain.Activity, *util.TagError) {
+
+	timeline := []domain.Activity{}
+
+	startingDate, endingDate := util.GetFirstAndLastDayOfMonth(month, year)
+
+	incomes, tagError := fetchIncomesByDate(userId, startingDate, endingDate)
+
+	// fetch data
+	if tagError != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
+		return nil, tagError
+	}
+
+	expenses, tagError := fetchExpensesByDate(userId, startingDate, endingDate)
+
+	if tagError != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.EXPENSE, tagError.Inner)
+		return nil, tagError
+	}
+
+	// In case one of the arrays are empty, just return the opposite
+
+	inLen := len(incomes)
+	exLen := len(expenses)
+
+	if inLen == 0 {
+		return expenses, nil
+	}
+	if exLen == 0 {
+		return incomes, nil
+	}
+
+	size := inLen + exLen
+
+	exIndex := 0
+	inIndex := 0
+
+	// Sort and stacking activities
+
+	for i := 0; i < size; i++ {
+
+		if exIndex == exLen {
+			timeline = append(timeline, incomes...)
+			break
+		}
+
+		if inIndex == inLen {
+			timeline = append(timeline, expenses[exIndex:]...)
+			break
+		}
+
+		expense, _ := time.Parse(time.RFC3339, expenses[exIndex].ActivityDate)
+		income, _ := time.Parse(time.RFC3339, incomes[inIndex].ActivityDate)
+
+		switch income.Compare(expense) {
+		case -1:
+			timeline = append(timeline, expenses[exIndex])
+			exIndex++
+
+		default:
+			timeline = append(timeline, incomes[inIndex])
+			inIndex++
+		}
+	}
+
+	return timeline, nil
+
 }
 
 // createTotalInDB creates the total in the database

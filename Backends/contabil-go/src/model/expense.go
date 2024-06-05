@@ -13,6 +13,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetExpensesByDate(userId string, startingDate string, endingDate string) ([]domain.Expense, *util.TagError) {
@@ -27,7 +28,7 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).Find(&expenses)
+		result := database.DBlocal.Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).Order("paid_at DESC").Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)
@@ -50,7 +51,9 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
 		filter := bson.M{"userID": userId, "receivedAt": sdBson}
 
-		cursor, err := database.DBCloud.Expense.Find(context.Background(), filter)
+		opts := options.Find().SetSort(bson.D{{"paidAt", -1}})
+
+		cursor, err := database.DBCloud.Expense.Find(context.Background(), filter, opts)
 
 		if err != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.CLOUD, err)

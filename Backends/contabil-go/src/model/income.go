@@ -13,6 +13,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetFullIncomes() ([]domain.IncomeDTO, *util.TagError) {
@@ -134,7 +135,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Find(&incomes)
+		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Order("received_at Desc").Find(&incomes)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.LOCAL, result.Error)
@@ -155,7 +156,9 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
 		filter := bson.M{"userID": userId, "receivedAt": sdBson}
 
-		cursor, err := database.DBCloud.Income.Find(context.Background(), filter)
+		opts := options.Find().SetSort(bson.D{{"receivedAt", -1}})
+
+		cursor, err := database.DBCloud.Income.Find(context.Background(), filter, opts)
 
 		if err != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.CLOUD, err)
