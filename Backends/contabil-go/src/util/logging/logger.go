@@ -48,6 +48,10 @@ func InvalidFields() string {
 	return logHandler("Invalid fields.", nil)
 }
 
+func ContextAlreadyClosed() string {
+	return logHandler("Context already closed.", nil)
+}
+
 // FAILED TO
 
 // "Failed to open connection to %s database."

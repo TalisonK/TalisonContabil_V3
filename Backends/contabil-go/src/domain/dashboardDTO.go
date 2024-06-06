@@ -32,3 +32,9 @@ type Activity struct {
 	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
 }
+
+type Resume struct {
+	Actual  float64 `json:"actual"`
+	Pass    float64 `json:"pass"`
+	Balance float64 `json:"balance"`
+}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,7 +18,7 @@ func GetTotalRange(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&entry)
 
-	result, err := model.TotalRanger(entry.UserID, entry.Month, entry.Year)
+	result, err := model.TotalRanger(context.Background(), nil, entry.UserID, entry.Month, entry.Year)
 
 	if err != nil {
 		fail(w, "range", *err, entry)

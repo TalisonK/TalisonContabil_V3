@@ -135,7 +135,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Order("received_at Desc").Find(&incomes)
+		result := database.DBlocal.Where("User_id = ? AND received_at between ? AND ?", userId, startingDate, endingDate).Order("created_at Desc").Find(&incomes)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Incomes from user %s", userId), constants.LOCAL, result.Error)
@@ -156,7 +156,7 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
 		filter := bson.M{"userID": userId, "receivedAt": sdBson}
 
-		opts := options.Find().SetSort(bson.D{{"receivedAt", -1}})
+		opts := options.Find().SetSort(bson.D{{"createdAt", -1}})
 
 		cursor, err := database.DBCloud.Income.Find(context.Background(), filter, opts)
 

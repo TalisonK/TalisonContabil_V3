@@ -28,7 +28,7 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).Order("paid_at DESC").Find(&expenses)
+		result := database.DBlocal.Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).Order("created_at DESC").Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)
@@ -49,9 +49,9 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 		ed := primitive.NewDateTimeFromTime(auxED)
 
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
-		filter := bson.M{"userID": userId, "receivedAt": sdBson}
+		filter := bson.M{"userID": userId, "paidAt": sdBson}
 
-		opts := options.Find().SetSort(bson.D{{"paidAt", -1}})
+		opts := options.Find().SetSort(bson.D{{"createdAt", -1}})
 
 		cursor, err := database.DBCloud.Expense.Find(context.Background(), filter, opts)
 

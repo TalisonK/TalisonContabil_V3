@@ -97,28 +97,40 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func TotalRanger(userID string, originMonth string, originYear int) ([]domain.IncomevsExpense, *util.TagError) {
+func TotalRanger(ctx context.Context, cancel func(), userID string, originMonth string, originYear int) ([]domain.IncomevsExpense, *util.TagError) {
 
 	// creating arrays with pre-loaded size
 	grathData := make([]domain.IncomevsExpense, 13)
 	errors := make(chan *util.TagError, 13)
 
 	// Get starting date
-	month, year := util.MonthSubtractorByJump(originMonth, originYear, 6)
+	month, year := util.MonthSubtractorByJump(originMonth, originYear, 5)
 
 	var wg sync.WaitGroup
 	for i := 0; i < 13; i++ {
 		wg.Add(1)
+
 		go func(i int, month string, year int) {
-			defer wg.Done()
-			actual, err := mountInvsEx(userID, month, year)
-			if err != nil {
-				logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
-				errors <- err
+
+			select {
+			case <-ctx.Done():
+				// Context was cancelled, return to prevent further processing
+				logging.ContextAlreadyClosed()
 				return
+
+			default:
+				// Context was not cancelled, continue processing
+				defer wg.Done()
+				actual, err := mountInvsEx(userID, month, year)
+				if err != nil {
+					logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
+					errors <- err
+					cancel()
+					return
+				}
+				grathData[i] = actual
 			}
-			grathData[i] = actual
-			month, year = util.MonthAdder(month, year)
+
 		}(i, month, year)
 		month, year = util.MonthAdder(month, year)
 	}
@@ -133,26 +145,65 @@ func TotalRanger(userID string, originMonth string, originYear int) ([]domain.In
 	return grathData, nil
 }
 
-func Timeline(userId string, month string, year int) ([]domain.Activity, *util.TagError) {
+func Timeline(ctx context.Context, cancel func(), errChan chan *util.TagError, userId string, month string, year int) ([]domain.Activity, *util.TagError) {
 
-	timeline := []domain.Activity{}
+	var incomes []domain.Activity
+	var expenses []domain.Activity
 
 	startingDate, endingDate := util.GetFirstAndLastDayOfMonth(month, year)
 
-	incomes, tagError := fetchIncomesByDate(userId, startingDate, endingDate)
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	// fetch data
-	if tagError != nil {
-		logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
-		return nil, tagError
-	}
+	go func() {
 
-	expenses, tagError := fetchExpensesByDate(userId, startingDate, endingDate)
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, return to prevent further processing
+			logging.ContextAlreadyClosed()
+			return
+		default:
+			result, tagError := fetchIncomesByDate(userId, startingDate, endingDate)
 
-	if tagError != nil {
-		logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.EXPENSE, tagError.Inner)
-		return nil, tagError
-	}
+			if tagError != nil {
+				logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
+				errChan <- tagError
+				cancel()
+				return
+			}
+
+			logging.FoundOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME)
+			incomes = result
+		}
+
+	}()
+
+	go func() {
+
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, return to prevent further processing
+			logging.ContextAlreadyClosed()
+			return
+		default:
+			result, tagError := fetchExpensesByDate(userId, startingDate, endingDate)
+
+			if tagError != nil {
+				logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME, tagError.Inner)
+				errChan <- tagError
+				cancel()
+				return
+			}
+
+			logging.FoundOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME)
+			expenses = result
+		}
+
+	}()
+
+	wg.Wait()
 
 	// In case one of the arrays are empty, just return the opposite
 
@@ -170,6 +221,8 @@ func Timeline(userId string, month string, year int) ([]domain.Activity, *util.T
 
 	exIndex := 0
 	inIndex := 0
+
+	timeline := []domain.Activity{}
 
 	// Sort and stacking activities
 
@@ -200,6 +253,18 @@ func Timeline(userId string, month string, year int) ([]domain.Activity, *util.T
 	}
 
 	return timeline, nil
+
+}
+
+func Resume(ctx context.Context, cancel func(), errChan chan *util.TagError, userId string, month string, year int) (map[string]domain.Resume, *util.TagError) {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	return nil, nil
 
 }
 
