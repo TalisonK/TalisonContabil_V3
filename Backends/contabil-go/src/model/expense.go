@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/TalisonK/TalisonContabil/src/database"
@@ -16,7 +17,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetExpensesByDate(userId string, startingDate string, endingDate string) ([]domain.Expense, *util.TagError) {
+func GetExpensesByDate(userId string, startingDate string, endingDate string) ([]domain.ExpenseDTO, *util.TagError) {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
@@ -28,7 +29,11 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 
 	if statusDBLocal {
 
-		result := database.DBlocal.Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).Order("created_at DESC").Find(&expenses)
+		result := database.DBlocal.
+			Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).
+			Joins("Category", "expense.category_id = categories.id").
+			Order("created_at DESC").
+			Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)
@@ -36,8 +41,10 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 		}
 
 		logging.FoundOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL)
-		return expenses, nil
 
+		dtos := ExpenseGetCategoryName(expenses)
+
+		return dtos, nil
 	}
 
 	if statusDBCloud {
@@ -62,13 +69,50 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string) ([
 
 		for cursor.Next(context.Background()) {
 			var raw bson.M
+
 			cursor.Decode(raw)
 
 			expenses = append(expenses, domain.PrimToExpense(raw))
 		}
 
-		return expenses, nil
+		dtos := ExpenseGetCategoryName(expenses)
+
+		return dtos, nil
 	}
 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func CreateExpense() {}
+
+func ExpenseGetCategoryName(expenses []domain.Expense) []domain.ExpenseDTO {
+	expensesDto := make([]domain.ExpenseDTO, len(expenses))
+
+	errors := make(chan *util.TagError, len(expenses))
+
+	var wg sync.WaitGroup
+	for i, exp := range expenses {
+		wg.Add(1)
+
+		go func(i int, exp domain.Expense) {
+			defer wg.Done()
+			cat, tagErr := FindCategoryByID(exp.CategoryID)
+
+			if tagErr != nil {
+				logging.FailedToFindOnDB(fmt.Sprintf("Category from user %s", exp.UserID), constants.LOCAL, tagErr.Inner)
+				errors <- tagErr
+				return
+			}
+
+			expDto := exp.ToDTO()
+			expDto.CategoryName = cat.Name
+
+			expensesDto[i] = expDto
+
+		}(i, exp)
+	}
+
+	wg.Wait()
+
+	return expensesDto
 }

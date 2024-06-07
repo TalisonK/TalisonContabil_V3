@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"runtime/trace"
 
 	"github.com/TalisonK/TalisonContabil/src/auth"
 	"github.com/TalisonK/TalisonContabil/src/config"
@@ -16,7 +17,21 @@ import (
 
 func main() {
 
-	err := config.Load()
+	f, err := os.Create("trace.out")
+
+	if err != nil {
+		logging.GenericError("Could no create tracer file", err)
+	}
+
+	err = trace.Start(f)
+
+	if err != nil {
+		logging.GenericError("Could no Start tracer", err)
+	}
+
+	defer trace.Stop()
+
+	err = config.Load()
 
 	auth.NewAuth()
 

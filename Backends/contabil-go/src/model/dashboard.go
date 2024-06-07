@@ -27,13 +27,11 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *util.
 
 	wg.Add(2)
 
-	// TotalRanger routine for the income VS Expense plot
-	go totalRangeRoutine(&wg, errors, ctx, cancel, &entry)
+	// TotalRanger routine for the income VS Expense plot and Resume data
+	go totalRangeAndResumeRoutine(&wg, errors, ctx, cancel, &entry)
 
 	// Timeline routine for the timeline
 	go timelineRoutine(&wg, errors, ctx, cancel, &entry)
-
-	// TODO: Resume
 
 	// TODO: ExpenseByCategory
 
@@ -49,7 +47,7 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *util.
 
 }
 
-func totalRangeRoutine(wg *sync.WaitGroup, errChan chan *util.TagError, ctx context.Context, cancel func(), entry *domain.DashboardPacket) {
+func totalRangeAndResumeRoutine(wg *sync.WaitGroup, errChan chan *util.TagError, ctx context.Context, cancel func(), entry *domain.DashboardPacket) {
 
 	defer wg.Done()
 	ive, tagerr := TotalRanger(ctx, cancel, entry.UserID, entry.Month, entry.Year)
@@ -61,7 +59,18 @@ func totalRangeRoutine(wg *sync.WaitGroup, errChan chan *util.TagError, ctx cont
 	}
 
 	logging.GenericSuccess(fmt.Sprintf("Incomes Vs Expenses from %s/%d for user %s sucessfully generated", entry.Month, entry.Year, entry.UserID))
+
+	resume, tagerr := Resume(ive)
+
+	if tagerr != nil {
+		logging.GenericError("Failed to generate resume for dashboard", tagerr.Inner)
+		errChan <- tagerr
+		cancel()
+	}
+
+	logging.GenericSuccess(fmt.Sprintf("Resumes from %s/%d for user %s sucessfully generated", entry.Month, entry.Year, entry.UserID))
 	entry.IncomevsExpense = ive
+	entry.Resume = resume
 
 }
 

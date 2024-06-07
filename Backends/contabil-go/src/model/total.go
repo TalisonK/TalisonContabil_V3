@@ -256,16 +256,40 @@ func Timeline(ctx context.Context, cancel func(), errChan chan *util.TagError, u
 
 }
 
-func Resume(ctx context.Context, cancel func(), errChan chan *util.TagError, userId string, month string, year int) (map[string]domain.Resume, *util.TagError) {
+func Resume(ive []domain.IncomevsExpense) (map[string]domain.Resume, *util.TagError) {
 
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+	resumes := map[string]domain.Resume{}
 
-	if !statusDBLocal && !statusDBCloud {
-		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	pass := ive[5]
+	actual := ive[6]
+
+	resumes["income"] = domain.Resume{
+		Actual:  actual.Income,
+		Pass:    pass.Income,
+		Balance: resumeBalance(actual.Income, pass.Income),
 	}
 
-	return nil, nil
+	resumes["expense"] = domain.Resume{
+		Actual:  actual.Expense,
+		Pass:    pass.Expense,
+		Balance: resumeBalance(actual.Expense, pass.Expense),
+	}
 
+	resumes["balance"] = domain.Resume{
+		Actual:  actual.Income - actual.Expense,
+		Pass:    pass.Income - pass.Expense,
+		Balance: resumeBalance((actual.Income - actual.Expense), (pass.Income - pass.Expense)),
+	}
+
+	return resumes, nil
+
+}
+
+func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *util.TagError, userId string, month string, year int) (map[string]float64, *util.TagError) {
+
+	expVSCat := map[string]float64{}
+
+	return expVSCat, nil
 }
 
 // createTotalInDB creates the total in the database
@@ -410,4 +434,11 @@ func mountInvsEx(userID string, month string, year int) (domain.IncomevsExpense,
 	actual.Year = year
 
 	return actual, nil
+}
+
+func resumeBalance(actual float64, pass float64) float64 {
+
+	x := (100 * pass) / actual
+
+	return float64(util.ToFixed(100-x, 2))
 }

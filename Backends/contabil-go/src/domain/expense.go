@@ -16,6 +16,8 @@ type Expense struct {
 	CreatedAt     string   `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UpdatedAt     string   `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	PaidAt        string   `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	ActualParcel  int32    `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
+	TotalParcel   int32    `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
 	UserID        string   `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	User          User     `json:"user" gorm:"constraint;"`
 	CategoryID    string   `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
@@ -32,6 +34,7 @@ type ExpenseDTO struct {
 	PaidAt        string  `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
+	CategoryName  string  `json:"categoryName" gorm:"type:varchar(255);not null;idx_expense;"`
 }
 
 func (e *ExpenseDTO) ToEntity() Expense {
@@ -113,6 +116,21 @@ func (e *Expense) ToActivity() Activity {
 	}
 }
 
+func (e *ExpenseDTO) ToActivity() Activity {
+	return Activity{
+		ID:            e.ID,
+		Description:   e.Description,
+		PaymentMethod: e.PaymentMethod,
+		Value:         e.Value,
+		Type:          constants.EXPENSE,
+		CreatedAt:     e.CreatedAt,
+		UpdatedAt:     e.UpdatedAt,
+		ActivityDate:  e.PaidAt,
+		UserID:        e.UserID,
+		CategoryID:    e.CategoryID,
+	}
+}
+
 func PrimToExpense(pexp primitive.M) Expense {
 	exp := Expense{}
 
@@ -128,6 +146,29 @@ func PrimToExpense(pexp primitive.M) Expense {
 	exp.PaidAt = pexp["paidAt"].(string)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
+
+	return exp
+}
+
+func PrimToExpenseDto(pexp primitive.M) ExpenseDTO {
+	exp := ExpenseDTO{}
+
+	if pexp["_id"] != nil {
+		exp.ID = pexp["_id"].(primitive.ObjectID).Hex()
+	}
+
+	exp.Description = pexp["description"].(string)
+	exp.PaymentMethod = pexp["paymentMethod"].(string)
+	exp.Value = pexp["value"].(float64)
+	exp.CreatedAt = pexp["createdAt"].(string)
+	exp.UpdatedAt = pexp["updatedAt"].(string)
+	exp.PaidAt = pexp["paidAt"].(string)
+	exp.UserID = pexp["userID"].(string)
+	exp.CategoryID = pexp["categoryID"].(string)
+
+	if pexp["categoryName"] != nil {
+		exp.CategoryName = pexp["categoryName"].(string)
+	}
 
 	return exp
 }
