@@ -381,13 +381,6 @@ func Resume(ive []domain.IncomevsExpense) (map[string]domain.Resume, *tagError.T
 
 }
 
-func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
-
-	expVSCat := map[string]float64{}
-
-	return expVSCat, nil
-}
-
 // createTotalInDB creates the total in the database
 func createTotalInDB(total domain.Total) (domain.Total, *tagError.TagError) {
 

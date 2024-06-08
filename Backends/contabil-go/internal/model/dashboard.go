@@ -26,7 +26,7 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *tagEr
 
 	var wg sync.WaitGroup
 
-	wg.Add(2)
+	wg.Add(3)
 
 	// TotalRanger routine for the income VS Expense plot and Resume data
 	go totalRangeAndResumeRoutine(&wg, errors, ctx, cancel, &entry)
@@ -35,6 +35,7 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *tagEr
 	go timelineRoutine(&wg, errors, ctx, cancel, &entry)
 
 	// TODO: ExpenseByCategory
+	go ExpenseByCategoryRoutine(&wg, errors, ctx, cancel, &entry)
 
 	// TODO: ExpenseByMethod
 
@@ -85,8 +86,26 @@ func timelineRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError, ctx co
 		logging.GenericError("Failed to generate timeline array", tagerr.Inner)
 		errChan <- tagerr
 		cancel()
+		return
 	}
 
 	entry.Timeline = timeline
+
+}
+
+func ExpenseByCategoryRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError, ctx context.Context, cancel func(), entry *domain.DashboardPacket) {
+
+	defer wg.Done()
+
+	ebc, tagErr := ExpenseByCategory(ctx, cancel, errChan, entry.UserID, entry.Month, entry.Year)
+
+	if tagErr != nil {
+		logging.GenericError("Failed to generate Expense by Category plot data", tagErr.Inner)
+		errChan <- tagErr
+		cancel()
+		return
+	}
+
+	entry.ExpenseByCategory = ebc
 
 }

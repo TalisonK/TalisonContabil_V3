@@ -11,7 +11,9 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
+	mathplus "github.com/TalisonK/TalisonContabil/pkg/math_plus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
+	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -78,6 +80,111 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 }
 
 func CreateExpense() {}
+
+func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
+
+	expVSCat := make(map[string]float64, len(database.CacheDatabase.Categories))
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	// get the first and last day of the month
+	startingDate, endingDate := timeHandler.GetFirstAndLastDayOfMonth(month, year)
+
+	var wg sync.WaitGroup
+
+	for id, cat := range database.CacheDatabase.Categories {
+
+		wg.Add(1)
+
+		select {
+		case <-ctx.Done():
+			// Context was cancelled, return to prevent further processing
+			logging.ContextAlreadyClosed()
+			return nil, nil
+
+		default:
+			go func(categoryId string, cat domain.Category, statusDBLocal bool, statusDBCloud bool, startingDate string, endingDate string) {
+
+				defer wg.Done()
+				expenses, tagErr := findExpenseByCategoryId(categoryId, statusDBLocal, statusDBCloud, startingDate, endingDate)
+
+				if tagErr != nil {
+					logging.GenericError(fmt.Sprintf("Failed to create expenses vs Category for category %s", categoryId), tagErr.Inner)
+					errChan <- tagErr
+					cancel()
+					return
+				}
+
+				value := 0.0
+
+				for _, expense := range expenses {
+					value += expense.Value
+				}
+
+				expVSCat[cat.Name] = mathplus.ToFixed(value, 2)
+
+			}(id, cat, statusDBLocal, statusDBCloud, startingDate, endingDate)
+		}
+	}
+
+	wg.Wait()
+
+	return expVSCat, nil
+}
+
+func findExpenseByCategoryId(categoryId string, statusDBLocal bool, statusDBCloud bool, startingDate string, endingDate string) ([]domain.Expense, *tagError.TagError) {
+
+	var expenses []domain.Expense
+
+	if statusDBLocal {
+		result := database.DBlocal.Where("category_id = ?", categoryId).Find(&expenses)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Expenses for category %s", categoryId), constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusInternalServerError, result.Error)
+		}
+
+		logging.FoundOnDB(fmt.Sprintf("Expenses for category %s", categoryId), constants.LOCAL)
+		return expenses, nil
+	}
+
+	if statusDBCloud {
+
+		auxSD, _ := time.Parse(time.RFC3339, startingDate)
+		sd := primitive.NewDateTimeFromTime(auxSD)
+
+		auxED, _ := time.Parse(time.RFC3339, endingDate)
+		ed := primitive.NewDateTimeFromTime(auxED)
+
+		sdBson := bson.M{"$gt": sd, "$lt": ed}
+		filter := bson.M{"categoryId": categoryId, "paidAt": sdBson}
+
+		cursor, err := database.DBCloud.Expense.Find(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Expenses for category %s", categoryId), constants.LOCAL, err)
+			return nil, tagError.GetTagError(http.StatusInternalServerError, err)
+		}
+
+		expenses := []domain.Expense{}
+
+		for cursor.Next(context.Background()) {
+			var aux bson.M
+
+			cursor.Decode(aux)
+
+			expenses = append(expenses, domain.PrimToExpense(aux))
+		}
+
+		return expenses, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
 
 func ExpenseGetCategoryName(expenses []domain.Expense, statusDBLocal bool, statusDBCloud bool) []domain.ExpenseDTO {
 	expensesDto := make([]domain.ExpenseDTO, len(expenses))
