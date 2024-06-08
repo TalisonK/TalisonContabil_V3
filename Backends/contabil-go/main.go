@@ -10,6 +10,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/src/auth"
 	"github.com/TalisonK/TalisonContabil/src/config"
 	"github.com/TalisonK/TalisonContabil/src/database"
+	"github.com/TalisonK/TalisonContabil/src/model"
 	"github.com/TalisonK/TalisonContabil/src/routes"
 	"github.com/TalisonK/TalisonContabil/src/util/constants"
 	"github.com/TalisonK/TalisonContabil/src/util/logging"
@@ -52,6 +53,8 @@ func main() {
 	if err != nil {
 		logging.FailedToOpenConnection(constants.CLOUD, err)
 	}
+
+	database.CacheDatabase = model.StartCache()
 
 	defer database.CloseConnections()
 

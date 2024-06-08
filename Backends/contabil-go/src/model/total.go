@@ -16,15 +16,86 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func CreateUpdateTotal(userId string, month string, year int, totalType string) (*domain.Total, *util.TagError) {
+func TotalRanger(ctx context.Context, cancel func(), userID string, originMonth string, originYear int) ([]domain.IncomevsExpense, *util.TagError) {
 
-	// check for connectivity with the databases
+	// creating arrays with pre-loaded size
+	grathData := make([]domain.IncomevsExpense, 13)
+	errors := make(chan *util.TagError, 13)
+
+	// Get starting date
+	month, year := util.MonthSubtractorByJump(originMonth, originYear, 5)
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
 		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 13; i++ {
+		wg.Add(1)
+
+		go func(i int, month string, year int, statusDBLocal bool, statusDBCloud bool) {
+
+			select {
+			case <-ctx.Done():
+				// Context was cancelled, return to prevent further processing
+				logging.ContextAlreadyClosed()
+				return
+
+			default:
+				// Context was not cancelled, continue processing
+				defer wg.Done()
+				actual, err := mountInvsEx(userID, month, year, statusDBLocal, statusDBCloud)
+				if err != nil {
+					logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
+					errors <- err
+					cancel()
+					return
+				}
+				grathData[i] = actual
+			}
+
+		}(i, month, year, statusDBLocal, statusDBCloud)
+		month, year = util.MonthAdder(month, year)
+	}
+
+	wg.Wait()
+	close(errors)
+
+	if len(errors) > 0 {
+		return nil, <-errors
+	}
+
+	return grathData, nil
+}
+
+func mountInvsEx(userID string, month string, year int, statusDBLocal bool, statusDBCloud bool) (domain.IncomevsExpense, *util.TagError) {
+	actual := domain.IncomevsExpense{}
+
+	income, err := CreateUpdateTotal(userID, month, year, constants.INCOME, statusDBLocal, statusDBCloud)
+
+	if err != nil {
+		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.INCOME, userID), constants.ALL, err.Inner)
+		return domain.IncomevsExpense{}, err
+	}
+
+	expense, err := CreateUpdateTotal(userID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
+
+	if err != nil {
+		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.EXPENSE, userID), constants.ALL, err.Inner)
+		return domain.IncomevsExpense{}, err
+	}
+
+	actual.Income = income.TotalValue
+	actual.Expense = expense.TotalValue
+	actual.Month = month
+	actual.Year = year
+
+	return actual, nil
+}
+
+func CreateUpdateTotal(userId string, month string, year int, totalType string, statusDBLocal bool, statusDBCloud bool) (*domain.Total, *util.TagError) {
 
 	// check if the month and year are valid
 
@@ -40,7 +111,7 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	var tagError *util.TagError
 
 	if totalType == constants.INCOME {
-		activities, tagError = fetchIncomesByDate(userId, startingDate, endingDate)
+		activities, tagError = fetchIncomesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
 	} else {
 		activities, tagError = fetchExpensesByDate(userId, startingDate, endingDate)
 	}
@@ -54,7 +125,7 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	total := mountTotal(month, year, userId, totalType, activities)
 
 	// check if the total already exists
-	old, tagError := findTotalByMonthAndYear(month, year, totalType)
+	old, tagError := findTotalByMonthAndYear(month, year, totalType, statusDBLocal, statusDBCloud)
 
 	if tagError != nil {
 		logging.FailedToFindOnDB(fmt.Sprintf("Totals for user %s", userId), "Total", tagError.Inner)
@@ -97,58 +168,61 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string) 
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func TotalRanger(ctx context.Context, cancel func(), userID string, originMonth string, originYear int) ([]domain.IncomevsExpense, *util.TagError) {
+func resumeBalance(actual float64, pass float64) float64 {
 
-	// creating arrays with pre-loaded size
-	grathData := make([]domain.IncomevsExpense, 13)
-	errors := make(chan *util.TagError, 13)
+	x := (100 * pass) / actual
 
-	// Get starting date
-	month, year := util.MonthSubtractorByJump(originMonth, originYear, 5)
+	return float64(util.ToFixed(100-x, 2))
+}
 
-	var wg sync.WaitGroup
-	for i := 0; i < 13; i++ {
-		wg.Add(1)
+func fetchIncomesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.Activity, *util.TagError) {
 
-		go func(i int, month string, year int) {
+	var activities []domain.Activity
 
-			select {
-			case <-ctx.Done():
-				// Context was cancelled, return to prevent further processing
-				logging.ContextAlreadyClosed()
-				return
+	incomes, tagError := GetIncomesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
 
-			default:
-				// Context was not cancelled, continue processing
-				defer wg.Done()
-				actual, err := mountInvsEx(userID, month, year)
-				if err != nil {
-					logging.FailedToCreateOnDB(fmt.Sprintf("IncomeVSExpense for %s/%d", month, year), constants.ALL, err.Inner)
-					errors <- err
-					cancel()
-					return
-				}
-				grathData[i] = actual
-			}
-
-		}(i, month, year)
-		month, year = util.MonthAdder(month, year)
+	if tagError != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
+		return nil, tagError
 	}
 
-	wg.Wait()
-	close(errors)
-
-	if len(errors) > 0 {
-		return nil, <-errors
+	for _, income := range incomes {
+		activities = append(activities, income.ToActivity())
 	}
 
-	return grathData, nil
+	return activities, nil
+
+}
+
+func fetchExpensesByDate(userId string, startingDate string, endingDate string) ([]domain.Activity, *util.TagError) {
+
+	var activities []domain.Activity
+
+	expenses, tagError := GetExpensesByDate(userId, startingDate, endingDate)
+
+	if tagError != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME, tagError.Inner)
+		return nil, tagError
+	}
+
+	for _, expenses := range expenses {
+		activities = append(activities, expenses.ToActivity())
+	}
+
+	return activities, nil
+
 }
 
 func Timeline(ctx context.Context, cancel func(), errChan chan *util.TagError, userId string, month string, year int) ([]domain.Activity, *util.TagError) {
 
 	var incomes []domain.Activity
 	var expenses []domain.Activity
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
 
 	startingDate, endingDate := util.GetFirstAndLastDayOfMonth(month, year)
 
@@ -164,7 +238,7 @@ func Timeline(ctx context.Context, cancel func(), errChan chan *util.TagError, u
 			logging.ContextAlreadyClosed()
 			return
 		default:
-			result, tagError := fetchIncomesByDate(userId, startingDate, endingDate)
+			result, tagError := fetchIncomesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
 
 			if tagError != nil {
 				logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
@@ -328,51 +402,7 @@ func updateTotalInDB(total domain.Total) (domain.Total, *util.TagError) {
 	return total, nil
 }
 
-func fetchIncomesByDate(userId string, startingDate string, endingDate string) ([]domain.Activity, *util.TagError) {
-
-	var activities []domain.Activity
-
-	incomes, tagError := GetIncomesByDate(userId, startingDate, endingDate)
-
-	if tagError != nil {
-		logging.FailedToFindOnDB(fmt.Sprintf("Incomes for user %s", userId), constants.INCOME, tagError.Inner)
-		return nil, tagError
-	}
-
-	for _, income := range incomes {
-		activities = append(activities, income.ToActivity())
-	}
-
-	return activities, nil
-
-}
-
-func fetchExpensesByDate(userId string, startingDate string, endingDate string) ([]domain.Activity, *util.TagError) {
-
-	var activities []domain.Activity
-
-	expenses, tagError := GetExpensesByDate(userId, startingDate, endingDate)
-
-	if tagError != nil {
-		logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME, tagError.Inner)
-		return nil, tagError
-	}
-
-	for _, expenses := range expenses {
-		activities = append(activities, expenses.ToActivity())
-	}
-
-	return activities, nil
-
-}
-
-func findTotalByMonthAndYear(month string, year int, totalType string) (*domain.Total, *util.TagError) {
-
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
-
-	if !statusDBLocal && !statusDBCloud {
-		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
-	}
+func findTotalByMonthAndYear(month string, year int, totalType string, statusDBLocal bool, statusDBCloud bool) (*domain.Total, *util.TagError) {
 
 	if statusDBLocal {
 
@@ -409,36 +439,4 @@ func mountTotal(month string, year int, userId string, totalType string, activit
 	total.TotalValue = util.ToFixed(total.TotalValue, 2)
 
 	return total
-}
-
-func mountInvsEx(userID string, month string, year int) (domain.IncomevsExpense, *util.TagError) {
-	actual := domain.IncomevsExpense{}
-
-	income, err := CreateUpdateTotal(userID, month, year, constants.INCOME)
-
-	if err != nil {
-		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.INCOME, userID), constants.ALL, err.Inner)
-		return domain.IncomevsExpense{}, err
-	}
-
-	expense, err := CreateUpdateTotal(userID, month, year, constants.EXPENSE)
-
-	if err != nil {
-		logging.FailedToCreateOnDB(fmt.Sprintf("%ss for user %s", constants.EXPENSE, userID), constants.ALL, err.Inner)
-		return domain.IncomevsExpense{}, err
-	}
-
-	actual.Income = income.TotalValue
-	actual.Expense = expense.TotalValue
-	actual.Month = month
-	actual.Year = year
-
-	return actual, nil
-}
-
-func resumeBalance(actual float64, pass float64) float64 {
-
-	x := (100 * pass) / actual
-
-	return float64(util.ToFixed(100-x, 2))
 }

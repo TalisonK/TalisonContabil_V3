@@ -96,6 +96,11 @@ func ExpenseGetCategoryName(expenses []domain.Expense) []domain.ExpenseDTO {
 
 		go func(i int, exp domain.Expense) {
 			defer wg.Done()
+
+			if database.CacheDatabase.CategoryStatus {
+
+			}
+
 			cat, tagErr := FindCategoryByID(exp.CategoryID)
 
 			if tagErr != nil {

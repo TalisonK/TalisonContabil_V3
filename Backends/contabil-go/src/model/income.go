@@ -123,13 +123,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *util.TagError) {
 	return nil, util.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func GetIncomesByDate(userId string, startingDate string, endingDate string) ([]domain.Income, *util.TagError) {
-
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
-
-	if !statusDBLocal && !statusDBCloud {
-		return nil, util.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
-	}
+func GetIncomesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.Income, *util.TagError) {
 
 	incomes := []domain.Income{}
 
