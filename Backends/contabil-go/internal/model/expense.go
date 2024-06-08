@@ -11,7 +11,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
-	mathplus "github.com/TalisonK/TalisonContabil/pkg/math_plus"
+	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson"
@@ -81,6 +81,33 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 
 func CreateExpense() {}
 
+func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	// get the first and last day of the month
+	startingDate, endingDate := timeHandler.GetFirstAndLastDayOfMonth(month, year)
+
+	expenses, tagErr := GetExpensesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FoundOnDB(fmt.Sprintf("Expenses for user %s", userId), "User")
+		return nil, tagErr
+	}
+
+	methods := make(map[string]float64)
+
+	for _, expense := range expenses {
+		methods[expense.PaymentMethod] += expense.Value
+	}
+
+	return methods, nil
+
+}
+
 func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
 
 	expVSCat := make(map[string]float64, len(database.CacheDatabase.Categories))
@@ -124,8 +151,9 @@ func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagErro
 				for _, expense := range expenses {
 					value += expense.Value
 				}
-
-				expVSCat[cat.Name] = mathplus.ToFixed(value, 2)
+				if value > 1 {
+					expVSCat[cat.Name] = mathplus.ToFixed(value, 2)
+				}
 
 			}(id, cat, statusDBLocal, statusDBCloud, startingDate, endingDate)
 		}
@@ -141,7 +169,7 @@ func findExpenseByCategoryId(categoryId string, statusDBLocal bool, statusDBClou
 	var expenses []domain.Expense
 
 	if statusDBLocal {
-		result := database.DBlocal.Where("category_id = ?", categoryId).Find(&expenses)
+		result := database.DBlocal.Where("category_id = ? AND paid_at between ? AND ?", categoryId, startingDate, endingDate).Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses for category %s", categoryId), constants.LOCAL, result.Error)
@@ -180,6 +208,7 @@ func findExpenseByCategoryId(categoryId string, statusDBLocal bool, statusDBClou
 			expenses = append(expenses, domain.PrimToExpense(aux))
 		}
 
+		logging.FoundOnDB(fmt.Sprintf("Expenses for category %s", categoryId), constants.LOCAL)
 		return expenses, nil
 	}
 

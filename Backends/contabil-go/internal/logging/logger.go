@@ -5,13 +5,14 @@ import (
 	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 )
 
 func logHandler(message string, err error) string {
 
-	f, _ := os.OpenFile("talisoncontabil.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, _ := os.OpenFile(fmt.Sprintf("../../log/talisoncontabil-%s.log", time.Now().Format(time.DateOnly)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	defer f.Close()
 

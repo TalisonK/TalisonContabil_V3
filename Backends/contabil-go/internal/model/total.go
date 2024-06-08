@@ -11,7 +11,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
-	mathplus "github.com/TalisonK/TalisonContabil/pkg/math_plus"
+	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson"
@@ -372,8 +372,8 @@ func Resume(ive []domain.IncomevsExpense) (map[string]domain.Resume, *tagError.T
 	}
 
 	resumes["balance"] = domain.Resume{
-		Actual:  actual.Income - actual.Expense,
-		Pass:    pass.Income - pass.Expense,
+		Actual:  mathplus.ToFixed(actual.Income-actual.Expense, 2),
+		Pass:    mathplus.ToFixed(pass.Income-pass.Expense, 2),
 		Balance: resumeBalance((actual.Income - actual.Expense), (pass.Income - pass.Expense)),
 	}
 

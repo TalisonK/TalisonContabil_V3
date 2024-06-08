@@ -26,7 +26,7 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *tagEr
 
 	var wg sync.WaitGroup
 
-	wg.Add(3)
+	wg.Add(4)
 
 	// TotalRanger routine for the income VS Expense plot and Resume data
 	go totalRangeAndResumeRoutine(&wg, errors, ctx, cancel, &entry)
@@ -38,6 +38,8 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *tagEr
 	go ExpenseByCategoryRoutine(&wg, errors, ctx, cancel, &entry)
 
 	// TODO: ExpenseByMethod
+
+	go ExpenseByMethodRoutine(&wg, errors, ctx, cancel, &entry)
 
 	// TODO: FixatedExpenses
 
@@ -107,5 +109,22 @@ func ExpenseByCategoryRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagErro
 	}
 
 	entry.ExpenseByCategory = ebc
+
+}
+
+func ExpenseByMethodRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError, ctx context.Context, cancel func(), entry *domain.DashboardPacket) {
+
+	defer wg.Done()
+
+	ebm, tagErr := ExpenseByMethod(ctx, cancel, errChan, entry.UserID, entry.Month, entry.Year)
+
+	if tagErr != nil {
+		logging.GenericError("Failed to generate Expense by Method plot data", tagErr.Inner)
+		errChan <- tagErr
+		cancel()
+		return
+	}
+
+	entry.ExpenseByMethod = ebm
 
 }
