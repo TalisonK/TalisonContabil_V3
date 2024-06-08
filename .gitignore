@@ -32,6 +32,7 @@ replay_pid*
 /tmp
 /out-tsc
 /bazel-out
+*output
 
 # Node
 /node_modules
@@ -45,6 +46,7 @@ yarn-error.log
 .c9/
 *.launch
 .settings/
+*.vscode/
 *.sublime-workspace
 
 # Visual Studio Code
