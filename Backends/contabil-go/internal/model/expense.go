@@ -11,7 +11,6 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
-	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson"
@@ -79,7 +78,64 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func CreateExpense() {}
+func CreateExpense(expenseDto domain.ExpenseDTO) (*domain.ExpenseDTO, *tagError.TagError) {
+
+	/*
+		userId
+		categoryname
+		paidAt
+		paymentMethod
+		actualParcel
+		totalParcel
+		value
+	*/
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	expense := expenseDto.ToEntity()
+
+	expense.CreatedAt = timeHandler.GetTimeNow()
+	expense.UpdatedAt = timeHandler.GetTimeNow()
+
+	fmt.Println(expense)
+
+	// pegar o id da categoria
+
+	if statusDBCloud {
+
+		inserted, err := database.DBCloud.Expense.InsertOne(context.Background(), expense.ToPrim())
+
+		if err != nil {
+			logging.FailedToCreateOnDB(fmt.Sprintf("Expense %s", expense.Description), "Cloud", err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		expense.ID = inserted.InsertedID.(primitive.ObjectID).Hex()
+		logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Cloud")
+	}
+
+	if statusDBLocal {
+
+		result := database.DBlocal.Create(&expense)
+
+		if result.Error != nil {
+			logging.FailedToCreateOnDB(fmt.Sprintf("Expense %s", expense.Description), "Local", result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Local")
+
+		dto := expense.ToDTO()
+
+		return &dto, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
 
 func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
@@ -108,9 +164,9 @@ func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.
 
 }
 
-func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
+func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string][]domain.Expense, *tagError.TagError) {
 
-	expVSCat := make(map[string]float64, len(database.CacheDatabase.Categories))
+	expVSCat := make(map[string][]domain.Expense, len(database.CacheDatabase.Categories))
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
@@ -146,14 +202,7 @@ func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagErro
 					return
 				}
 
-				value := 0.0
-
-				for _, expense := range expenses {
-					value += expense.Value
-				}
-				if value > 1 {
-					expVSCat[cat.Name] = mathplus.ToFixed(value, 2)
-				}
+				expVSCat[cat.Name] = expenses
 
 			}(id, cat, statusDBLocal, statusDBCloud, startingDate, endingDate)
 		}

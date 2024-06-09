@@ -29,6 +29,8 @@ type Activity struct {
 	CreatedAt     string  `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UpdatedAt     string  `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	ActivityDate  string  `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	ActualParcel  int32   `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
+	TotalParcel   int32   `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
 	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	UserName      string  `json:"userName" gorm:"type:varchar(255);not null;idx_expense;"`
 	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`

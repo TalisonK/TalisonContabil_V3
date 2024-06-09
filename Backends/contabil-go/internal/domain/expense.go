@@ -32,6 +32,8 @@ type ExpenseDTO struct {
 	CreatedAt     string  `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UpdatedAt     string  `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	PaidAt        string  `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	ActualParcel  int32   `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
+	TotalParcel   int32   `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
 	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
 	CategoryName  string  `json:"categoryName" gorm:"type:varchar(255);not null;idx_expense;"`
@@ -48,6 +50,8 @@ func (e *ExpenseDTO) ToEntity() Expense {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		ActualParcel:  e.ActualParcel,
+		TotalParcel:   e.TotalParcel,
 	}
 }
 
@@ -62,6 +66,8 @@ func (e *Expense) ToDTO() ExpenseDTO {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		ActualParcel:  e.ActualParcel,
+		TotalParcel:   e.TotalParcel,
 	}
 }
 
@@ -95,6 +101,9 @@ func (e *Expense) ToPrim() primitive.M {
 	}
 	pexp["paidAt"] = paidAt
 
+	pexp["actualParcel"] = e.ActualParcel
+	pexp["totalParcel"] = e.TotalParcel
+
 	pexp["userID"] = e.UserID
 	pexp["categoryID"] = e.CategoryID
 
@@ -113,6 +122,8 @@ func (e *Expense) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		ActualParcel:  e.ActualParcel,
+		TotalParcel:   e.TotalParcel,
 	}
 }
 
@@ -128,6 +139,8 @@ func (e *ExpenseDTO) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		ActualParcel:  e.ActualParcel,
+		TotalParcel:   e.TotalParcel,
 	}
 }
 
@@ -144,6 +157,8 @@ func PrimToExpense(pexp primitive.M) Expense {
 	exp.CreatedAt = pexp["createdAt"].(string)
 	exp.UpdatedAt = pexp["updatedAt"].(string)
 	exp.PaidAt = pexp["paidAt"].(string)
+	exp.ActualParcel = pexp["actualParcel"].(int32)
+	exp.TotalParcel = pexp["totalParcel"].(int32)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
 
@@ -163,6 +178,8 @@ func PrimToExpenseDto(pexp primitive.M) ExpenseDTO {
 	exp.CreatedAt = pexp["createdAt"].(string)
 	exp.UpdatedAt = pexp["updatedAt"].(string)
 	exp.PaidAt = pexp["paidAt"].(string)
+	exp.ActualParcel = pexp["actualParcel"].(int32)
+	exp.TotalParcel = pexp["totalParcel"].(int32)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
 

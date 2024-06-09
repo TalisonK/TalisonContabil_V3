@@ -9,6 +9,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
+	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 )
@@ -108,7 +109,24 @@ func ExpenseByCategoryRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagErro
 		return
 	}
 
-	entry.ExpenseByCategory = ebc
+	values := map[string]float64{}
+	fixated := map[string][]domain.Activity{}
+
+	fixe := []string{"Conta", "Streaming"}
+
+	var wg2 sync.WaitGroup
+	for catName, expenses := range ebc {
+
+		wg2.Add(1)
+
+		go expenseHandler(&wg2, ctx, catName, expenses, values, fixated, fixe)
+
+	}
+
+	wg2.Wait()
+
+	entry.ExpenseByCategory = values
+	entry.FixatedExpenses = fixated
 
 }
 
@@ -127,4 +145,30 @@ func ExpenseByMethodRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError,
 
 	entry.ExpenseByMethod = ebm
 
+}
+
+func expenseHandler(wg *sync.WaitGroup, ctx context.Context, catName string, expenses []domain.Expense, values map[string]float64, fixated map[string][]domain.Activity, fixe []string) {
+	defer wg.Done()
+
+	select {
+	case <-ctx.Done():
+		logging.ContextAlreadyClosed()
+		return
+
+	default:
+		value := 0.0
+
+		for _, expense := range expenses {
+			value += expense.Value
+
+			for _, f := range fixe {
+				if catName == f {
+					fixated[catName] = append(fixated[catName], expense.ToActivity())
+				}
+			}
+		}
+		if value > 1 {
+			values[catName] = mathplus.ToFixed(value, 2)
+		}
+	}
 }

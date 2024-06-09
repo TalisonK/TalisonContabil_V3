@@ -12,6 +12,7 @@ func ExpenseRouter() http.Handler {
 	r := chi.NewRouter()
 
 	r.Post("/", handler.GetExpenses)
+	r.Post("/create", handler.CreateExpense)
 
 	return r
 
