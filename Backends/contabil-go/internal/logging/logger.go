@@ -43,8 +43,8 @@ func ErrorOccurred() error {
 	return fmt.Errorf(logHandler("An error occurred.", nil))
 }
 
-func InvalidFields() string {
-	return logHandler("Invalid fields.", nil)
+func InvalidFields() error {
+	return fmt.Errorf(logHandler("Invalid fields.", nil))
 }
 
 func ContextAlreadyClosed() string {

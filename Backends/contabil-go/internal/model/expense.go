@@ -78,7 +78,29 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func CreateExpense(expenseDto domain.ExpenseDTO) (*domain.ExpenseDTO, *tagError.TagError) {
+func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
+
+	if expense.CategoryName == "" || expense.PaidAt == "" || expense.PaymentMethod == "" || expense.Value == 0 {
+		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if expense.PaymentMethod == "CREDIT_CARD" {
+		if expense.TotalParcel == 0 || expense.ActualParcel == 0 || expense.TotalParcel < expense.ActualParcel {
+			return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+		}
+
+	}
+
+	return nil, nil
+}
+
+func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
 	/*
 		userId
@@ -89,12 +111,6 @@ func CreateExpense(expenseDto domain.ExpenseDTO) (*domain.ExpenseDTO, *tagError.
 		totalParcel
 		value
 	*/
-
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
-
-	if !statusDBLocal && !statusDBCloud {
-		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
-	}
 
 	expense := expenseDto.ToEntity()
 

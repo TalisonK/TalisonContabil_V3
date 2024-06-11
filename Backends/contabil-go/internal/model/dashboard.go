@@ -9,7 +9,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
-	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
+	"github.com/TalisonK/TalisonContabil/pkg/mathPlus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 )
@@ -168,7 +168,7 @@ func expenseHandler(wg *sync.WaitGroup, ctx context.Context, catName string, exp
 			}
 		}
 		if value > 1 {
-			values[catName] = mathplus.ToFixed(value, 2)
+			values[catName] = mathPlus.ToFixed(value, 2)
 		}
 	}
 }

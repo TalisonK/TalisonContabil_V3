@@ -11,7 +11,7 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
-	"github.com/TalisonK/TalisonContabil/pkg/mathplus"
+	"github.com/TalisonK/TalisonContabil/pkg/mathPlus"
 	"github.com/TalisonK/TalisonContabil/pkg/tagError"
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson"
@@ -122,7 +122,7 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string, 
 	// check if the month and year are valid
 
 	if month == "" || year == 0 {
-		return nil, tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.InvalidFields()))
+		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
 	// get the first and last day of the month
@@ -194,7 +194,7 @@ func resumeBalance(actual float64, pass float64) float64 {
 
 	x := (100 * pass) / actual
 
-	return float64(mathplus.ToFixed(100-x, 2))
+	return float64(mathPlus.ToFixed(100-x, 2))
 }
 
 func fetchIncomesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.Activity, *tagError.TagError) {
@@ -372,8 +372,8 @@ func Resume(ive []domain.IncomevsExpense) (map[string]domain.Resume, *tagError.T
 	}
 
 	resumes["balance"] = domain.Resume{
-		Actual:  mathplus.ToFixed(actual.Income-actual.Expense, 2),
-		Pass:    mathplus.ToFixed(pass.Income-pass.Expense, 2),
+		Actual:  mathPlus.ToFixed(actual.Income-actual.Expense, 2),
+		Pass:    mathPlus.ToFixed(pass.Income-pass.Expense, 2),
 		Balance: resumeBalance((actual.Income - actual.Expense), (pass.Income - pass.Expense)),
 	}
 
@@ -474,7 +474,7 @@ func mountTotal(month string, year int, userId string, totalType string, activit
 		total.TotalValue += activity.Value
 	}
 
-	total.TotalValue = mathplus.ToFixed(total.TotalValue, 2)
+	total.TotalValue = mathPlus.ToFixed(total.TotalValue, 2)
 
 	return total
 }

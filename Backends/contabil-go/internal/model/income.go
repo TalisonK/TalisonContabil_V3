@@ -183,7 +183,7 @@ func CreateIncome(income domain.IncomeDTO) *tagError.TagError {
 	}
 
 	if income.Value == 0 || income.Description == "" || income.ReceivedAt == "" || income.UserID == "" {
-		return tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.InvalidFields()))
+		return tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
 	income.CreatedAt = timeHandler.GetTimeNow()

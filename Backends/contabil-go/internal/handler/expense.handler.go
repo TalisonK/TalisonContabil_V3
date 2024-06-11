@@ -38,7 +38,7 @@ func CreateExpense(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&body)
 
-	result, tagErr := model.CreateExpense(body)
+	result, tagErr := model.CreateExpenseHandler(body)
 
 	if tagErr != nil {
 		w.WriteHeader(tagErr.HtmlStatus)
