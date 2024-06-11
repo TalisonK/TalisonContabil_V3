@@ -80,9 +80,15 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 
 func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
 
-	if expense.CategoryName == "" || expense.PaidAt == "" || expense.PaymentMethod == "" || expense.Value == 0 {
+	if expense.CategoryName == "" || expense.PaidAt == "" || expense.PaymentMethod == "" || expense.Value == 0 || expense.Description == "" {
 		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
+
+	// validar se a categoria existe
+
+	// validar se o método de pagamento é válido
+
+	// validar se é repetido
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
@@ -90,14 +96,57 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
+	expenses := []string{}
+
 	if expense.PaymentMethod == "CREDIT_CARD" {
 		if expense.TotalParcel == 0 || expense.ActualParcel == 0 || expense.TotalParcel < expense.ActualParcel {
 			return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 		}
 
+		var wg sync.WaitGroup
+		for i := expense.ActualParcel; i <= expense.TotalParcel; i++ {
+			wg.Add(1)
+
+			go func(i int32) {
+				defer wg.Done()
+
+				expenseAux := expense
+				expenseAux.ActualParcel = i
+				expenseAux.ID = ""
+
+				id, tagErr := CreateExpense(expenseAux, statusDBLocal, statusDBCloud)
+
+				if tagErr != nil {
+					logging.GenericError(fmt.Sprintf("Failed to create expense %d/%d", i, expense.TotalParcel), tagErr.Inner)
+					return
+				}
+				logging.CreatedOnDB(fmt.Sprintf("Expense from date %d/%d", i, expense.TotalParcel), "Expenses")
+				expenses = append(expenses, id.ID)
+			}(i)
+		}
+
+		wg.Wait()
+
+		logging.GenericSuccess(fmt.Sprintf("Expenses %d/%d created successfully", expense.ActualParcel, expense.TotalParcel))
+
+		return expenses, nil
+
 	}
 
-	return nil, nil
+	id, tagErr := CreateExpense(expense, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.GenericError(fmt.Sprintf("Failed to create expense %s", expense.Description), tagErr.Inner)
+		return nil, tagErr
+	}
+
+	// Debit card or cash
+
+	logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Expenses")
+
+	expenses = append(expenses, id.ID)
+
+	return expenses, nil
 }
 
 func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
@@ -117,9 +166,16 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 	expense.CreatedAt = timeHandler.GetTimeNow()
 	expense.UpdatedAt = timeHandler.GetTimeNow()
 
-	fmt.Println(expense)
-
 	// pegar o id da categoria
+
+	category, tagErr := FindCategoryByName(expenseDto.CategoryName, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Category %s", expenseDto.CategoryName), "Category", tagErr.Inner)
+		return nil, tagErr
+	}
+
+	expense.CategoryID = category.ID
 
 	if statusDBCloud {
 

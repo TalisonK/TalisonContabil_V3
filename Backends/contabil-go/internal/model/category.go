@@ -235,3 +235,34 @@ func FindCategoryByID(id string, statusDBLocal bool, statusDBCloud bool) (*domai
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
+
+func FindCategoryByName(name string, statusDBLocal bool, statusDBCloud bool) (*domain.Category, *tagError.TagError) {
+
+	if statusDBLocal {
+
+		category := domain.Category{}
+		result := database.DBlocal.First(&category, "name = ?", name)
+		if result.Error != nil {
+			logging.FailedToFindOnDB(name, constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		} else {
+			logging.FoundOnDB(name, constants.LOCAL)
+			return &category, nil
+		}
+	}
+
+	if statusDBCloud {
+		result := database.DBCloud.Category.FindOne(context.TODO(), bson.M{"name": name})
+
+		var category domain.Category
+		if err := result.Decode(&category); err != nil {
+			logging.FailedToFindOnDB(name, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusInternalServerError, err)
+		}
+
+		logging.FoundOnDB(name, constants.CLOUD)
+		return &category, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
