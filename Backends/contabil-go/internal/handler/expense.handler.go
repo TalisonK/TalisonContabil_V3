@@ -67,3 +67,18 @@ func UpdateExpense(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 
 }
+
+func DeleteExpense(w http.ResponseWriter, r *http.Request) {
+
+	id := r.PathValue("id")
+
+	tagErr := model.DeleteExpenseHandler(id)
+
+	if tagErr != nil {
+		w.WriteHeader(tagErr.HtmlStatus)
+		fmt.Fprintln(w, logging.GenericError("Error received while tring do delete expense", tagErr.Inner), tagErr.Inner.Error())
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}

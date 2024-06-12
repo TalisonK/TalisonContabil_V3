@@ -179,6 +179,154 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 	return expenses, nil
 }
 
+func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if expense.ID == "" {
+		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	expense = makeExpenseParser(expense)
+
+	expensesToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
+		return nil, tagErr
+	}
+
+	expenses := []string{}
+
+	var wg sync.WaitGroup
+	var errors = make(chan *tagError.TagError, len(expensesToUpdate))
+
+	for _, exp := range expensesToUpdate {
+		wg.Add(1)
+
+		go func(exp domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) {
+			defer wg.Done()
+
+			id, tagErr := UpdateExpense(exp, statusDBLocal, statusDBCloud)
+
+			if tagErr != nil {
+				logging.GenericError(fmt.Sprintf("Failed to update expense %s", exp.Description), tagErr.Inner)
+				errors <- tagErr
+				return
+			}
+
+			logging.UpdatedOnDB(fmt.Sprintf("Expense %s", exp.Description), constants.EXPENSE)
+			expenses = append(expenses, id.ID)
+		}(exp, statusDBLocal, statusDBCloud)
+
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return nil, <-errors
+	}
+
+	return expenses, nil
+
+}
+
+func DeleteExpenseHandler(id string) *tagError.TagError {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if id == "" {
+		return tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	expense := domain.ExpenseDTO{}
+	expense.ID = id
+
+	expensesToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
+		return tagErr
+	}
+
+	var wg sync.WaitGroup
+	var errors = make(chan *tagError.TagError, 1)
+
+	for _, exp := range expensesToUpdate {
+		wg.Add(1)
+
+		go func(exp domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) {
+			defer wg.Done()
+
+			tagErr := DeleteExpense(exp, statusDBLocal, statusDBCloud)
+
+			if tagErr != nil {
+				logging.GenericError(fmt.Sprintf("Failed to delete expense %s", exp.Description), tagErr.Inner)
+				errors <- tagErr
+				return
+			}
+
+			logging.DeletedOnDB(fmt.Sprintf("Expense %s", exp.Description), constants.EXPENSE)
+		}(exp, statusDBLocal, statusDBCloud)
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return <-errors
+	}
+
+	return nil
+}
+
+func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
+
+	expenseEntity := expense.ToEntity()
+
+	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
+
+	if statusDBLocal {
+		result := database.DBlocal.Save(&expenseEntity)
+
+		if result.Error != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.UpdatedOnDB(expenseEntity.ID, constants.LOCAL)
+	}
+
+	if statusDBCloud {
+		objId, err := primitive.ObjectIDFromHex(expenseEntity.ID)
+
+		if err != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		filter := bson.M{"_id": objId}
+		update := bson.M{"$set": expenseEntity.ToPrim()}
+
+		_, err = database.DBCloud.Expense.UpdateOne(context.Background(), filter, update)
+
+		if err != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+
+}
+
 func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
 	/*
@@ -230,69 +378,40 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
-
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
-
-	if !statusDBLocal && !statusDBCloud {
-		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
-	}
-
-	if expense.ID == "" {
-		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
-	}
-
-	expenseParse, tagErr := FindExpenseByDescription(expense.Description, statusDBLocal, statusDBCloud)
-
-	if tagErr != nil {
-		logging.FailedToFindOnDB(expense.ID, constants.LOCAL, tagErr.Inner)
-		return nil, tagErr
-	}
-
-	fmt.Print(expenseParse)
-
-	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
-
-}
-
-func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
-
-	expenseEntity := expense.ToEntity()
-
-	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
+func DeleteExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) *tagError.TagError {
 
 	if statusDBLocal {
-		result := database.DBlocal.Save(&expenseEntity)
+		result := database.DBlocal.Delete(&domain.Expense{}, "id = ?", expense.ID)
 
 		if result.Error != nil {
-			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.LOCAL, result.Error)
-			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+			logging.FailedToDeleteOnDB(expense.ID, constants.LOCAL, result.Error)
+			return tagError.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
-		logging.UpdatedOnDB(expenseEntity.ID, constants.LOCAL)
+		logging.DeletedOnDB(expense.ID, constants.LOCAL)
 	}
 
 	if statusDBCloud {
-		objId, err := primitive.ObjectIDFromHex(expenseEntity.ID)
+		objId, err := primitive.ObjectIDFromHex(expense.ID)
 
 		if err != nil {
-			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
-			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+			logging.FailedToDeleteOnDB(expense.ID, constants.CLOUD, err)
+			return tagError.GetTagError(http.StatusBadRequest, err)
 		}
 
 		filter := bson.M{"_id": objId}
-		update := bson.M{"$set": expenseEntity.ToPrim()}
 
-		_, err = database.DBCloud.Expense.UpdateOne(context.Background(), filter, update)
+		_, err = database.DBCloud.Expense.DeleteOne(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
-			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+			logging.FailedToDeleteOnDB(expense.ID, constants.CLOUD, err)
+			return tagError.GetTagError(http.StatusBadRequest, err)
 		}
+
+		logging.DeletedOnDB(expense.ID, constants.CLOUD)
 	}
 
-	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
-
+	return nil
 }
 
 func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
@@ -487,7 +606,7 @@ func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCl
 	if statusDBLocal {
 		expenses := []domain.Expense{}
 
-		result := database.DBlocal.Where("de = ?", description).Find(&expenses)
+		result := database.DBlocal.Where("description = ?", description).Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(description, constants.LOCAL, result.Error)
@@ -536,4 +655,133 @@ func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCl
 	}
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func FindExpenseByID(id string, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
+	if statusDBLocal {
+		expense := domain.Expense{}
+
+		result := database.DBlocal.Where("id = ?", id).First(&expense)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(id, constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.FoundOnDB(id, constants.LOCAL)
+
+		dto := expense.ToDTO()
+
+		return &dto, nil
+	}
+
+	if statusDBCloud {
+		expense := domain.Expense{}
+
+		objId, err := primitive.ObjectIDFromHex(id)
+
+		if err != nil {
+			logging.FailedToFindOnDB(id, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		filter := bson.M{"_id": objId}
+
+		err = database.DBCloud.Expense.FindOne(context.Background(), filter).Decode(&expense)
+
+		if err != nil {
+			logging.FailedToFindOnDB(id, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		logging.FoundOnDB(id, constants.CLOUD)
+
+		dto := expense.ToDTO()
+
+		return &dto, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func makeExpenseParser(expense domain.ExpenseDTO) domain.ExpenseDTO {
+	expenseParse := expense
+
+	if expense.CategoryName != "" {
+		category, tagErr := FindCategoryByName(expense.CategoryName, true, true)
+
+		if tagErr != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Category %s", expense.CategoryName), "Category", tagErr.Inner)
+			return expenseParse
+		}
+
+		if category.ID == "" {
+			return expenseParse
+		}
+
+		expenseParse.CategoryID = category.ID
+	}
+
+	if expense.PaymentMethod != "" {
+		cond := true
+
+		for _, method := range constants.GetMethods() {
+			if method == expense.PaymentMethod {
+				cond = false
+				break
+			}
+		}
+
+		if cond {
+			return expenseParse
+		}
+
+		expenseParse.PaymentMethod = expense.PaymentMethod
+	}
+
+	return expenseParse
+}
+
+func makeExpensesToUpdate(expenseParse domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
+	expensesToUpdate := []domain.ExpenseDTO{}
+
+	expense, tagErr := FindExpenseByID(expenseParse.ID, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(expenseParse.ID, constants.LOCAL, tagErr.Inner)
+		return nil, tagErr
+	}
+
+	if expense.TotalParcel > 0 {
+		expenses, tagErr := FindExpenseByDescription(expense.Description, true, true)
+
+		if tagErr != nil {
+			logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
+			return nil, tagErr
+		}
+
+		for _, exp := range expenses {
+			if expenseParse.CategoryID != "" {
+				exp.CategoryID = expenseParse.CategoryID
+			}
+			if expenseParse.PaymentMethod != "" {
+				exp.PaymentMethod = expenseParse.PaymentMethod
+			}
+			if expenseParse.Value != 0 {
+				exp.Value = expenseParse.Value
+			}
+			if expenseParse.Description != "" {
+				exp.Description = expenseParse.Description
+			}
+			if expenseParse.PaidAt != "" {
+				exp.PaidAt = expenseParse.PaidAt
+			}
+
+			expensesToUpdate = append(expensesToUpdate, exp)
+		}
+	} else {
+		expensesToUpdate = append(expensesToUpdate, expenseParse)
+	}
+
+	return expensesToUpdate, nil
 }
