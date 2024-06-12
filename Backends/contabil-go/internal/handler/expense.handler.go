@@ -24,7 +24,7 @@ func GetExpenses(w http.ResponseWriter, r *http.Request) {
 
 	if tagerr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", body.UserID), constants.LOCAL, tagerr.Inner))
+		fmt.Fprint(w, logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", body.UserID), constants.LOCAL, tagerr.Inner), tagerr.Inner.Error())
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -42,10 +42,28 @@ func CreateExpense(w http.ResponseWriter, r *http.Request) {
 
 	if tagErr != nil {
 		w.WriteHeader(tagErr.HtmlStatus)
-		fmt.Fprintln(w, logging.GenericError("Error received while tring do create expense", tagErr.Inner))
+		fmt.Fprintln(w, logging.GenericError("Error received while tring do create expense", tagErr.Inner), tagErr.Inner.Error())
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(result)
+
+}
+
+func UpdateExpense(w http.ResponseWriter, r *http.Request) {
+
+	var body domain.ExpenseDTO
+
+	json.NewDecoder(r.Body).Decode(&body)
+
+	result, tagErr := model.UpdateExpenseHandler(body)
+
+	if tagErr != nil {
+		w.WriteHeader(tagErr.HtmlStatus)
+		fmt.Fprintln(w, logging.GenericError("Error received while tring do update expense", tagErr.Inner), tagErr.Inner.Error())
+	}
+
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 
 }

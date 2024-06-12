@@ -84,16 +84,46 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
-	// validar se a categoria existe
-
-	// validar se o método de pagamento é válido
-
-	// validar se é repetido
-
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
 		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	// validar se a categoria existe
+
+	category, tagErr := FindCategoryByName(expense.CategoryName, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(fmt.Sprintf("Category %s", expense.CategoryName), "Category", tagErr.Inner)
+		return nil, tagErr
+	}
+
+	if category.ID == "" {
+		return nil, tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.FailedToFindOnDB(expense.CategoryName, "Category", tagErr.Inner)))
+	}
+
+	expense.CategoryID = category.ID
+
+	// validar se o método de pagamento é válido
+
+	cond := true
+
+	for _, method := range constants.GetMethods() {
+		if method == expense.PaymentMethod {
+			cond = false
+			break
+		}
+	}
+
+	if cond {
+		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	// validar se é repetido
+
+	if checkDuplicatedExpense(expense, statusDBLocal, statusDBCloud) {
+		return nil, tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.DuplicatedEntry(expense.Description)))
 	}
 
 	expenses := []string{}
@@ -168,15 +198,6 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 
 	// pegar o id da categoria
 
-	category, tagErr := FindCategoryByName(expenseDto.CategoryName, statusDBLocal, statusDBCloud)
-
-	if tagErr != nil {
-		logging.FailedToFindOnDB(fmt.Sprintf("Category %s", expenseDto.CategoryName), "Category", tagErr.Inner)
-		return nil, tagErr
-	}
-
-	expense.CategoryID = category.ID
-
 	if statusDBCloud {
 
 		inserted, err := database.DBCloud.Expense.InsertOne(context.Background(), expense.ToPrim())
@@ -207,6 +228,71 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 	}
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if expense.ID == "" {
+		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	expenseParse, tagErr := FindExpenseByDescription(expense.Description, statusDBLocal, statusDBCloud)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(expense.ID, constants.LOCAL, tagErr.Inner)
+		return nil, tagErr
+	}
+
+	fmt.Print(expenseParse)
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+
+}
+
+func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
+
+	expenseEntity := expense.ToEntity()
+
+	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
+
+	if statusDBLocal {
+		result := database.DBlocal.Save(&expenseEntity)
+
+		if result.Error != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.UpdatedOnDB(expenseEntity.ID, constants.LOCAL)
+	}
+
+	if statusDBCloud {
+		objId, err := primitive.ObjectIDFromHex(expenseEntity.ID)
+
+		if err != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		filter := bson.M{"_id": objId}
+		update := bson.M{"$set": expenseEntity.ToPrim()}
+
+		_, err = database.DBCloud.Expense.UpdateOne(context.Background(), filter, update)
+
+		if err != nil {
+			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+
 }
 
 func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.TagError, userId string, month string, year int) (map[string]float64, *tagError.TagError) {
@@ -367,4 +453,87 @@ func ExpenseGetCategoryName(expenses []domain.Expense, statusDBLocal bool, statu
 	wg.Wait()
 
 	return expensesDto
+}
+
+func checkDuplicatedExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) bool {
+	if statusDBLocal {
+		var count int64
+		database.DBlocal.Model(&domain.Expense{}).Where("description = ? AND value = ? AND paid_at = ? AND user_id = ?", expense.Description, expense.Value, expense.PaidAt, expense.UserID).Count(&count)
+
+		if count > 0 {
+			return true
+		}
+	}
+
+	if statusDBCloud {
+		filter := bson.M{"description": expense.Description, "value": expense.Value, "paidAt": expense.PaidAt, "userID": expense.UserID}
+
+		count, err := database.DBCloud.Expense.CountDocuments(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Expense %s", expense.Description), constants.CLOUD, err)
+			return true
+		}
+
+		if count > 0 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
+	if statusDBLocal {
+		expenses := []domain.Expense{}
+
+		result := database.DBlocal.Where("de = ?", description).Find(&expenses)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(description, constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.FoundOnDB(description, constants.LOCAL)
+
+		dto := []domain.ExpenseDTO{}
+
+		for _, expense := range expenses {
+			dto = append(dto, expense.ToDTO())
+		}
+
+		return dto, nil
+	}
+
+	if statusDBCloud {
+		expenses := []domain.Expense{}
+
+		objId, err := primitive.ObjectIDFromHex(description)
+
+		if err != nil {
+			logging.FailedToFindOnDB(description, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		filter := bson.M{"_id": objId}
+
+		err = database.DBCloud.Expense.FindOne(context.Background(), filter).Decode(&expenses)
+
+		if err != nil {
+			logging.FailedToFindOnDB(description, constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		logging.FoundOnDB(description, constants.CLOUD)
+
+		dto := []domain.ExpenseDTO{}
+
+		for _, expense := range expenses {
+			dto = append(dto, expense.ToDTO())
+		}
+
+		return dto, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }

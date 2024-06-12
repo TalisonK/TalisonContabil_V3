@@ -13,6 +13,7 @@ func ExpenseRouter() http.Handler {
 
 	r.Post("/", handler.GetExpenses)
 	r.Post("/create", handler.CreateExpense)
+	r.Put("/", handler.UpdateExpense)
 
 	return r
 

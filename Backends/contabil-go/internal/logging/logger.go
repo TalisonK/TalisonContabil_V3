@@ -147,6 +147,7 @@ func EmptyPassword() string {
 	return logHandler("User name or password is empty.", nil)
 }
 
+// "Duplicated entry %s on database."
 func DuplicatedEntry(id string) string {
 	return logHandler(fmt.Sprintf("Duplicated entry %s on database.", id), nil)
 }
