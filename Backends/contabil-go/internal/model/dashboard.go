@@ -115,11 +115,14 @@ func ExpenseByCategoryRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagErro
 	fixe := []string{"Conta", "Streaming"}
 
 	var wg2 sync.WaitGroup
+	var valuesMutex sync.RWMutex
+	var fixatedMutex sync.RWMutex
+
 	for catName, expenses := range ebc {
 
 		wg2.Add(1)
 
-		go expenseHandler(&wg2, ctx, catName, expenses, values, fixated, fixe)
+		go expenseHandler(&wg2, &valuesMutex, &fixatedMutex, ctx, catName, expenses, values, fixated, fixe)
 
 	}
 
@@ -147,7 +150,7 @@ func ExpenseByMethodRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError,
 
 }
 
-func expenseHandler(wg *sync.WaitGroup, ctx context.Context, catName string, expenses []domain.Expense, values map[string]float64, fixated map[string][]domain.Activity, fixe []string) {
+func expenseHandler(wg *sync.WaitGroup, valuesMutex *sync.RWMutex, fixatedMutex *sync.RWMutex, ctx context.Context, catName string, expenses []domain.Expense, values map[string]float64, fixated map[string][]domain.Activity, fixe []string) {
 	defer wg.Done()
 
 	select {
@@ -163,12 +166,20 @@ func expenseHandler(wg *sync.WaitGroup, ctx context.Context, catName string, exp
 
 			for _, f := range fixe {
 				if catName == f {
+					fixatedMutex.Lock()
+
 					fixated[catName] = append(fixated[catName], expense.ToActivity())
+
+					fixatedMutex.Unlock()
 				}
 			}
 		}
 		if value > 1 {
+			valuesMutex.Lock()
+
 			values[catName] = mathPlus.ToFixed(value, 2)
+
+			valuesMutex.Unlock()
 		}
 	}
 }

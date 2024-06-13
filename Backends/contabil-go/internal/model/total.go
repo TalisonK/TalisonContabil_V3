@@ -192,6 +192,10 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string, 
 
 func resumeBalance(actual float64, pass float64) float64 {
 
+	if actual == 0 || pass == 0 {
+		return 0.0
+	}
+
 	x := (100 * pass) / actual
 
 	return float64(mathPlus.ToFixed(100-x, 2))

@@ -455,6 +455,7 @@ func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagErro
 	startingDate, endingDate := timeHandler.GetFirstAndLastDayOfMonth(month, year)
 
 	var wg sync.WaitGroup
+	var mutex sync.Mutex
 
 	for id, cat := range database.CacheDatabase.Categories {
 
@@ -479,6 +480,8 @@ func ExpenseByCategory(ctx context.Context, cancel func(), errChan chan *tagErro
 					return
 				}
 
+				mutex.Lock()
+				defer mutex.Unlock()
 				expVSCat[cat.Name] = expenses
 
 			}(id, cat, statusDBLocal, statusDBCloud, startingDate, endingDate)
