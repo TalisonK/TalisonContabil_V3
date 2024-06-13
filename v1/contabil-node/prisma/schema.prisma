@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model Activity {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  metodo        Metodos
+  descricao     String
+  valor         Float
+  tipo          Tipos
+  parcelaAtual  Int
+  parcelaTotal  Int
+  dataPagamento DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  //relacionamentos
+  categoriaName Categorias
+  categoriaId   String     @db.ObjectId
+  userId        String     @db.ObjectId
+  categoria     Categoria  @relation(fields: [categoriaId, categoriaName], references: [id, nome])
+  user          User       @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id      String     @id @default(auto()) @map("_id") @db.ObjectId
+  nome    String     @unique
+  senha   String
+  compras Activity[]
+}
+
+model Categoria {
+  id      String     @id @default(auto()) @map("_id") @db.ObjectId
+  nome    Categorias @unique
+  compras Activity[]
+
+  @@unique([id, nome])
+}
+
+enum Tipos {
+  Income
+  Expense
+}
+
+enum Categorias {
+  Alimento
+  Computador
+  Conta
+  Ecommerce
+  Estudo
+  Helen
+  Imposto
+  Jogo
+  Leitura
+  Movel
+  Mike
+  Periferico
+  Saude
+  Servico
+  Streaming
+  Telefone
+  Transporte
+  Utensilio
+  Veiculo
+  Vestimenta
+  Income
+}
+
+enum Metodos {
+  Debito
+  Credito
+  Dinheiro
+  Entrada
+}
