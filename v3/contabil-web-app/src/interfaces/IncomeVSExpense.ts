@@ -1,5 +1,6 @@
 interface IncomeVSExpense {
-    monthYear: string
+    year: number
+    month: string
     income: number
     expense: number
 }

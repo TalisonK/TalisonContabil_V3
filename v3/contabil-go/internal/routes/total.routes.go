@@ -12,6 +12,7 @@ func TotalRouter() http.Handler {
 	r := chi.NewRouter()
 
 	r.Post("/", handler.GetTotalRange)
+	r.Post("/dashboard", handler.GetDashboard)
 
 	return r
 }

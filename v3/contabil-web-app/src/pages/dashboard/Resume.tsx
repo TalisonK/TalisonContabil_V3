@@ -1,25 +1,14 @@
 import React from 'react'
 import { DisplayFlex, Text } from '../../styles'
 import Totals from '../../interfaces/Totals'
+import ResumeBundle from '../../interfaces/Resume'
 
 interface Props {
-    entradas: Totals[]
+    entradas: ResumeBundle
     type: string
 }
 
 const Resume = (props: Props) => {
-    const getPercentage = () => {
-        return (
-            100 -
-            Number.parseInt(
-                (
-                    (props.entradas[0].value * 100) /
-                    props.entradas[1].value
-                ).toFixed(2)
-            )
-        )
-    }
-
     return (
         <DisplayFlex direction="row" justifyContent="space-between" width="95%">
             <DisplayFlex direction="column">
@@ -27,7 +16,7 @@ const Resume = (props: Props) => {
                     {props.type}
                 </Text>
                 <Text marginLeft="10px">
-                    R$ {Number.parseInt(props.entradas[1].value.toFixed(4))}
+                    R$ {props.entradas.actual.toFixed(2)}
                 </Text>
             </DisplayFlex>
             <DisplayFlex
@@ -36,9 +25,7 @@ const Resume = (props: Props) => {
                 marginTop="20px"
             >
                 <Text fontSize="1em" style={{ alignSelf: 'center' }}>
-                    {Number.isNaN(getPercentage())
-                        ? ''
-                        : `${getPercentage()} %`}
+                    {`${props.entradas.balance} %`}
                 </Text>
             </DisplayFlex>
         </DisplayFlex>

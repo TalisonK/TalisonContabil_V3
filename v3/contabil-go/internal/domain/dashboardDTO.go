@@ -6,7 +6,7 @@ type DashboardPacket struct {
 	Year              int                   `json:"year"`
 	UpdatedAt         string                `json:"updatedAt"`
 	Timeline          []Activity            `json:"timeline"`
-	Resume            map[string]Resume     `json:"resume"`
+	Resumes           map[string]Resume     `json:"resumes"`
 	ExpenseByCategory map[string]float64    `json:"expenseByCategory"`
 	IncomevsExpense   []IncomevsExpense     `json:"incomeVSexpense"`
 	ExpenseByMethod   map[string]float64    `json:"expenseByMethod"`

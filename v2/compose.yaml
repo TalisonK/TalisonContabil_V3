@@ -5,7 +5,7 @@ services:
     container_name: contabil_front
     hostname: contabil_front
     build:
-      context: ./Frontends/contabil-web-app
+      context: ./contabil-web-app
       dockerfile: Dockerfile
     restart: always
     ports:
@@ -17,7 +17,7 @@ services:
     container_name: contabil_back
     hostname: contabil_back
     build:
-      context: ./Backends/contabil-java
+      context: ./contabil-java
       dockerfile: Dockerfile
     restart: always
     ports:

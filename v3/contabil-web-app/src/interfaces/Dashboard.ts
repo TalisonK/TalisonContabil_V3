@@ -1,6 +1,7 @@
 import Activity from './Activity'
 import IncomeVSExpense from './IncomeVSExpense'
 import Totals from './Totals'
+import ResumeBundle from './Resume'
 
 interface DashboardBundle {
     userId: string
@@ -9,9 +10,9 @@ interface DashboardBundle {
     updatedAt: Date
     timeline: Activity[]
     resumes: {
-        incomes: Totals[]
-        expenses: Totals[]
-        balances: Totals[]
+        income: ResumeBundle
+        expense: ResumeBundle
+        balance: ResumeBundle
     }
     incomeVSexpense: IncomeVSExpense[]
     expenseByCategory: any

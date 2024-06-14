@@ -75,7 +75,7 @@ func totalRangeAndResumeRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagEr
 
 	logging.GenericSuccess(fmt.Sprintf("Resumes from %s/%d for user %s sucessfully generated", entry.Month, entry.Year, entry.UserID))
 	entry.IncomevsExpense = ive
-	entry.Resume = resume
+	entry.Resumes = resume
 
 }
 

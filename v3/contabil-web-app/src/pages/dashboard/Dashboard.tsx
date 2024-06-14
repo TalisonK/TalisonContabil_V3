@@ -47,7 +47,7 @@ const Dashboard = (props: any) => {
     const updateBundle = (id: string) => {
         getDashboard(
             id,
-            '' + date.getFullYear(),
+            date.getFullYear(),
             date
                 .toLocaleString('default', { month: 'short' })
                 .slice(0, 1)
@@ -182,9 +182,7 @@ const Dashboard = (props: any) => {
                                             dark={props.theme === 'dark'}
                                         >
                                             <Resume
-                                                entradas={
-                                                    bundle.resumes.incomes
-                                                }
+                                                entradas={bundle.resumes.income}
                                                 type="Income"
                                             />
                                         </DisplayFlex>
@@ -204,7 +202,7 @@ const Dashboard = (props: any) => {
                                         >
                                             <Resume
                                                 entradas={
-                                                    bundle.resumes.expenses
+                                                    bundle.resumes.expense
                                                 }
                                                 type="Expense"
                                             />
@@ -225,7 +223,7 @@ const Dashboard = (props: any) => {
                                         >
                                             <Resume
                                                 entradas={
-                                                    bundle.resumes.balances
+                                                    bundle.resumes.balance
                                                 }
                                                 type="Balance"
                                             />
@@ -238,7 +236,6 @@ const Dashboard = (props: any) => {
                                         />
                                     )}
                                 </DisplayFlex>
-
                                 {/* IncomeVSExpense and pie */}
                                 <DisplayFlex
                                     direction="row"
