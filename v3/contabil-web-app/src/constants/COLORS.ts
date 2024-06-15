@@ -11,6 +11,7 @@ export const CATEGORY_COLORS = {
     Movel: '#FF4500', // OrangeRed
     Outras: '#32CD32', // LimeGreen
     Periferico: '#FF69B4', // HotPink
+    Perfumaria : '#6495ED', // CornflowerBlue
     Saude: '#BA55D3', // MediumOrchid
     Servico: '#87CEFA', // LightSkyBlue
     Streaming: '#48D1CC', // MediumTurquoise
