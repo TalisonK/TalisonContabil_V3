@@ -18,8 +18,8 @@ interface DashboardBundle {
     expenseByCategory: any
     expenseByMethod: any
     fixatedExpenses: {
-        contas: Activity[]
-        streaming: Activity[]
+        Conta: Activity[]
+        Streaming: Activity[]
     }
 }
 

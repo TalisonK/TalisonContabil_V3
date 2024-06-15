@@ -1,12 +1,12 @@
 package logging
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 )
@@ -14,16 +14,46 @@ import (
 var mutex sync.Mutex
 var wg sync.WaitGroup
 
+var LogSize int64
+
+func GetLogs(start string, lines int64) ([]string, error) {
+	file, err := os.Open("talisoncontabil.log")
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var lineCount int64 = 0
+	var logLines []string
+	for scanner.Scan() {
+
+		lineCount++
+		if lines == 0 || (start == "head" && lineCount <= lines) || (start == "tail" && lineCount > LogSize-lines) {
+			logLines = append(logLines, scanner.Text())
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return logLines, nil
+}
+
 func logHandler(message string, err error) string {
 	wg.Add(1)
 
 	funcao := getFunctionName()
 
+	LogSize++
+
 	go func() {
 
 		defer wg.Done()
 
-		f, _ := os.OpenFile(fmt.Sprintf("../../log/talisoncontabil-%s.log", time.Now().Format(time.DateOnly)), os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		f, _ := os.OpenFile("talisoncontabil.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		defer f.Close()
 
 		mutex.Lock()

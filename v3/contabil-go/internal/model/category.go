@@ -200,7 +200,7 @@ func DeleteCategory(id string) *tagError.TagError {
 
 func FindCategoryByID(id string, statusDBLocal bool, statusDBCloud bool) (*domain.Category, *tagError.TagError) {
 
-	cat := database.CacheDatabase.GetNameById(id)
+	cat := database.CacheDatabase.GetCategoryById(id)
 
 	if cat.ID != "" {
 		logging.FoundOnDB(id, "Cache")

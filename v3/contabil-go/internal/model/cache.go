@@ -26,6 +26,7 @@ func StartCache() database.CacheDB {
 	}
 
 	logging.GenericSuccess("Cache for Category started successfully.")
+
 	return cache
 
 }

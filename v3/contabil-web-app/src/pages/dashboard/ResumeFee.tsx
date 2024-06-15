@@ -57,7 +57,7 @@ const ResumeFee = (props: Props) => {
                 }}
                 card={true}
             >
-                <Text margin="10px">{props.conta.method}</Text>
+                <Text margin="10px">{props.conta.paymentMethod}</Text>
                 <Text margin="10px">R${props.conta.value.toFixed(2)}</Text>
             </DisplayFlex>
         </DisplayFlex>

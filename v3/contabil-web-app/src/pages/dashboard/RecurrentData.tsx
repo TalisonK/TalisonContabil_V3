@@ -14,6 +14,13 @@ interface Props {
 
 const RecurrentData = (props: Props) => {
     const feeShuffler = (fee: string) => {
+        if(!props.contas) {
+            return {
+                description: fee,
+                paymentMethod: 'Waiting',
+                value: 0,
+            }
+        }
         for (let i = 0; i < props.contas.length; i++) {
             if (props.contas[i].description === fee) {
                 return props.contas[i]
@@ -21,7 +28,7 @@ const RecurrentData = (props: Props) => {
         }
         return {
             description: fee,
-            method: 'Waiting',
+            paymentMethod: 'Waiting',
             value: 0,
         }
     }

@@ -9,7 +9,7 @@ type CacheDB struct {
 
 var CacheDatabase CacheDB
 
-func (c CacheDB) GetNameById(id string) domain.Category {
+func (c CacheDB) GetCategoryById(id string) domain.Category {
 
 	return c.Categories[id]
 

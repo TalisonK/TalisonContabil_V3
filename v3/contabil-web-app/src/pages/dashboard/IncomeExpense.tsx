@@ -38,7 +38,7 @@ const IncomeExpense = (props: Props) => {
                     }}
                 >
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="monthYear" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
                     <Legend verticalAlign="top" iconType="circle" />

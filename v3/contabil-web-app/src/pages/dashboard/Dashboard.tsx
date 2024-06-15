@@ -325,11 +325,11 @@ const Dashboard = (props: any) => {
                                             <RecurrentData
                                                 contas={
                                                     bundle.fixatedExpenses
-                                                        .contas
+                                                        .Conta
                                                 }
                                                 streaming={
                                                     bundle.fixatedExpenses
-                                                        .streaming
+                                                        .Streaming
                                                 }
                                                 theme={props.theme}
                                             />
