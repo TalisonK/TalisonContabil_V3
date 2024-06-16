@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime/trace"
 
-	"github.com/TalisonK/TalisonContabil/internal/auth"
 	"github.com/TalisonK/TalisonContabil/internal/config"
 	"github.com/TalisonK/TalisonContabil/internal/constants"
 	"github.com/TalisonK/TalisonContabil/internal/database"
@@ -48,7 +47,7 @@ func main() {
 	}
 
 	// Start the auth
-	auth.NewAuth()
+	//auth.NewAuth()
 
 	// Open the database Local connections
 	err = database.OpenConnectionLocal()

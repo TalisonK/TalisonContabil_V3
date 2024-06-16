@@ -40,6 +40,23 @@ func MonthSubtractor(month string, year int) (string, int) {
 	}
 }
 
+func MonthCompare(firstMonth string, firstYear int, secondMonth string, secondYear int) int {
+
+	firstSum := MonthToNumber(firstMonth) + firstYear*20
+	secondSum := MonthToNumber(secondMonth) + secondYear*20
+
+	if firstSum > secondSum {
+		return -1
+	}
+
+	if firstSum == secondSum {
+		return 0
+	}
+
+	return 1
+
+}
+
 func MonthSubtractorByJump(month string, year int, jump int) (string, int) {
 	for i := 0; i < jump; i++ {
 		month, year = MonthSubtractor(month, year)

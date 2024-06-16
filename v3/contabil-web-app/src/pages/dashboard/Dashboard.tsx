@@ -49,10 +49,10 @@ const Dashboard = (props: any) => {
             id,
             date.getFullYear(),
             date
-                .toLocaleString('default', { month: 'short' })
+                .toLocaleString('en-US', { month: 'short' })
                 .slice(0, 1)
                 .toLocaleUpperCase() +
-                date.toLocaleString('default', { month: 'short' }).slice(1, 3)
+                date.toLocaleString('en-US', { month: 'short' }).slice(1, 3)
         )
             .then((res) => {
                 setBundle(res.data)
