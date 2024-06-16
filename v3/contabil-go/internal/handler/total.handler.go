@@ -36,3 +36,37 @@ func fail(w http.ResponseWriter, totalType string, err tagError.TagError, entry 
 	w.WriteHeader(err.HtmlStatus)
 	fmt.Fprint(w, message)
 }
+
+func GetDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var entry domain.DashboardPacket
+
+	json.NewDecoder(r.Body).Decode(&entry)
+
+	out, tagErr := model.GetDashboard(entry)
+
+	if tagErr != nil {
+		logging.ErrorOccurred()
+		w.WriteHeader(tagErr.HtmlStatus)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(out)
+
+}
+
+func GetActivities(w http.ResponseWriter, r *http.Request) {
+
+	userId := r.PathValue("id")
+
+	out, tagErr := model.GetActivities(userId)
+
+	if tagErr != nil {
+		logging.ErrorOccurred()
+		w.WriteHeader(tagErr.HtmlStatus)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(out)
+
+}

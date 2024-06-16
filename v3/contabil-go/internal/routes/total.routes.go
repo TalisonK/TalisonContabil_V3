@@ -13,6 +13,7 @@ func TotalRouter() http.Handler {
 
 	r.Post("/", handler.GetTotalRange)
 	r.Post("/dashboard", handler.GetDashboard)
+	r.Get("/activities/{id}", handler.GetActivities)
 
 	return r
 }

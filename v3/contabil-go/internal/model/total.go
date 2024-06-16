@@ -190,6 +190,43 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string, 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
+func GetActivities(userId string) ([]domain.Activity, *tagError.TagError) {
+
+	var activities []domain.Activity
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	incomes, tagError := GetUserIncomes(userId)
+
+	if tagError != nil {
+		logging.FailedToFindOnDB("Incomes", constants.INCOME, tagError.Inner)
+		return nil, tagError
+	}
+
+	for _, income := range incomes {
+		ent := income.ToEntity()
+		activities = append(activities, ent.ToActivity())
+	}
+
+	expenses, tagError := GetUserExpenses(userId)
+
+	if tagError != nil {
+		logging.FailedToFindOnDB("Expenses", constants.EXPENSE, tagError.Inner)
+		return nil, tagError
+	}
+
+	for _, expense := range expenses {
+		activities = append(activities, expense.ToActivity())
+	}
+
+	return activities, nil
+
+}
+
 func resumeBalance(actual float64, pass float64) float64 {
 
 	if actual == 0 || pass == 0 {

@@ -18,6 +18,57 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
+	expenses := []domain.Expense{}
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if statusDBLocal {
+		result := database.DBlocal.Where("user_id = ?", userId).Find(&expenses)
+
+		if result.Error != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)
+			return nil, tagError.GetTagError(http.StatusInternalServerError, result.Error)
+		}
+
+		logging.FoundOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL)
+
+		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+
+		return dtos, nil
+	}
+
+	if statusDBCloud {
+
+		filter := bson.M{"userID": userId}
+
+		cursor, err := database.DBCloud.Expense.Find(context.Background(), filter)
+
+		if err != nil {
+			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.CLOUD, err)
+			return nil, tagError.GetTagError(http.StatusInternalServerError, err)
+		}
+
+		for cursor.Next(context.Background()) {
+			var raw bson.M
+
+			cursor.Decode(raw)
+
+			expenses = append(expenses, domain.PrimToExpense(raw))
+		}
+
+		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+
+		return dtos, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
 func GetExpensesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
 
 	expenses := []domain.Expense{}

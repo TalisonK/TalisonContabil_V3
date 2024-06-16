@@ -30,6 +30,8 @@ const ListPage = (props: any) => {
         }
 
         getList(user.id).then((response) => {
+            console.log(response);
+            
             setRows(response)
         })
     }, [])
