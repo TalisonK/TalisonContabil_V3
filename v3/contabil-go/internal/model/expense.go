@@ -157,6 +157,10 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 
 		wg.Wait()
 
+		month, year := timeHandler.DateBreaker(expense.PaidAt)
+
+		CreateUpdateTotal(expense.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
+
 		logging.GenericSuccess(fmt.Sprintf("Expenses %d/%d created successfully", expense.ActualParcel, expense.TotalParcel))
 
 		return expenses, nil
@@ -231,6 +235,12 @@ func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 		return nil, <-errors
 	}
 
+	month, year := timeHandler.DateBreaker(expense.PaidAt)
+
+	CreateUpdateTotal(expense.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
+
+	logging.GenericSuccess(fmt.Sprintf("Expenses %s updated successfully", expense.Description))
+
 	return expenses, nil
 
 }
@@ -283,6 +293,10 @@ func DeleteExpenseHandler(id string) *tagError.TagError {
 	if len(errors) > 0 {
 		return <-errors
 	}
+
+	month, year := timeHandler.DateBreaker(expense.PaidAt)
+
+	CreateUpdateTotal(expense.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
 
 	return nil
 }

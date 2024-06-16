@@ -222,6 +222,10 @@ func CreateIncome(income domain.IncomeDTO) *tagError.TagError {
 		return nil
 	}
 
+	month, year := timeHandler.DateBreaker(income.ReceivedAt)
+
+	CreateUpdateTotal(income.UserID, month, year, constants.INCOME, statusDBLocal, statusDBCloud)
+
 	return tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
@@ -284,6 +288,10 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *tagError.TagErro
 		dto := baseIncome.ToDTO()
 		return &dto, nil
 	}
+
+	month, year := timeHandler.DateBreaker(income.ReceivedAt)
+
+	CreateUpdateTotal(income.UserID, month, year, constants.INCOME, statusDBLocal, statusDBCloud)
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }

@@ -157,7 +157,7 @@ const Insert = (props: any) => {
 
         let data: any = {
             description,
-            user: user.name,
+            userId: user.id,
             value: parseFloat(value.replace(',', '.')),
             type,
         }
@@ -165,7 +165,7 @@ const Insert = (props: any) => {
         if (type === 'Expense') {
             data = {
                 ...data,
-                category,
+                categoryName: category,
                 paymentMethod,
                 actualParcel,
                 totalParcel,

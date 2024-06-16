@@ -13,7 +13,7 @@ func IncomeRouter() http.Handler {
 
 	r.Get("/", handler.GetIncomes)
 	r.Get("/{id}", handler.GetUserIncomes)
-	r.Post("/", handler.CreateIncome)
+	r.Post("/create", handler.CreateIncome)
 	r.Put("/", handler.UpdateIncome)
 	r.Delete("/{id}", handler.DeleteIncome)
 

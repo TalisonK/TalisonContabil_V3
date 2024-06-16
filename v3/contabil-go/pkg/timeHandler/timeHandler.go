@@ -77,6 +77,14 @@ func MonthAdder(month string, year int) (string, int) {
 	return month, year
 }
 
+func DateBreaker(date string) (string, int) {
+	t, _ := time.Parse(time.RFC3339, date)
+
+	year, month, _ := t.Date()
+
+	return months[month-1], year
+}
+
 func NumberToMonth(number int) string {
 	return months[number-1]
 }
