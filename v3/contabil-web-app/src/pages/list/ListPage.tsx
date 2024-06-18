@@ -9,8 +9,8 @@ const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 220 },
     { field: 'description', headerName: 'Description', width: 350 },
     { field: 'type', headerName: 'Type', width: 180 },
-    { field: 'method', headerName: 'Payment Method', width: 180 },
-    { field: 'activityCategory', headerName: 'Category', width: 200 },
+    { field: 'paymentMethod', headerName: 'Payment Method', width: 180 },
+    { field: 'categoryName', headerName: 'Category', width: 200 },
     { field: 'value', headerName: 'Value', width: 150, type: 'number' },
     { field: 'actualParcel', headerName: 'Actual Parcel', width: 100 },
     { field: 'totalParcel', headerName: 'Total Parcel', width: 100 },
@@ -30,8 +30,6 @@ const ListPage = (props: any) => {
         }
 
         getList(user.id).then((response) => {
-            console.log(response);
-            
             setRows(response)
         })
     }, [])

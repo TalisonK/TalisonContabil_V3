@@ -139,6 +139,7 @@ func (e *ExpenseDTO) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		CategoryName:  e.CategoryName,
 		ActualParcel:  e.ActualParcel,
 		TotalParcel:   e.TotalParcel,
 	}

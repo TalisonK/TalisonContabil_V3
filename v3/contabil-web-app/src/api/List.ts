@@ -4,8 +4,9 @@ import Activity from '../interfaces/Activity'
 const url = `${process.env.REACT_APP_BACKEND_API}`
 
 export const getList = async (id: string) => {
+    
     const response = await axios.get<Activity[]>(
-        url + 'total/activities/' + id
+        url + '/total/activities/' + id
     )
 
     return response.data

@@ -28,7 +28,7 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 	}
 
 	if statusDBLocal {
-		result := database.DBlocal.Where("user_id = ?", userId).Find(&expenses)
+		result := database.DBlocal.Where("user_id = ?", userId).Order("paid_at DESC").Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)

@@ -82,7 +82,7 @@ func GetUserIncomes(id string) ([]domain.IncomeDTO, *tagError.TagError) {
 	if statusDBLocal {
 		incomes := []domain.Income{}
 
-		result := database.DBlocal.Where("user_id = ?", id).Find(&incomes)
+		result := database.DBlocal.Where("user_id = ?", id).Order("received_at DESC").Find(&incomes)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(id, constants.LOCAL, result.Error)

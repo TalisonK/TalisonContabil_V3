@@ -200,6 +200,17 @@ func GetActivities(userId string) ([]domain.Activity, *tagError.TagError) {
 		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
+	expenses, tagError := GetUserExpenses(userId)
+
+	if tagError != nil {
+		logging.FailedToFindOnDB("Expenses", constants.EXPENSE, tagError.Inner)
+		return nil, tagError
+	}
+
+	for _, expense := range expenses {
+		activities = append(activities, expense.ToActivity())
+	}
+
 	incomes, tagError := GetUserIncomes(userId)
 
 	if tagError != nil {
@@ -210,17 +221,6 @@ func GetActivities(userId string) ([]domain.Activity, *tagError.TagError) {
 	for _, income := range incomes {
 		ent := income.ToEntity()
 		activities = append(activities, ent.ToActivity())
-	}
-
-	expenses, tagError := GetUserExpenses(userId)
-
-	if tagError != nil {
-		logging.FailedToFindOnDB("Expenses", constants.EXPENSE, tagError.Inner)
-		return nil, tagError
-	}
-
-	for _, expense := range expenses {
-		activities = append(activities, expense.ToActivity())
 	}
 
 	return activities, nil
