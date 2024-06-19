@@ -327,7 +327,7 @@ func DeleteExpenseHandler(id string) *tagError.TagError {
 		go func(exp domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) {
 			defer wg.Done()
 
-			tagErr := DeleteExpense(exp, statusDBLocal, statusDBCloud)
+			tagErr := DeleteExpense(exp.ID, statusDBLocal, statusDBCloud)
 
 			if tagErr != nil {
 				logging.GenericError(fmt.Sprintf("Failed to delete expense %s", exp.Description), tagErr.Inner)
@@ -443,24 +443,24 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func DeleteExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) *tagError.TagError {
+func DeleteExpense(id string, statusDBLocal bool, statusDBCloud bool) *tagError.TagError {
 
 	if statusDBLocal {
-		result := database.DBlocal.Delete(&domain.Expense{}, "id = ?", expense.ID)
+		result := database.DBlocal.Delete(&domain.Expense{}, "id = ?", id)
 
 		if result.Error != nil {
-			logging.FailedToDeleteOnDB(expense.ID, constants.LOCAL, result.Error)
+			logging.FailedToDeleteOnDB(id, constants.LOCAL, result.Error)
 			return tagError.GetTagError(http.StatusBadRequest, result.Error)
 		}
 
-		logging.DeletedOnDB(expense.ID, constants.LOCAL)
+		logging.DeletedOnDB(id, constants.LOCAL)
 	}
 
 	if statusDBCloud {
-		objId, err := primitive.ObjectIDFromHex(expense.ID)
+		objId, err := primitive.ObjectIDFromHex(id)
 
 		if err != nil {
-			logging.FailedToDeleteOnDB(expense.ID, constants.CLOUD, err)
+			logging.FailedToDeleteOnDB(id, constants.CLOUD, err)
 			return tagError.GetTagError(http.StatusBadRequest, err)
 		}
 
@@ -469,11 +469,11 @@ func DeleteExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud 
 		_, err = database.DBCloud.Expense.DeleteOne(context.Background(), filter)
 
 		if err != nil {
-			logging.FailedToDeleteOnDB(expense.ID, constants.CLOUD, err)
+			logging.FailedToDeleteOnDB(id, constants.CLOUD, err)
 			return tagError.GetTagError(http.StatusBadRequest, err)
 		}
 
-		logging.DeletedOnDB(expense.ID, constants.CLOUD)
+		logging.DeletedOnDB(id, constants.CLOUD)
 	}
 
 	return nil

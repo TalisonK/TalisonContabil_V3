@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/TalisonK/TalisonContabil/internal/database"
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
 	"github.com/TalisonK/TalisonContabil/internal/model"
@@ -107,7 +108,15 @@ func DeleteIncome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := model.DeleteIncome(id)
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintln(w, "Failed to delete income")
+		return
+	}
+
+	err := model.DeleteIncome(id, statusDBLocal, statusDBCloud)
 
 	if err != nil {
 		logging.GenericError("Failed to delete income", err.Inner)

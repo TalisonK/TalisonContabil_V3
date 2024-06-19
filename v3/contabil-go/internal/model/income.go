@@ -296,13 +296,7 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *tagError.TagErro
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func DeleteIncome(id string) *tagError.TagError {
-
-	statusDBLocal, statusDBCloud := database.CheckDBStatus()
-
-	if !statusDBLocal && !statusDBCloud {
-		return tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
-	}
+func DeleteIncome(id string, statusDBLocal bool, statusDBCloud bool) *tagError.TagError {
 
 	if statusDBLocal {
 

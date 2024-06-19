@@ -227,6 +227,56 @@ func GetActivities(userId string) ([]domain.Activity, *tagError.TagError) {
 
 }
 
+func DeleteBucket(bucket []domain.Activity) (bool, *tagError.TagError) {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return false, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	errors := make(chan *tagError.TagError)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	for _, buck := range bucket {
+		wg.Add(1)
+
+		go func(buck domain.Activity) {
+
+			wg.Done()
+			select {
+			case <-ctx.Done():
+				// Context was cancelled, return to prevent further processing
+				logging.ContextAlreadyClosed()
+				return
+			default:
+				switch buck.Type {
+				case constants.INCOME:
+					DeleteIncome(buck.ID, statusDBLocal, statusDBCloud)
+				case constants.EXPENSE:
+					DeleteExpense(buck.ID, statusDBLocal, statusDBCloud)
+				default:
+					errors <- tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+					cancel()
+				}
+			}
+
+		}(buck)
+	}
+
+	wg.Wait()
+
+	if len(errors) > 0 {
+		return false, <-errors
+	} else {
+		return true, nil
+	}
+}
+
 func resumeBalance(actual float64, pass float64) float64 {
 
 	if actual == 0 || pass == 0 {

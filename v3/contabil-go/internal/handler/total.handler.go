@@ -70,3 +70,23 @@ func GetActivities(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(out)
 
 }
+
+func DeleteBucket(w http.ResponseWriter, r *http.Request) {
+
+	var bucket []domain.Activity
+
+	json.NewDecoder(r.Body).Decode(&bucket)
+
+	result, err := model.DeleteBucket(bucket)
+
+	if err != nil {
+		logging.FailedToDeleteOnDB("bucket", "All", err.Inner)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(result)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
+
+}
