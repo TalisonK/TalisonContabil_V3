@@ -298,6 +298,13 @@ func UpdateIncome(income domain.IncomeDTO) (*domain.IncomeDTO, *tagError.TagErro
 
 func DeleteIncome(id string, statusDBLocal bool, statusDBCloud bool) *tagError.TagError {
 
+	inc, tagErr := findIncomeById(id)
+
+	if tagErr != nil {
+		logging.FailedToFindOnDB(id, "All", tagErr.Inner)
+		return tagErr
+	}
+
 	if statusDBLocal {
 
 		result := database.DBlocal.Delete(&domain.Income{}, "id = ?", id)
@@ -325,6 +332,12 @@ func DeleteIncome(id string, statusDBLocal bool, statusDBCloud bool) *tagError.T
 
 		logging.DeletedOnDB(id, constants.CLOUD)
 	}
+
+	month, year := timeHandler.DateBreaker(inc.ReceivedAt)
+
+	CreateUpdateTotal(inc.UserID, month, year, constants.INCOME, statusDBLocal, statusDBCloud)
+
+	logging.DeletedOnDB(id, "All")
 
 	return nil
 

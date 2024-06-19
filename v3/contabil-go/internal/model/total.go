@@ -257,8 +257,10 @@ func DeleteBucket(bucket []domain.Activity) (bool, *tagError.TagError) {
 				switch buck.Type {
 				case constants.INCOME:
 					DeleteIncome(buck.ID, statusDBLocal, statusDBCloud)
+					logging.DeletedOnDB(fmt.Sprintf("id: %s, description: %s, value:%.2f", buck.ID, buck.Description, buck.Value), "All")
 				case constants.EXPENSE:
 					DeleteExpense(buck.ID, statusDBLocal, statusDBCloud)
+					logging.DeletedOnDB(fmt.Sprintf("id: %s, description: %s, value:%.2f", buck.ID, buck.Description, buck.Value), "All")
 				default:
 					errors <- tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 					cancel()

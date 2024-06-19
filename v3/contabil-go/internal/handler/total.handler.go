@@ -86,6 +86,8 @@ func DeleteBucket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logging.DeletedOnDB("bucket", "all")
+
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 
