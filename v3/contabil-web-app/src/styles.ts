@@ -36,6 +36,7 @@ interface TextProps extends Margin {
     height?: string
     width?: string
     textAlign?: string
+    fontFamily?: string
 }
 
 interface TextFieldProps extends Margin, Size {}
@@ -97,6 +98,7 @@ export const IconFA = styled(FontAwesomeIcon)<TextProps>`
 
 export const Text = styled.p<TextProps>`
     ${(props) => props.fontSize && `font-size: ${props.fontSize}!important;`}
+    ${(props) => props.fontFamily && `font-family: ${props.fontFamily}!important;`}
     ${(props) => props.color && `color: ${props.color}!important;`}
     ${(props) => props.height && `height: ${props.height}!important;`}
     ${(props) => props.width && `width: ${props.width}!important;`}

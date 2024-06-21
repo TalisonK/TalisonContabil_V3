@@ -6,15 +6,13 @@ interface Props {
     category: string
     setter: (value: string) => void
     categories: { name: string; id: number }[]
+    style: any
 }
 
 const CategoryInput = (props: Props) => {
     return (
         <FormControl
-            style={{
-                marginRight: '70px',
-                marginLeft: '70px',
-            }}
+            style={props.style}
             error={props.error}
         >
             <InputLabel id="demo-simple-select-label">Category</InputLabel>

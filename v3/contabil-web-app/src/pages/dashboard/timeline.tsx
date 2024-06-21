@@ -62,7 +62,7 @@ const TimelineItem = ({ activity }: ItemProps) => {
                             marginTop="2px"
                             marginLeft="5px"
                         >
-                            {activity.activityCategory}
+                            {activity.categoryName}
                         </Text>
                     </DisplayFlex>
                     <DisplayFlex width="100%" justifyContent="space-evenly">
@@ -98,11 +98,11 @@ const TimelineItem = ({ activity }: ItemProps) => {
                                     textAlign: 'center',
                                 }}
                             >
-                                {activity.method === 'CREDIT_CARD'
+                                {activity.paymentMethod === 'CREDIT_CARD'
                                     ? 'Parcelas'
-                                    : activity.method === 'DEBIT_CARD'
+                                    : activity.paymentMethod === 'DEBIT_CARD'
                                     ? 'Débito'
-                                    : activity.method === 'PIX'
+                                    : activity.paymentMethod === 'PIX'
                                     ? 'PIX'
                                     : ''}
                             </Text>
@@ -111,7 +111,7 @@ const TimelineItem = ({ activity }: ItemProps) => {
                                 marginBottom="10px"
                                 style={{ textAlign: 'center' }}
                             >
-                                {activity.method === 'CREDIT_CARD'
+                                {activity.paymentMethod === 'CREDIT_CARD'
                                     ? `${activity.actualParcel} - ${activity.totalParcel}`
                                     : ''}
                             </Text>

@@ -28,7 +28,7 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 	}
 
 	if statusDBLocal {
-		result := database.DBlocal.Where("user_id = ?", userId).Order("paid_at DESC").Find(&expenses)
+		result := database.DBlocal.Where("user_id = ?", userId).Order("created_at DESC").Find(&expenses)
 
 		if result.Error != nil {
 			logging.FailedToFindOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL, result.Error)
@@ -363,8 +363,16 @@ func DeleteExpenseHandler(id string) *tagError.TagError {
 
 func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
-	expenseEntity := expense.ToEntity()
+	expenseToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
 
+	if tagErr != nil {
+		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
+		return nil, tagErr
+	}
+
+	expenseParser := expenseToUpdate[0]
+
+	expenseEntity := expenseParser.ToEntity()
 	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
 
 	if statusDBLocal {

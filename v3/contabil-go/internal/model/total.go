@@ -279,6 +279,32 @@ func DeleteBucket(bucket []domain.Activity) (bool, *tagError.TagError) {
 	}
 }
 
+func UpdateBucket(body domain.Activity) (bool, *tagError.TagError) {
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return false, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	switch body.Type {
+	case constants.INCOME:
+
+		_, tagErr := UpdateIncome(body.ToIncomeDTO())
+		if tagErr != nil {
+			return false, tagErr
+		}
+	case constants.EXPENSE:
+		_, tagErr := UpdateExpense(body.ToExpenseDTO(), statusDBLocal, statusDBCloud)
+		if tagErr != nil {
+			return false, tagErr
+		}
+	default:
+		return false, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	return true, nil
+}
+
 func resumeBalance(actual float64, pass float64) float64 {
 
 	if actual == 0 || pass == 0 {

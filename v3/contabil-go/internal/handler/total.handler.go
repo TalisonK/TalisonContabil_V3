@@ -92,3 +92,25 @@ func DeleteBucket(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 
 }
+
+func UpdateBucket(w http.ResponseWriter, r *http.Request) {
+
+	var body domain.Activity
+
+	json.NewDecoder(r.Body).Decode(&body)
+
+	result, err := model.UpdateBucket(body)
+
+	if err != nil {
+		logging.FailedToUpdateOnDB("bucket", "All", err.Inner)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(result)
+		return
+	}
+
+	logging.UpdatedOnDB("bucket", "all")
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
+
+}

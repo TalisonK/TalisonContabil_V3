@@ -18,3 +18,10 @@ export const deleteActivity = async (bucket: Activity[]) => {
 
     return response
 }
+
+export const updateActivity = async (body : Activity) => {
+
+    const response = await axios.put<boolean>(url + '/total/update', body)
+
+    return response.data
+}

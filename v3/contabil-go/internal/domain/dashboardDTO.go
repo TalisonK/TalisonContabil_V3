@@ -42,3 +42,31 @@ type Resume struct {
 	Pass    float64 `json:"pass"`
 	Balance float64 `json:"balance"`
 }
+
+func (a *Activity) ToIncomeDTO() IncomeDTO {
+	return IncomeDTO{
+		ID:          a.ID,
+		Description: a.Description,
+		Value:       a.Value,
+		CreatedAt:   a.CreatedAt,
+		UpdatedAt:   a.UpdatedAt,
+		ReceivedAt:  a.ActivityDate,
+		UserID:      a.UserID,
+	}
+}
+
+func (a *Activity) ToExpenseDTO() ExpenseDTO {
+	return ExpenseDTO{
+		ID:           a.ID,
+		Description:  a.Description,
+		Value:        a.Value,
+		CreatedAt:    a.CreatedAt,
+		UpdatedAt:    a.UpdatedAt,
+		PaidAt:       a.ActivityDate,
+		ActualParcel: a.ActualParcel,
+		TotalParcel:  a.TotalParcel,
+		UserID:       a.UserID,
+		CategoryID:   a.CategoryID,
+		CategoryName: a.CategoryName,
+	}
+}

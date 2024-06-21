@@ -1,10 +1,10 @@
 interface Activity {
     id: string
     description: string
-    method: string
+    paymentMethod: string
     type: string
-    userId: string
-    activityCategory: string
+    userID: string
+    categoryName: string
     value: number
     activityDate: Date | any
     actualParcel: number

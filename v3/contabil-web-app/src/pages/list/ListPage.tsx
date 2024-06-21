@@ -3,7 +3,8 @@ import { DisplayFlex } from '../../styles'
 import { DataGrid, GridColDef } from '@mui/x-data-grid'
 import { deleteActivity, getList } from '../../api/List'
 import Activity from '../../interfaces/Activity'
-import { Button, ButtonGroup } from '@mui/material'
+import { Box, Button, ButtonGroup, Modal, TextField, Typography } from '@mui/material'
+import EditModal from './EditModal'
 
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 220 },
@@ -18,10 +19,13 @@ const columns: GridColDef[] = [
     { field: 'createdAt', headerName: 'Created At', width: 250 },
 ]
 
+
 const ListPage = (props: any) => {
     const [rows, setRows] = useState<Activity[]>([])
+    const [openEdit, setOpenEdit] = useState<boolean>(false)
 
     const [selectionModel, setSelectionModel] = useState<any[]>([])
+    const [selected, setSelected] = useState<Activity | null>(null)
 
     useEffect(() => {
         const user = JSON.parse(localStorage.getItem('user') || '{}')
@@ -47,6 +51,11 @@ const ListPage = (props: any) => {
         })
     }
 
+    const editHandler = () => {
+        setSelected(rows.filter((row) => row.id === selectionModel[0])[0])
+        setOpenEdit(true)
+    }
+
     return (
         <DisplayFlex
             direction="column"
@@ -66,6 +75,7 @@ const ListPage = (props: any) => {
                     <ButtonGroup variant="contained">
                         <Button
                             color="warning"
+                            onClick={editHandler}
                             disabled={!(selectionModel.length === 1)}
                             style={{
                                 color: `${
@@ -75,6 +85,7 @@ const ListPage = (props: any) => {
                                         : 'black'
                                 }`,
                             }}
+                            
                         >
                             Edit
                         </Button>
@@ -113,6 +124,9 @@ const ListPage = (props: any) => {
                     rowSelectionModel={selectionModel}
                 />
             </DisplayFlex>
+
+            <EditModal atual={selected} openEdit={openEdit} setOpenEdit={setOpenEdit} />
+
         </DisplayFlex>
     )
 }

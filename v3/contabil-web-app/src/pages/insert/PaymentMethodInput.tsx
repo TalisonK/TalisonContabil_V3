@@ -5,6 +5,7 @@ interface Props {
     error: boolean
     paymentMethod: string
     setter: (value: string) => void
+    style?: any
 }
 
 const paymentMethods: string[] = ['CREDIT_CARD', 'DEBIT_CARD', 'MONEY', 'PIX']
@@ -12,14 +13,7 @@ const paymentMethods: string[] = ['CREDIT_CARD', 'DEBIT_CARD', 'MONEY', 'PIX']
 const PaymentMethodInput = (props: Props) => {
     return (
         <FormControl
-            style={{
-                marginRight: '70px',
-                marginLeft: '70px',
-                marginTop: '70px',
-                marginBottom: `${
-                    props.paymentMethod === 'CREDIT_CARD' ? '0px' : '55px'
-                }`,
-            }}
+            style={props.style}
             error={props.error}
         >
             <InputLabel id="demo-simple-select-label">

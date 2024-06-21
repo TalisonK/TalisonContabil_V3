@@ -279,12 +279,20 @@ const Insert = (props: any) => {
                                 category={category}
                                 setter={setCategory}
                                 categories={categories}
+                                style={{marginRight: "70px", marginLeft:'70px'}}
+                                
                             />
 
                             <PaymentMethodInput
                                 error={paymentMethodError}
                                 paymentMethod={paymentMethod}
                                 setter={setPaymentMethod}
+                                style={{marginRight: '70px',
+                                    marginLeft: '70px',
+                                    marginTop: '70px',
+                                    marginBottom: `${
+                                        paymentMethod === 'CREDIT_CARD' ? '0px' : '55px'
+                                    }`,}}
                             />
 
                             <ParcelsInput
