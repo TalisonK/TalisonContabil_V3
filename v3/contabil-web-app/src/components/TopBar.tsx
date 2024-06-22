@@ -15,6 +15,7 @@ import {
 } from '@mui/material'
 import { ThemeSwitch } from './styles'
 import { DisplayFlex } from '../styles'
+import User from '../interfaces/User'
 
 interface TopBarProps {
     theme: string
@@ -22,15 +23,20 @@ interface TopBarProps {
 }
 
 const TopBar = (props: TopBarProps) => {
-    const pages = ['Insert', 'List']
+    const pages = [
+        {name: 'Insert', role: 'ROLE_USER'}, 
+        {name: 'Activities', role: 'ROLE_USER'},
+        {name: 'Categories', role: 'ROLE_USER'},
+        {name: 'Users', role: 'ROLE_ADMIN'}
+    ]
     const settings = ['Profile', 'Logout']
 
-    const [user, setUser] = useState(null)
+    const [user, setUser] = useState<User>({id:"",name:"A",role:'ROLE_USER',createdAt:""})
 
     useEffect(() => {
         const userStorage = localStorage.getItem('user')
         if (userStorage) {
-            setUser(JSON.parse(userStorage).name.toUpperCase())
+            setUser(JSON.parse(userStorage))
         }
     }, [])
 
@@ -92,19 +98,38 @@ const TopBar = (props: TopBarProps) => {
                             display: { xs: 'none', md: 'flex' },
                         }}
                     >
-                        {pages.map((page) => (
-                            <Button
-                                key={page}
-                                href={`/${page}`}
-                                sx={{
-                                    my: 2,
-                                    color: 'white',
-                                    display: 'block',
-                                }}
-                            >
-                                {page}
-                            </Button>
-                        ))}
+                        {pages.map((page) => {
+
+                            if (page.role === 'ROLE_ADMIN') {
+                                return user.role == 'ROLE_ADMIN'?
+                                (
+                                <Button
+                                    key={page.name}
+                                    href={`/${page.name}`}
+                                    sx={{
+                                        my: 2,
+                                        color: 'white',
+                                        display: 'block',
+                                    }}
+                                >
+                                    {page.name}
+                                </Button>
+                                ):
+                                <></>
+                            } else {
+                                return (<Button
+                                    key={page.name}
+                                    href={`/${page.name}`}
+                                    sx={{
+                                        my: 2,
+                                        color: 'white',
+                                        display: 'block',
+                                    }}
+                                >
+                                    {page.name}
+                                </Button>)
+                            }
+                        })}
                     </Box>
 
                     <Box sx={{ flexGrow: 0 }}>
@@ -114,7 +139,7 @@ const TopBar = (props: TopBarProps) => {
                                 sx={{ p: 0 }}
                             >
                                 <Avatar
-                                    alt={`${user}`}
+                                    alt={`${user.name.toUpperCase()}`}
                                     src="/static/images/avatar/2.jpg"
                                 />
                             </IconButton>
