@@ -94,6 +94,8 @@ func CreateCategory(category domain.Category) *tagError.TagError {
 		}
 	}
 
+	database.CacheDatabase = StartCache()
+
 	return nil
 }
 func UpdateCategory(category domain.Category) *tagError.TagError {
@@ -195,6 +197,8 @@ func DeleteCategory(id string) *tagError.TagError {
 
 		logging.DeletedOnDB(id, constants.CLOUD)
 	}
+
+	database.CacheDatabase = StartCache()
 	return nil
 }
 
