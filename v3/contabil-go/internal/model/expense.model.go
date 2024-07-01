@@ -243,6 +243,68 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 	return expenses, nil
 }
 
+func CreateExpenseListHandler(expense domain.ExpenseDTO) *tagError.TagError {
+
+	statusDBLocal, statusDBCloud := database.CheckDBStatus()
+
+	if !statusDBLocal && !statusDBCloud {
+		return tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	expenseEntity := expense.ToEntity()
+
+	expenseEntity.CreatedAt = timeHandler.GetTimeNow()
+	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
+
+	_, terr := CreateExpenseHandler(expense)
+
+	if terr != nil {
+		return terr
+	}
+
+	logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Expenses")
+
+	var wg sync.WaitGroup
+	errors := make(chan *tagError.TagError, len(expense.List))
+	ctx, cancel := context.WithCancel(context.Background())
+
+	for _, item := range expense.List {
+		wg.Add(1)
+
+		go func(item domain.List) {
+			defer wg.Done()
+
+			select {
+			case <-ctx.Done():
+				logging.ContextAlreadyClosed()
+				return
+
+			default:
+				terr := CreateExpenseItem(item, expenseEntity, statusDBLocal, statusDBCloud)
+
+				if terr != nil {
+					logging.FailedToCreateOnDB(fmt.Sprintf("Item %s", item.ItemName), "Local", terr.Inner)
+					errors <- terr
+					cancel()
+					return
+				}
+
+				logging.CreatedOnDB(fmt.Sprintf("Item %s", item.ItemName), "Local")
+			}
+		}(item)
+	}
+
+	wg.Wait()
+	cancel()
+
+	if len(errors) > 0 {
+		return <-errors
+	}
+
+	return nil
+
+}
+
 func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
@@ -407,6 +469,46 @@ func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud 
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 
+}
+
+func CreateExpenseItem(item domain.List, expense domain.Expense, statusDBLocal, statusDBCloud bool) *tagError.TagError {
+
+	if item.ItemName == "" || item.ItemValue == 0 {
+		return tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	item.ExpenseID = expense.ID
+	item.ExpenseName = expense.Description
+
+	if statusDBCloud {
+
+		raw := item.ToPrim()
+
+		resultId, err := database.DBCloud.List.InsertOne(context.Background(), raw)
+
+		if err != nil {
+			logging.FailedToCreateOnDB(fmt.Sprintf("Item %s", item.ItemName), constants.CLOUD, err)
+			return tagError.GetTagError(http.StatusBadRequest, err)
+		}
+
+		item.ID = resultId.InsertedID.(primitive.ObjectID).Hex()
+
+		logging.CreatedOnDB(fmt.Sprintf("Item %s", item.ItemName), constants.CLOUD)
+	}
+
+	if statusDBLocal {
+
+		result := database.DBlocal.Create(&item)
+
+		if result.Error != nil {
+			logging.FailedToCreateOnDB(fmt.Sprintf("Item %s", item.ItemName), constants.LOCAL, result.Error)
+			return tagError.GetTagError(http.StatusBadRequest, result.Error)
+		}
+
+		logging.CreatedOnDB(fmt.Sprintf("Item %s", item.ItemName), constants.LOCAL)
+	}
+
+	return nil
 }
 
 func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {

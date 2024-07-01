@@ -25,18 +25,19 @@ type Expense struct {
 }
 
 type ExpenseDTO struct {
-	ID            string  `json:"id" gorm:"type:varchar(255);primary_key;"`
-	Description   string  `json:"description" gorm:"type:varchar(255);not null;idx_expense;"`
-	PaymentMethod string  `json:"paymentMethod" gorm:"type:varchar(255);not null;idx_expense;"`
-	Value         float64 `json:"value" gorm:"type:float;not null;idx_expense;"`
-	CreatedAt     string  `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	UpdatedAt     string  `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	PaidAt        string  `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	ActualParcel  int32   `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
-	TotalParcel   int32   `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
-	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
-	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
-	CategoryName  string  `json:"categoryName" gorm:"type:varchar(255);not null;idx_expense;"`
+	ID            string  `json:"id"`
+	Description   string  `json:"description"`
+	PaymentMethod string  `json:"paymentMethod"`
+	Value         float64 `json:"value"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+	PaidAt        string  `json:"paidAt"`
+	ActualParcel  int32   `json:"actualParcel"`
+	TotalParcel   int32   `json:"totalParcel"`
+	UserID        string  `json:"userID"`
+	CategoryID    string  `json:"categoryID"`
+	CategoryName  string  `json:"categoryName"`
+	List          []List  `json:"list"`
 }
 
 func (e *ExpenseDTO) ToEntity() Expense {
