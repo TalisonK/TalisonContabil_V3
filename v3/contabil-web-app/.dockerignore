@@ -1,8 +1,0 @@
-#node_modules
-.idea
-build
-.gitignore
-.prettierrc
-Dockerfile
-README.md
-yarn*
