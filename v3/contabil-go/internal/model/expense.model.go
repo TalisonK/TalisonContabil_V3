@@ -27,6 +27,8 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
+	month, year := timeHandler.DateBreaker(time.Now().Format(time.DateTime))
+
 	if statusDBLocal {
 		result := database.DBlocal.Where("user_id = ?", userId).Order("created_at DESC").Find(&expenses)
 
@@ -37,7 +39,7 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 
 		logging.FoundOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL)
 
-		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+		dtos := ExpenseGetCategoryName(expenses, month, year, statusDBLocal, statusDBCloud)
 
 		return dtos, nil
 	}
@@ -61,7 +63,7 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 			expenses = append(expenses, domain.PrimToExpense(raw))
 		}
 
-		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+		dtos := ExpenseGetCategoryName(expenses, month, year, statusDBLocal, statusDBCloud)
 
 		return dtos, nil
 	}
@@ -69,14 +71,16 @@ func GetUserExpenses(userId string) ([]domain.ExpenseDTO, *tagError.TagError) {
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func GetExpensesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
+func GetExpensesByDate(userId string, month string, year int, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
 
 	expenses := []domain.Expense{}
+
+	date, last := timeHandler.GetFirstAndLastDayOfMonth(month[0:3], year)
 
 	if statusDBLocal {
 
 		result := database.DBlocal.
-			Where("user_id = ? AND paid_at between ? AND ?", userId, startingDate, endingDate).
+			Where("user_id = ? AND STR_TO_DATE(ends_at, '%Y-%m-%d %H:%i:%s') >= ? AND STR_TO_DATE(paid_at, '%Y-%m-%d %H:%i:%s') <= ?", userId, date, last).
 			Joins("Category", "expense.category_id = categories.id").
 			Order("created_at DESC").
 			Find(&expenses)
@@ -88,21 +92,22 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 
 		logging.FoundOnDB(fmt.Sprintf("Expenses from user %s", userId), constants.LOCAL)
 
-		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+		dtos := ExpenseGetCategoryName(expenses, month, year, statusDBLocal, statusDBCloud)
 
 		return dtos, nil
 	}
 
 	if statusDBCloud {
 
-		auxSD, _ := time.Parse(time.RFC3339, startingDate)
-		sd := primitive.NewDateTimeFromTime(auxSD)
+		auxD, _ := time.Parse(time.DateTime, date)
+		primDate := primitive.NewDateTimeFromTime(auxD)
 
-		auxED, _ := time.Parse(time.RFC3339, endingDate)
-		ed := primitive.NewDateTimeFromTime(auxED)
+		auxE, _ := time.Parse(time.DateTime, last)
+		primEnd := primitive.NewDateTimeFromTime(auxE)
 
-		sdBson := bson.M{"$gt": sd, "$lt": ed}
-		filter := bson.M{"userID": userId, "paidAt": sdBson}
+		sdBson := bson.M{"$get": primDate}
+		pdBson := bson.M{"$let": primEnd}
+		filter := bson.M{"userID": userId, "endsAt": sdBson, "paidAt": pdBson}
 
 		opts := options.Find().SetSort(bson.D{{"createdAt", -1}})
 
@@ -121,7 +126,7 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 			expenses = append(expenses, domain.PrimToExpense(raw))
 		}
 
-		dtos := ExpenseGetCategoryName(expenses, statusDBLocal, statusDBCloud)
+		dtos := ExpenseGetCategoryName(expenses, month, year, statusDBLocal, statusDBCloud)
 
 		return dtos, nil
 	}
@@ -129,16 +134,16 @@ func GetExpensesByDate(userId string, startingDate string, endingDate string, st
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
+func CreateExpenseHandler(expense domain.ExpenseDTO) (string, *tagError.TagError) {
 
 	if expense.CategoryName == "" || expense.PaidAt == "" || expense.PaymentMethod == "" || expense.Value == 0 || expense.Description == "" {
-		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+		return "", tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+		return "", tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	// validar se a categoria existe
@@ -147,11 +152,11 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 
 	if tagErr != nil {
 		logging.FailedToFindOnDB(fmt.Sprintf("Category %s", expense.CategoryName), "Category", tagErr.Inner)
-		return nil, tagErr
+		return "", tagErr
 	}
 
 	if category.ID == "" {
-		return nil, tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.FailedToFindOnDB(expense.CategoryName, "Category", tagErr.Inner)))
+		return "", tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.FailedToFindOnDB(expense.CategoryName, "Category", tagErr.Inner)))
 	}
 
 	expense.CategoryID = category.ID
@@ -168,79 +173,42 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagErr
 	}
 
 	if cond {
-		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+		return "", tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+	}
+
+	paux, _ := time.Parse(time.RFC3339, expense.PaidAt)
+
+	expense.PaidAt = paux.Format(time.DateTime)
+
+	if expense.PaymentMethod == "CREDIT_CARD" {
+		month, year := timeHandler.DateBreaker(expense.PaidAt)
+
+		endMonth, endYear := timeHandler.MonthAdderByJump(month, year, int(expense.TotalParcel)-1)
+
+		_, expense.EndsAt = timeHandler.GetFirstAndLastDayOfMonth(endMonth, endYear)
+
+	} else {
+		expense.EndsAt = expense.PaidAt
 	}
 
 	// validar se é repetido
 
 	if checkDuplicatedExpense(expense, statusDBLocal, statusDBCloud) {
-		return nil, tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.DuplicatedEntry(expense.Description)))
-	}
-
-	expenses := []string{}
-
-	if expense.PaymentMethod == "CREDIT_CARD" {
-		if expense.TotalParcel == 0 || expense.ActualParcel == 0 || expense.TotalParcel < expense.ActualParcel {
-			return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
-		}
-
-		var wg sync.WaitGroup
-		for i := expense.ActualParcel; i <= expense.TotalParcel; i++ {
-			wg.Add(1)
-
-			go func(i int32) {
-				defer wg.Done()
-
-				expenseAux := expense
-				expenseAux.ActualParcel = i
-				expenseAux.ID = ""
-
-				id, tagErr := CreateExpense(expenseAux, statusDBLocal, statusDBCloud)
-
-				if tagErr != nil {
-					logging.GenericError(fmt.Sprintf("Failed to create expense %d/%d", i, expense.TotalParcel), tagErr.Inner)
-					return
-				}
-				logging.CreatedOnDB(fmt.Sprintf("Expense from date %d/%d", i, expense.TotalParcel), "Expenses")
-				expenses = append(expenses, id.ID)
-
-				month, year := timeHandler.DateBreaker(expense.PaidAt)
-
-				CreateUpdateTotal(expense.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
-
-				nm, ny := timeHandler.MonthAdder(month, year)
-
-				// TODO
-				fmt.Println(nm, ny)
-			}(i)
-		}
-
-		wg.Wait()
-
-		month, year := timeHandler.DateBreaker(expense.PaidAt)
-
-		CreateUpdateTotal(expense.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
-
-		logging.GenericSuccess(fmt.Sprintf("Expenses %d/%d created successfully", expense.ActualParcel, expense.TotalParcel))
-
-		return expenses, nil
-
+		return "", tagError.GetTagError(http.StatusBadRequest, fmt.Errorf(logging.DuplicatedEntry(expense.Description)))
 	}
 
 	id, tagErr := CreateExpense(expense, statusDBLocal, statusDBCloud)
 
 	if tagErr != nil {
 		logging.GenericError(fmt.Sprintf("Failed to create expense %s", expense.Description), tagErr.Inner)
-		return nil, tagErr
+		return "", tagErr
 	}
 
 	// Debit card or cash
 
 	logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Expenses")
 
-	expenses = append(expenses, id.ID)
-
-	return expenses, nil
+	return id.ID, nil
 }
 
 func CreateExpenseListHandler(expense domain.ExpenseDTO) *tagError.TagError {
@@ -253,10 +221,23 @@ func CreateExpenseListHandler(expense domain.ExpenseDTO) *tagError.TagError {
 
 	expenseEntity := expense.ToEntity()
 
+	if expenseEntity.PaymentMethod == "CREDIT_CARD" {
+		month, year := timeHandler.DateBreaker(expenseEntity.PaidAt)
+
+		endMonth, endYear := timeHandler.MonthAdderByJump(month, year, int(expense.TotalParcel)-1)
+
+		_, expenseEntity.EndsAt = timeHandler.GetFirstAndLastDayOfMonth(endMonth, endYear)
+
+	} else {
+		expenseEntity.EndsAt = expense.PaidAt
+	}
+
 	expenseEntity.CreatedAt = timeHandler.GetTimeNow()
 	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
 
-	_, terr := CreateExpenseHandler(expense)
+	expId, terr := CreateExpenseHandler(expense)
+
+	expenseEntity.ID = expId
 
 	if terr != nil {
 		return terr
@@ -298,6 +279,7 @@ func CreateExpenseListHandler(expense domain.ExpenseDTO) *tagError.TagError {
 	cancel()
 
 	if len(errors) > 0 {
+		DeleteExpense(expId, statusDBLocal, statusDBCloud)
 		return <-errors
 	}
 
@@ -305,65 +287,43 @@ func CreateExpenseListHandler(expense domain.ExpenseDTO) *tagError.TagError {
 
 }
 
-func UpdateExpenseHandler(expense domain.ExpenseDTO) ([]string, *tagError.TagError) {
+func UpdateExpenseHandler(expense domain.ExpenseDTO) (string, *tagError.TagError) {
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
 	if !statusDBLocal && !statusDBCloud {
-		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+		return "", tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
 	if expense.ID == "" {
-		return nil, tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
+		return "", tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
 	expense = makeExpenseParser(expense)
 
-	expensesToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
+	expenseToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
 
 	if tagErr != nil {
 		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
-		return nil, tagErr
+		return "", tagErr
 	}
 
-	expenses := []string{}
+	id, tagErr := UpdateExpense(*expenseToUpdate, statusDBLocal, statusDBCloud)
 
-	var wg sync.WaitGroup
-	var errors = make(chan *tagError.TagError, len(expensesToUpdate))
-
-	for _, exp := range expensesToUpdate {
-		wg.Add(1)
-
-		go func(exp domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) {
-			defer wg.Done()
-
-			id, tagErr := UpdateExpense(exp, statusDBLocal, statusDBCloud)
-
-			if tagErr != nil {
-				logging.GenericError(fmt.Sprintf("Failed to update expense %s", exp.Description), tagErr.Inner)
-				errors <- tagErr
-				return
-			}
-
-			logging.UpdatedOnDB(fmt.Sprintf("Expense %s", exp.Description), constants.EXPENSE)
-			expenses = append(expenses, id.ID)
-
-			month, year := timeHandler.DateBreaker(exp.PaidAt)
-
-			CreateUpdateTotal(exp.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
-		}(exp, statusDBLocal, statusDBCloud)
-
+	if tagErr != nil {
+		logging.GenericError(fmt.Sprintf("Failed to update expense %s", expenseToUpdate.Description), tagErr.Inner)
+		return "", tagErr
 	}
 
-	wg.Wait()
+	logging.UpdatedOnDB(fmt.Sprintf("Expense %s", expenseToUpdate.Description), constants.EXPENSE)
 
-	if len(errors) > 0 {
-		return nil, <-errors
-	}
+	month, year := timeHandler.DateBreaker(expenseToUpdate.PaidAt)
+
+	CreateUpdateTotal(expenseToUpdate.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
 
 	logging.GenericSuccess(fmt.Sprintf("Expenses %s updated successfully", expense.Description))
 
-	return expenses, nil
+	return id.ID, nil
 
 }
 
@@ -382,59 +342,31 @@ func DeleteExpenseHandler(id string) *tagError.TagError {
 	expense := domain.ExpenseDTO{}
 	expense.ID = id
 
-	expensesToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
+	expenseToDelete, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
 
 	if tagErr != nil {
 		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
 		return tagErr
 	}
 
-	var wg sync.WaitGroup
-	var errors = make(chan *tagError.TagError, 1)
+	tagErr = DeleteExpense(expenseToDelete.ID, statusDBLocal, statusDBCloud)
 
-	for _, exp := range expensesToUpdate {
-		wg.Add(1)
-
-		go func(exp domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) {
-			defer wg.Done()
-
-			tagErr := DeleteExpense(exp.ID, statusDBLocal, statusDBCloud)
-
-			if tagErr != nil {
-				logging.GenericError(fmt.Sprintf("Failed to delete expense %s", exp.Description), tagErr.Inner)
-				errors <- tagErr
-				return
-			}
-
-			logging.DeletedOnDB(fmt.Sprintf("Expense %s", exp.Description), constants.EXPENSE)
-
-			month, year := timeHandler.DateBreaker(exp.PaidAt)
-
-			CreateUpdateTotal(exp.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
-		}(exp, statusDBLocal, statusDBCloud)
+	if tagErr != nil {
+		logging.GenericError(fmt.Sprintf("Failed to delete expense %s", expenseToDelete.Description), tagErr.Inner)
+		return tagErr
 	}
 
-	wg.Wait()
+	logging.DeletedOnDB(fmt.Sprintf("Expense %s", expenseToDelete.Description), constants.EXPENSE)
 
-	if len(errors) > 0 {
-		return <-errors
-	}
+	month, year := timeHandler.DateBreaker(expenseToDelete.PaidAt)
 
+	CreateUpdateTotal(expenseToDelete.UserID, month, year, constants.EXPENSE, statusDBLocal, statusDBCloud)
 	return nil
 }
 
 func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
-	expenseToUpdate, tagErr := makeExpensesToUpdate(expense, statusDBLocal, statusDBCloud)
-
-	if tagErr != nil {
-		logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
-		return nil, tagErr
-	}
-
-	expenseParser := expenseToUpdate[0]
-
-	expenseEntity := expenseParser.ToEntity()
+	expenseEntity := expense.ToEntity()
 	expenseEntity.UpdatedAt = timeHandler.GetTimeNow()
 
 	if statusDBLocal {
@@ -465,6 +397,9 @@ func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud 
 			logging.FailedToUpdateOnDB(expenseEntity.ID, constants.CLOUD, err)
 			return nil, tagError.GetTagError(http.StatusBadRequest, err)
 		}
+
+		logging.UpdatedOnDB(expenseEntity.ID, constants.CLOUD)
+		return &expense, nil
 	}
 
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
@@ -473,12 +408,11 @@ func UpdateExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud 
 
 func CreateExpenseItem(item domain.List, expense domain.Expense, statusDBLocal, statusDBCloud bool) *tagError.TagError {
 
-	if item.ItemName == "" || item.ItemValue == 0 {
+	if item.ItemName == "" || item.ItemPrice == 0 {
 		return tagError.GetTagError(http.StatusBadRequest, logging.InvalidFields())
 	}
 
 	item.ExpenseID = expense.ID
-	item.ExpenseName = expense.Description
 
 	if statusDBCloud {
 
@@ -513,22 +447,16 @@ func CreateExpenseItem(item domain.List, expense domain.Expense, statusDBLocal, 
 
 func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
-	/*
-		userId
-		categoryname
-		paidAt
-		paymentMethod
-		actualParcel
-		totalParcel
-		value
-	*/
-
 	expense := expenseDto.ToEntity()
 
 	expense.CreatedAt = timeHandler.GetTimeNow()
 	expense.UpdatedAt = timeHandler.GetTimeNow()
 
-	// pegar o id da categoria
+	endAux, _ := time.Parse(time.DateTime, expenseDto.EndsAt)
+	expense.EndsAt = endAux.Format(time.DateTime)
+
+	paidAux, _ := time.Parse(time.DateTime, expenseDto.PaidAt)
+	expense.PaidAt = paidAux.Format(time.DateTime)
 
 	if statusDBCloud {
 
@@ -554,7 +482,7 @@ func CreateExpense(expenseDto domain.ExpenseDTO, statusDBLocal bool, statusDBClo
 
 		logging.CreatedOnDB(fmt.Sprintf("Expense %s", expense.Description), "Local")
 
-		dto := expense.ToDTO()
+		dto := expense.ToDTO(time.Now().Format(time.DateTime))
 
 		return &dto, nil
 	}
@@ -605,10 +533,7 @@ func ExpenseByMethod(ctx context.Context, cancel func(), errChan chan *tagError.
 		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
 	}
 
-	// get the first and last day of the month
-	startingDate, endingDate := timeHandler.GetFirstAndLastDayOfMonth(month, year)
-
-	expenses, tagErr := GetExpensesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
+	expenses, tagErr := GetExpensesByDate(userId, month, year, statusDBLocal, statusDBCloud)
 
 	if tagErr != nil {
 		logging.FoundOnDB(fmt.Sprintf("Expenses for user %s", userId), "User")
@@ -695,10 +620,10 @@ func findExpenseByCategoryId(categoryId string, statusDBLocal bool, statusDBClou
 
 	if statusDBCloud {
 
-		auxSD, _ := time.Parse(time.RFC3339, startingDate)
+		auxSD, _ := time.Parse(time.DateTime, startingDate)
 		sd := primitive.NewDateTimeFromTime(auxSD)
 
-		auxED, _ := time.Parse(time.RFC3339, endingDate)
+		auxED, _ := time.Parse(time.DateTime, endingDate)
 		ed := primitive.NewDateTimeFromTime(auxED)
 
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
@@ -728,7 +653,7 @@ func findExpenseByCategoryId(categoryId string, statusDBLocal bool, statusDBClou
 	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
 }
 
-func ExpenseGetCategoryName(expenses []domain.Expense, statusDBLocal bool, statusDBCloud bool) []domain.ExpenseDTO {
+func ExpenseGetCategoryName(expenses []domain.Expense, month string, year int, statusDBLocal bool, statusDBCloud bool) []domain.ExpenseDTO {
 	expensesDto := make([]domain.ExpenseDTO, len(expenses))
 
 	errors := make(chan *tagError.TagError, len(expenses))
@@ -748,7 +673,7 @@ func ExpenseGetCategoryName(expenses []domain.Expense, statusDBLocal bool, statu
 				return
 			}
 
-			expDto := exp.ToDTO()
+			expDto := exp.ToDTO(timeHandler.DateMaker(month, year))
 			expDto.CategoryName = cat.Name
 
 			expensesDto[i] = expDto
@@ -764,7 +689,10 @@ func ExpenseGetCategoryName(expenses []domain.Expense, statusDBLocal bool, statu
 func checkDuplicatedExpense(expense domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) bool {
 	if statusDBLocal {
 		var count int64
-		database.DBlocal.Model(&domain.Expense{}).Where("description = ? AND value = ? AND paid_at = ? AND user_id = ?", expense.Description, expense.Value, expense.PaidAt, expense.UserID).Count(&count)
+
+		endDate, _ := time.Parse(time.DateTime, expense.EndsAt)
+
+		database.DBlocal.Model(&domain.Expense{}).Where("description = ? AND value = ? AND paid_at = ? AND user_id = ? AND STR_TO_DATE(ends_at, '%Y-%m-%d') = ?", expense.Description, expense.Value, expense.PaidAt, expense.UserID, endDate.Format(time.DateOnly)).Count(&count)
 
 		if count > 0 {
 			return true
@@ -789,7 +717,7 @@ func checkDuplicatedExpense(expense domain.ExpenseDTO, statusDBLocal bool, statu
 	return false
 }
 
-func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
+func FindExpenseByDescription(description string, month string, year int, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
 	if statusDBLocal {
 		expenses := []domain.Expense{}
 
@@ -805,7 +733,7 @@ func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCl
 		dto := []domain.ExpenseDTO{}
 
 		for _, expense := range expenses {
-			dto = append(dto, expense.ToDTO())
+			dto = append(dto, expense.ToDTO(timeHandler.DateMaker(month, year)))
 		}
 
 		return dto, nil
@@ -835,7 +763,7 @@ func FindExpenseByDescription(description string, statusDBLocal bool, statusDBCl
 		dto := []domain.ExpenseDTO{}
 
 		for _, expense := range expenses {
-			dto = append(dto, expense.ToDTO())
+			dto = append(dto, expense.ToDTO(timeHandler.DateMaker(month, year)))
 		}
 
 		return dto, nil
@@ -857,7 +785,7 @@ func FindExpenseByID(id string, statusDBLocal bool, statusDBCloud bool) (*domain
 
 		logging.FoundOnDB(id, constants.LOCAL)
 
-		dto := expense.ToDTO()
+		dto := expense.ToDTO(timeHandler.DateMaker(time.Now().Format(time.DateTime), 0))
 
 		return &dto, nil
 	}
@@ -883,7 +811,7 @@ func FindExpenseByID(id string, statusDBLocal bool, statusDBCloud bool) (*domain
 
 		logging.FoundOnDB(id, constants.CLOUD)
 
-		dto := expense.ToDTO()
+		dto := expense.ToDTO(timeHandler.DateMaker(time.Now().Format(time.DateTime), 0))
 
 		return &dto, nil
 	}
@@ -929,8 +857,7 @@ func makeExpenseParser(expense domain.ExpenseDTO) domain.ExpenseDTO {
 	return expenseParse
 }
 
-func makeExpensesToUpdate(expenseParse domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) ([]domain.ExpenseDTO, *tagError.TagError) {
-	expensesToUpdate := []domain.ExpenseDTO{}
+func makeExpensesToUpdate(expenseParse domain.ExpenseDTO, statusDBLocal bool, statusDBCloud bool) (*domain.ExpenseDTO, *tagError.TagError) {
 
 	expense, tagErr := FindExpenseByID(expenseParse.ID, statusDBLocal, statusDBCloud)
 
@@ -939,36 +866,21 @@ func makeExpensesToUpdate(expenseParse domain.ExpenseDTO, statusDBLocal bool, st
 		return nil, tagErr
 	}
 
-	if expense.TotalParcel > 0 {
-		expenses, tagErr := FindExpenseByDescription(expense.Description, true, true)
-
-		if tagErr != nil {
-			logging.FailedToFindOnDB(expense.Description, constants.LOCAL, tagErr.Inner)
-			return nil, tagErr
-		}
-
-		for _, exp := range expenses {
-			if expenseParse.CategoryID != "" {
-				exp.CategoryID = expenseParse.CategoryID
-			}
-			if expenseParse.PaymentMethod != "" {
-				exp.PaymentMethod = expenseParse.PaymentMethod
-			}
-			if expenseParse.Value != 0 {
-				exp.Value = expenseParse.Value
-			}
-			if expenseParse.Description != "" {
-				exp.Description = expenseParse.Description
-			}
-			if expenseParse.PaidAt != "" {
-				exp.PaidAt = expenseParse.PaidAt
-			}
-
-			expensesToUpdate = append(expensesToUpdate, exp)
-		}
-	} else {
-		expensesToUpdate = append(expensesToUpdate, expenseParse)
+	if expenseParse.CategoryID != "" {
+		expense.CategoryID = expenseParse.CategoryID
+	}
+	if expenseParse.PaymentMethod != "" {
+		expense.PaymentMethod = expenseParse.PaymentMethod
+	}
+	if expenseParse.Value != 0 {
+		expense.Value = expenseParse.Value
+	}
+	if expenseParse.Description != "" {
+		expense.Description = expenseParse.Description
+	}
+	if expenseParse.PaidAt != "" {
+		expense.PaidAt = expenseParse.PaidAt
 	}
 
-	return expensesToUpdate, nil
+	return expense, nil
 }

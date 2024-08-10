@@ -65,19 +65,19 @@ func (i *Income) ToPrim() primitive.M {
 
 	pinc["description"] = i.Description
 	pinc["value"] = i.Value
-	createdAt, err := time.Parse(time.RFC3339, i.CreatedAt)
+	createdAt, err := time.Parse(time.DateTime, i.CreatedAt)
 	if err != nil {
 		createdAt = time.Now()
 	}
 	pinc["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
-	updatedAt, err := time.Parse(time.RFC3339, i.UpdatedAt)
+	updatedAt, err := time.Parse(time.DateTime, i.UpdatedAt)
 
 	if err != nil {
 		updatedAt = createdAt
 	}
 	pinc["updatedAt"] = updatedAt
 
-	receivedAt, err := time.Parse(time.RFC3339, i.ReceivedAt)
+	receivedAt, err := time.Parse(time.DateTime, i.ReceivedAt)
 	if err != nil {
 		receivedAt = time.Now()
 	}
@@ -112,13 +112,13 @@ func PrimToIncome(income primitive.M) *Income {
 	}
 
 	newIncome.Description = income["description"].(string)
-	newIncome.ReceivedAt = income["receivedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+	newIncome.ReceivedAt = income["receivedAt"].(primitive.DateTime).Time().Format(time.DateTime)
 	newIncome.UserID = income["userId"].(string)
-	newIncome.CreatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+	newIncome.CreatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.DateTime)
 	if income["updatedAt"] == nil {
-		newIncome.UpdatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+		newIncome.UpdatedAt = income["createdAt"].(primitive.DateTime).Time().Format(time.DateTime)
 	} else {
-		newIncome.UpdatedAt = income["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+		newIncome.UpdatedAt = income["updatedAt"].(primitive.DateTime).Time().Format(time.DateTime)
 	}
 
 	return &newIncome

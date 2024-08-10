@@ -142,10 +142,10 @@ func GetIncomesByDate(userId string, startingDate string, endingDate string, sta
 
 	if statusDBCloud {
 
-		auxSD, _ := time.Parse(time.RFC3339, startingDate)
+		auxSD, _ := time.Parse(time.DateTime, startingDate)
 		sd := primitive.NewDateTimeFromTime(auxSD)
 
-		auxED, _ := time.Parse(time.RFC3339, endingDate)
+		auxED, _ := time.Parse(time.DateTime, endingDate)
 		ed := primitive.NewDateTimeFromTime(auxED)
 
 		sdBson := bson.M{"$gt": sd, "$lt": ed}
@@ -188,6 +188,10 @@ func CreateIncome(income domain.IncomeDTO) *tagError.TagError {
 
 	income.CreatedAt = timeHandler.GetTimeNow()
 	income.UpdatedAt = timeHandler.GetTimeNow()
+
+	aux, _ := time.Parse(time.RFC3339, income.ReceivedAt)
+
+	income.ReceivedAt = aux.Format(time.DateTime)
 
 	if statusDBCloud {
 

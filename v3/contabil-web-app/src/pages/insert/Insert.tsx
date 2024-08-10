@@ -1,27 +1,9 @@
 import React, { useEffect, useState } from 'react'
-import { DisplayFlex, OutlinedFieldStyled, TextFieldStyled } from '../../styles'
+import { DisplayFlex } from '../../styles'
 import {
     Button,
     Divider,
-    FormControl,
-    FormHelperText,
-    InputAdornment,
-    InputLabel,
-    MenuItem,
-    OutlinedInput,
-    Select,
-    Switch,
-    TextField,
-    Tooltip,
 } from '@mui/material'
-import {
-    DateCalendar,
-    DatePicker,
-    LocalizationProvider,
-    StaticDatePicker,
-} from '@mui/x-date-pickers'
-import dayjs from 'dayjs'
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { categoryList, submitActivity } from '../../api/insert'
 import Category from '../../interfaces/Category'
 import User from '../../interfaces/User'

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/TalisonK/TalisonContabil/internal/constants"
+	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	_ "gorm.io/gorm"
 )
@@ -16,8 +17,7 @@ type Expense struct {
 	CreatedAt     string   `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UpdatedAt     string   `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	PaidAt        string   `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	ActualParcel  int32    `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
-	TotalParcel   int32    `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
+	EndsAt        string   `json:"endsAt" gorm:"type:varchar(255);not null;idx_expense;"`
 	UserID        string   `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
 	User          User     `json:"user" gorm:"constraint;"`
 	CategoryID    string   `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
@@ -32,6 +32,7 @@ type ExpenseDTO struct {
 	CreatedAt     string  `json:"createdAt"`
 	UpdatedAt     string  `json:"updatedAt"`
 	PaidAt        string  `json:"paidAt"`
+	EndsAt        string  `json:"endsAt"`
 	ActualParcel  int32   `json:"actualParcel"`
 	TotalParcel   int32   `json:"totalParcel"`
 	UserID        string  `json:"userID"`
@@ -51,12 +52,15 @@ func (e *ExpenseDTO) ToEntity() Expense {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
-		ActualParcel:  e.ActualParcel,
-		TotalParcel:   e.TotalParcel,
+		EndsAt:        e.EndsAt,
 	}
 }
 
-func (e *Expense) ToDTO() ExpenseDTO {
+func (e *Expense) ToDTO(searchDate string) ExpenseDTO {
+
+	ac := int32(timeHandler.MonsthsAfterDate(e.PaidAt, searchDate)) + 1
+	tp := int32(timeHandler.MonsthsAfterDate(e.PaidAt, e.EndsAt)) + 1
+
 	return ExpenseDTO{
 		ID:            e.ID,
 		Description:   e.Description,
@@ -67,8 +71,9 @@ func (e *Expense) ToDTO() ExpenseDTO {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
-		ActualParcel:  e.ActualParcel,
-		TotalParcel:   e.TotalParcel,
+		EndsAt:        e.EndsAt,
+		ActualParcel:  ac,
+		TotalParcel:   tp,
 	}
 }
 
@@ -84,26 +89,29 @@ func (e *Expense) ToPrim() primitive.M {
 	pexp["paymentMethod"] = e.PaymentMethod
 	pexp["value"] = e.Value
 
-	createdAt, err := time.Parse(time.RFC3339, e.CreatedAt)
+	createdAt, err := time.Parse(time.DateTime, e.CreatedAt)
 	if err != nil {
 		createdAt = time.Now()
 	}
 	pexp["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
-	updatedAt, err := time.Parse(time.RFC3339, e.UpdatedAt)
+	updatedAt, err := time.Parse(time.DateTime, e.UpdatedAt)
 
 	if err != nil {
 		updatedAt = createdAt
 	}
 	pexp["updatedAt"] = updatedAt
 
-	paidAt, err := time.Parse(time.RFC3339, e.PaidAt)
+	paidAt, err := time.Parse(time.DateTime, e.PaidAt)
 	if err != nil {
 		paidAt = time.Now()
 	}
 	pexp["paidAt"] = paidAt
 
-	pexp["actualParcel"] = e.ActualParcel
-	pexp["totalParcel"] = e.TotalParcel
+	endsAt, err := time.Parse(time.DateTime, e.EndsAt)
+	if err != nil {
+		endsAt = paidAt
+	}
+	pexp["endsAt"] = endsAt
 
 	pexp["userID"] = e.UserID
 	pexp["categoryID"] = e.CategoryID
@@ -123,8 +131,9 @@ func (e *Expense) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
-		ActualParcel:  e.ActualParcel,
-		TotalParcel:   e.TotalParcel,
+		EndsAt:        e.EndsAt,
+		ActualParcel:  int32(timeHandler.MonthsAfterNow(e.PaidAt)),
+		TotalParcel:   int32(timeHandler.MonsthsAfterDate(e.PaidAt, e.EndsAt)),
 	}
 }
 
@@ -141,6 +150,7 @@ func (e *ExpenseDTO) ToActivity() Activity {
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
 		CategoryName:  e.CategoryName,
+		EndsAt:        e.EndsAt,
 		ActualParcel:  e.ActualParcel,
 		TotalParcel:   e.TotalParcel,
 	}
@@ -159,8 +169,7 @@ func PrimToExpense(pexp primitive.M) Expense {
 	exp.CreatedAt = pexp["createdAt"].(string)
 	exp.UpdatedAt = pexp["updatedAt"].(string)
 	exp.PaidAt = pexp["paidAt"].(string)
-	exp.ActualParcel = pexp["actualParcel"].(int32)
-	exp.TotalParcel = pexp["totalParcel"].(int32)
+	exp.EndsAt = pexp["endsAt"].(string)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
 
@@ -180,8 +189,7 @@ func PrimToExpenseDto(pexp primitive.M) ExpenseDTO {
 	exp.CreatedAt = pexp["createdAt"].(string)
 	exp.UpdatedAt = pexp["updatedAt"].(string)
 	exp.PaidAt = pexp["paidAt"].(string)
-	exp.ActualParcel = pexp["actualParcel"].(int32)
-	exp.TotalParcel = pexp["totalParcel"].(int32)
+	exp.EndsAt = pexp["endsAt"].(string)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
 

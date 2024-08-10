@@ -21,20 +21,21 @@ type IncomevsExpense struct {
 }
 
 type Activity struct {
-	ID            string  `json:"id" gorm:"type:varchar(255);primary_key;"`
-	Description   string  `json:"description" gorm:"type:varchar(255);not null;idx_expense;"`
-	PaymentMethod string  `json:"paymentMethod" gorm:"type:varchar(255);not null;idx_expense;"`
-	Value         float64 `json:"value" gorm:"type:float;not null;idx_expense;"`
-	Type          string  `json:"type" gorm:"type:varchar(255);not null;idx_expense;"`
-	CreatedAt     string  `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	UpdatedAt     string  `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	ActivityDate  string  `json:"activityDate" gorm:"type:varchar(255);not null;idx_expense;"`
-	ActualParcel  int32   `json:"actualParcel" gorm:"type:int;not null;idx_expense;"`
-	TotalParcel   int32   `json:"totalParcel" gorm:"type:int;not null;idx_expense;"`
-	UserID        string  `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
-	UserName      string  `json:"userName" gorm:"type:varchar(255);not null;idx_expense;"`
-	CategoryID    string  `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
-	CategoryName  string  `json:"categoryName" gorm:"type:varchar(255);not null;idx_expense;"`
+	ID            string  `json:"id"`
+	Description   string  `json:"description"`
+	PaymentMethod string  `json:"paymentMethod"`
+	Value         float64 `json:"value"`
+	Type          string  `json:"type"`
+	CreatedAt     string  `json:"createdAt"`
+	UpdatedAt     string  `json:"updatedAt"`
+	ActivityDate  string  `json:"activityDate"`
+	ActualParcel  int32   `json:"actualParcel"`
+	TotalParcel   int32   `json:"totalParcel"`
+	UserID        string  `json:"userID"`
+	UserName      string  `json:"userName"`
+	CategoryID    string  `json:"categoryID"`
+	CategoryName  string  `json:"categoryName"`
+	EndsAt        string  `json:"endsAt"`
 }
 
 type Resume struct {
@@ -63,10 +64,11 @@ func (a *Activity) ToExpenseDTO() ExpenseDTO {
 		CreatedAt:    a.CreatedAt,
 		UpdatedAt:    a.UpdatedAt,
 		PaidAt:       a.ActivityDate,
-		ActualParcel: a.ActualParcel,
-		TotalParcel:  a.TotalParcel,
+		EndsAt:       a.EndsAt,
 		UserID:       a.UserID,
 		CategoryID:   a.CategoryID,
 		CategoryName: a.CategoryName,
+		ActualParcel: a.ActualParcel,
+		TotalParcel:  a.TotalParcel,
 	}
 }

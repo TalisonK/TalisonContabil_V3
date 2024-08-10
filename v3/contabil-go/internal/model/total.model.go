@@ -25,7 +25,7 @@ func TotalRanger(ctx context.Context, cancel func(), userID string, originMonth 
 	errors := make(chan *tagError.TagError, 13)
 
 	// Get starting date
-	month, year := timeHandler.MonthSubtractorByJump(originMonth, originYear, 5)
+	month, year := timeHandler.MonthSubtractorByJump(originMonth, originYear, 6)
 
 	statusDBLocal, statusDBCloud := database.CheckDBStatus()
 
@@ -135,7 +135,7 @@ func CreateUpdateTotal(userId string, month string, year int, totalType string, 
 	if totalType == constants.INCOME {
 		activities, tagErr = fetchIncomesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
 	} else {
-		activities, tagErr = fetchExpensesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
+		activities, tagErr = fetchExpensesByDate(userId, month, year, statusDBLocal, statusDBCloud)
 	}
 
 	if tagErr != nil {
@@ -335,11 +335,11 @@ func fetchIncomesByDate(userId string, startingDate string, endingDate string, s
 
 }
 
-func fetchExpensesByDate(userId string, startingDate string, endingDate string, statusDBLocal bool, statusDBCloud bool) ([]domain.Activity, *tagError.TagError) {
+func fetchExpensesByDate(userId string, month string, year int, statusDBLocal bool, statusDBCloud bool) ([]domain.Activity, *tagError.TagError) {
 
 	var activities []domain.Activity
 
-	expenses, tagError := GetExpensesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
+	expenses, tagError := GetExpensesByDate(userId, month, year, statusDBLocal, statusDBCloud)
 
 	if tagError != nil {
 		logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME, tagError.Inner)
@@ -403,7 +403,7 @@ func Timeline(ctx context.Context, cancel func(), errChan chan *tagError.TagErro
 			logging.ContextAlreadyClosed()
 			return
 		default:
-			result, tagError := fetchExpensesByDate(userId, startingDate, endingDate, statusDBLocal, statusDBCloud)
+			result, tagError := fetchExpensesByDate(userId, month, year, statusDBLocal, statusDBCloud)
 
 			if tagError != nil {
 				logging.FailedToFindOnDB(fmt.Sprintf("Expenses for user %s", userId), constants.INCOME, tagError.Inner)
@@ -453,8 +453,8 @@ func Timeline(ctx context.Context, cancel func(), errChan chan *tagError.TagErro
 			break
 		}
 
-		expense, _ := time.Parse(time.RFC3339, expenses[exIndex].ActivityDate)
-		income, _ := time.Parse(time.RFC3339, incomes[inIndex].ActivityDate)
+		expense, _ := time.Parse(time.DateTime, expenses[exIndex].ActivityDate)
+		income, _ := time.Parse(time.DateTime, incomes[inIndex].ActivityDate)
 
 		switch income.Compare(expense) {
 		case -1:

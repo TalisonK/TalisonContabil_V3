@@ -9,7 +9,6 @@ import (
 	"github.com/TalisonK/TalisonContabil/internal/domain"
 	"github.com/TalisonK/TalisonContabil/internal/logging"
 	"github.com/TalisonK/TalisonContabil/internal/model"
-	"github.com/TalisonK/TalisonContabil/pkg/timeHandler"
 )
 
 func GetExpenses(w http.ResponseWriter, r *http.Request) {
@@ -18,9 +17,7 @@ func GetExpenses(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&body)
 
-	startingDate, endingDate := timeHandler.GetFirstAndLastDayOfMonth(body.Month, body.Year)
-
-	result, tagerr := model.GetExpensesByDate(body.UserID, startingDate, endingDate, true, true)
+	result, tagerr := model.GetExpensesByDate(body.UserID, body.Month, body.Year, true, true)
 
 	if tagerr != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -47,6 +44,24 @@ func CreateExpense(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(result)
+
+}
+
+func CreateExpenseList(w http.ResponseWriter, r *http.Request) {
+
+	var body domain.ExpenseDTO
+
+	json.NewDecoder(r.Body).Decode(&body)
+
+	tagErr := model.CreateExpenseListHandler(body)
+
+	if tagErr != nil {
+		w.WriteHeader(tagErr.HtmlStatus)
+		fmt.Fprintln(w, logging.GenericError("Error received while tring do create expense list", tagErr.Inner), tagErr.Inner.Error())
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	fmt.Fprintln(w, "Expense with List created successfully")
 
 }
 
