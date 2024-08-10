@@ -32,13 +32,13 @@ func (t Total) ToPrim() primitive.M {
 	if t.CreatedAt == "" {
 		pt["createdAt"] = timeHandler.GetTimeNow()
 	} else {
-		pt["createdAt"], _ = time.Parse(time.RFC3339, t.CreatedAt)
+		pt["createdAt"], _ = time.Parse(time.DateTime, t.CreatedAt)
 	}
 
 	if t.UpdatedAt == "" {
 		pt["updatedAt"] = timeHandler.GetTimeNow()
 	} else {
-		pt["updatedAt"], _ = time.Parse(time.RFC3339, t.UpdatedAt)
+		pt["updatedAt"], _ = time.Parse(time.DateTime, t.UpdatedAt)
 	}
 
 	pt["totalValue"] = t.TotalValue
@@ -59,11 +59,11 @@ func PrimToTotal(pt primitive.M) Total {
 	t.UserID = pt["userID"].(string)
 
 	if pt["createdAt"] != nil {
-		t.CreatedAt = pt["createdAt"].(time.Time).Format(time.RFC3339)
+		t.CreatedAt = pt["createdAt"].(time.Time).Format(time.DateTime)
 	}
 
 	if pt["updatedAt"] != nil {
-		t.UpdatedAt = pt["updatedAt"].(time.Time).Format(time.RFC3339)
+		t.UpdatedAt = pt["updatedAt"].(time.Time).Format(time.DateTime)
 	}
 
 	t.TotalValue = pt["totalValue"].(float64)

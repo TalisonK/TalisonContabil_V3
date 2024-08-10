@@ -71,8 +71,8 @@ func PrimToUser(user primitive.M) User {
 	usuario.Password = user["password"].(string)
 	usuario.Role = user["role"].(string)
 	usuario.Salt = user["salt"].(string)
-	usuario.CreatedAt = user["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339)
-	usuario.UpdatedAt = user["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339)
+	usuario.CreatedAt = user["createdAt"].(primitive.DateTime).Time().Format(time.DateTime)
+	usuario.UpdatedAt = user["updatedAt"].(primitive.DateTime).Time().Format(time.DateTime)
 
 	return usuario
 }

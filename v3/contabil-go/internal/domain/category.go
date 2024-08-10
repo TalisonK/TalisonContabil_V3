@@ -26,10 +26,10 @@ func (c *Category) ToPrim() primitive.M {
 	pcat["name"] = c.Name
 	pcat["description"] = c.Description
 
-	createdAt, _ := time.Parse(time.RFC3339, c.CreatedAt)
+	createdAt, _ := time.Parse(time.DateTime, c.CreatedAt)
 	pcat["createdAt"] = primitive.NewDateTimeFromTime(createdAt)
 
-	updatedAt, _ := time.Parse(time.RFC3339, c.UpdatedAt)
+	updatedAt, _ := time.Parse(time.DateTime, c.UpdatedAt)
 	pcat["updatedAt"] = primitive.NewDateTimeFromTime(updatedAt)
 
 	return pcat
@@ -40,7 +40,7 @@ func PrimToCategory(prim primitive.M) Category {
 		ID:          prim["_id"].(primitive.ObjectID).Hex(),
 		Name:        prim["name"].(string),
 		Description: prim["description"].(string),
-		CreatedAt:   prim["createdAt"].(primitive.DateTime).Time().Format(time.RFC3339),
-		UpdatedAt:   prim["updatedAt"].(primitive.DateTime).Time().Format(time.RFC3339),
+		CreatedAt:   prim["createdAt"].(primitive.DateTime).Time().Format(time.DateTime),
+		UpdatedAt:   prim["updatedAt"].(primitive.DateTime).Time().Format(time.DateTime),
 	}
 }

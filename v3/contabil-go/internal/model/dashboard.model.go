@@ -35,14 +35,12 @@ func GetDashboard(entry domain.DashboardPacket) (*domain.DashboardPacket, *tagEr
 	// Timeline routine for the timeline
 	go timelineRoutine(&wg, errors, ctx, cancel, &entry)
 
-	// TODO: ExpenseByCategory
+	// ExpenseByCategory
 	go ExpenseByCategoryRoutine(&wg, errors, ctx, cancel, &entry)
 
-	// TODO: ExpenseByMethod
+	// ExpenseByMethod
 
 	go ExpenseByMethodRoutine(&wg, errors, ctx, cancel, &entry)
-
-	// TODO: FixatedExpenses
 
 	wg.Wait()
 
@@ -83,6 +81,8 @@ func timelineRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagError, ctx co
 
 	defer wg.Done()
 
+	var timeline []domain.Activity = make([]domain.Activity, 0)
+
 	timeline, tagerr := Timeline(ctx, cancel, errChan, entry.UserID, entry.Month, entry.Year)
 
 	if tagerr != nil {
@@ -109,10 +109,14 @@ func ExpenseByCategoryRoutine(wg *sync.WaitGroup, errChan chan *tagError.TagErro
 		return
 	}
 
-	values := map[string]float64{}
+	values := make(map[string]float64)
 	fixated := map[string][]domain.Activity{}
 
 	fixe := []string{"Conta", "Streaming"}
+
+	for _, f := range fixe {
+		fixated[f] = make([]domain.Activity, 0)
+	}
 
 	var wg2 sync.WaitGroup
 	var valuesMutex sync.RWMutex

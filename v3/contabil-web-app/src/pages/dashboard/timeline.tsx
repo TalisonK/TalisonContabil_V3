@@ -139,16 +139,17 @@ const TimelineItem = ({ activity }: ItemProps) => {
 }
 
 const Timeline = (props: TimelineProps) => {
-    return (
-        <DisplayFlex direction="column" overflow="auto" width="100%">
-            {props.activities.map((activity) => (
-                <>
-                    <TimelineItem activity={activity} />
-                    <Divider />
-                </>
-            ))}
-        </DisplayFlex>
-    )
+    return props.activities === null? 
+    (<Text>Não há atividades</Text>) :
+    (<DisplayFlex direction="column" overflow="auto" width="100%">
+        {props.activities.map((activity) => (
+            <>
+                <TimelineItem activity={activity} />
+                <Divider />
+            </>
+        ))}
+    </DisplayFlex>)
+
 }
 
 export default Timeline
