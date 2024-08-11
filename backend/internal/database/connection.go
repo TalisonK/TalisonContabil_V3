@@ -65,6 +65,7 @@ func OpenConnectionLocal() error {
 	conn.AutoMigrate(&domain.Expense{})
 	conn.AutoMigrate(&domain.List{})
 	conn.AutoMigrate(&domain.Total{})
+	conn.AutoMigrate(&domain.CreditCard{})
 
 	DBlocal = conn
 

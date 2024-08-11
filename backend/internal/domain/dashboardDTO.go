@@ -34,6 +34,7 @@ type Activity struct {
 	UserID        string  `json:"userID"`
 	UserName      string  `json:"userName"`
 	CategoryID    string  `json:"categoryID"`
+	CreditCardID  string  `json:"creditCardID"`
 	CategoryName  string  `json:"categoryName"`
 	EndsAt        string  `json:"endsAt"`
 }
@@ -67,6 +68,7 @@ func (a *Activity) ToExpenseDTO() ExpenseDTO {
 		EndsAt:       a.EndsAt,
 		UserID:       a.UserID,
 		CategoryID:   a.CategoryID,
+		CreditCardID: a.CreditCardID,
 		CategoryName: a.CategoryName,
 		ActualParcel: a.ActualParcel,
 		TotalParcel:  a.TotalParcel,

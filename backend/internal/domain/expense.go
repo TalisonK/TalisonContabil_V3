@@ -10,18 +10,20 @@ import (
 )
 
 type Expense struct {
-	ID            string   `json:"id" gorm:"type:varchar(255);primary_key;"`
-	Description   string   `json:"description" gorm:"type:varchar(255);not null;idx_expense;"`
-	PaymentMethod string   `json:"paymentMethod" gorm:"type:varchar(255);not null;idx_expense;"`
-	Value         float64  `json:"value" gorm:"type:float;not null;idx_expense;"`
-	CreatedAt     string   `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	UpdatedAt     string   `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	PaidAt        string   `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	EndsAt        string   `json:"endsAt" gorm:"type:varchar(255);not null;idx_expense;"`
-	UserID        string   `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
-	User          User     `json:"user" gorm:"constraint;"`
-	CategoryID    string   `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
-	Category      Category `json:"category" gorm:"constraint;"`
+	ID            string     `json:"id" gorm:"type:varchar(255);primary_key;"`
+	Description   string     `json:"description" gorm:"type:varchar(255);not null;idx_expense;"`
+	PaymentMethod string     `json:"paymentMethod" gorm:"type:varchar(255);not null;idx_expense;"`
+	Value         float64    `json:"value" gorm:"type:float;not null;idx_expense;"`
+	CreatedAt     string     `json:"createdAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	UpdatedAt     string     `json:"updatedAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	PaidAt        string     `json:"paidAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	EndsAt        string     `json:"endsAt" gorm:"type:varchar(255);not null;idx_expense;"`
+	UserID        string     `json:"userID" gorm:"type:varchar(255);not null;idx_expense;"`
+	User          User       `json:"user" gorm:"constraint;"`
+	CategoryID    string     `json:"categoryID" gorm:"type:varchar(255);not null;idx_expense;"`
+	Category      Category   `json:"category" gorm:"constraint;"`
+	CreditCardID  string     `json:"creditCardID" gorm:"type:varchar(255);not null;idx_expense;"`
+	CreditCard    CreditCard `json:"creditCard" gorm:"constraint;"`
 }
 
 type ExpenseDTO struct {
@@ -37,6 +39,7 @@ type ExpenseDTO struct {
 	TotalParcel   int32   `json:"totalParcel"`
 	UserID        string  `json:"userID"`
 	CategoryID    string  `json:"categoryID"`
+	CreditCardID  string  `json:"creditCardID"`
 	CategoryName  string  `json:"categoryName"`
 	List          []List  `json:"list"`
 }
@@ -52,6 +55,7 @@ func (e *ExpenseDTO) ToEntity() Expense {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		CreditCardID:  e.CreditCardID,
 		EndsAt:        e.EndsAt,
 	}
 }
@@ -71,6 +75,7 @@ func (e *Expense) ToDTO(searchDate string) ExpenseDTO {
 		PaidAt:        e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		CreditCardID:  e.CreditCardID,
 		EndsAt:        e.EndsAt,
 		ActualParcel:  ac,
 		TotalParcel:   tp,
@@ -115,6 +120,7 @@ func (e *Expense) ToPrim() primitive.M {
 
 	pexp["userID"] = e.UserID
 	pexp["categoryID"] = e.CategoryID
+	pexp["creditCardID"] = e.CreditCardID
 
 	return pexp
 }
@@ -131,6 +137,7 @@ func (e *Expense) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		CreditCardID:  e.CreditCardID,
 		EndsAt:        e.EndsAt,
 		ActualParcel:  int32(timeHandler.MonthsAfterNow(e.PaidAt)),
 		TotalParcel:   int32(timeHandler.MonsthsAfterDate(e.PaidAt, e.EndsAt)),
@@ -149,6 +156,7 @@ func (e *ExpenseDTO) ToActivity() Activity {
 		ActivityDate:  e.PaidAt,
 		UserID:        e.UserID,
 		CategoryID:    e.CategoryID,
+		CreditCardID:  e.CreditCardID,
 		CategoryName:  e.CategoryName,
 		EndsAt:        e.EndsAt,
 		ActualParcel:  e.ActualParcel,
@@ -172,6 +180,7 @@ func PrimToExpense(pexp primitive.M) Expense {
 	exp.EndsAt = pexp["endsAt"].(string)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
+	exp.CreditCardID = pexp["creditCardID"].(string)
 
 	return exp
 }
@@ -192,6 +201,7 @@ func PrimToExpenseDto(pexp primitive.M) ExpenseDTO {
 	exp.EndsAt = pexp["endsAt"].(string)
 	exp.UserID = pexp["userID"].(string)
 	exp.CategoryID = pexp["categoryID"].(string)
+	exp.CreditCardID = pexp["creditCardID"].(string)
 
 	if pexp["categoryName"] != nil {
 		exp.CategoryName = pexp["categoryName"].(string)
