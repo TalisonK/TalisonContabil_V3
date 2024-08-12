@@ -6,7 +6,7 @@ interface Props {
     category: string
     setter: (value: string) => void
     categories: { name: string; id: number }[]
-    style: any
+    style?: any
 }
 
 const CategoryInput = (props: Props) => {

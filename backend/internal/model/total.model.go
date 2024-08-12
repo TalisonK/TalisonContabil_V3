@@ -597,3 +597,7 @@ func mountTotal(month string, year int, userId string, totalType string, activit
 
 	return total
 }
+
+func ClearCache() {
+	database.DBlocal.Exec("DELETE FROM totals")
+}

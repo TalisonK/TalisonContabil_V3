@@ -34,6 +34,7 @@ func Router() *chi.Mux {
 	r.Mount("/income", IncomeRouter())
 	r.Mount("/total", TotalRouter())
 	r.Mount("/expense", ExpenseRouter())
+	r.Mount("/creditcard", CreditCardRouter())
 	r.Mount("/", AuthRouter())
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {

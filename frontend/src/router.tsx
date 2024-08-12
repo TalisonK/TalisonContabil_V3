@@ -11,6 +11,7 @@ import Dashboard from './pages/dashboard/Dashboard'
 import Insert from './pages/insert/Insert'
 import ListPage from './pages/list/ListPage'
 import ErrorPage from './pages/error/ErrorPage'
+import CardPage from './pages/cards/card'
 
 export const RouterApp = (props: any) => {
     return (
@@ -24,6 +25,10 @@ export const RouterApp = (props: any) => {
                 <Route
                     path="/activities"
                     element={<ListPage theme={props.theme} />}
+                />
+                <Route
+                    path="/cards"
+                    element={<CardPage theme={props.theme} />}
                 />
                 <Route path="*" element={<ErrorPage theme={props.theme} />}/>
             </Routes>

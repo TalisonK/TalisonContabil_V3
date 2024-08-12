@@ -10,3 +10,7 @@ export const getDashboard = (userId: string, year: number, month: string) => {
         month,
     })
 }
+
+export const clearCache = () => {
+    return axios.delete(`${url}/clear-cache`)
+}

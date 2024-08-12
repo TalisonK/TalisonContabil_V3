@@ -6,8 +6,8 @@ type CreditCard struct {
 	ID        string `json:"id" gorm:"type:varchar(255);primary_key;"`
 	Flag      string `json:"flag" gorm:"type:varchar(255);not null;unique;idx_creditcard"`
 	Bank      string `json:"bank" gorm:"type:varchar(255);not null;idx_creditcard"`
-	ClosesAt  string `json:"closesAt" gorm:"type:varchar(255);not null;idx_creditcard"`
-	ExpiresAt string `json:"expiresAt" gorm:"type:varchar(255);not null;idx_creditcard"`
+	ClosesAt  int    `json:"closesAt" gorm:"type:int;not null;idx_creditcard"`
+	ExpiresAt int    `json:"expiresAt" gorm:"type:int;not null;idx_creditcard"`
 	UserID    string `json:"userID" gorm:"type:varchar(255);not null;idx_creditcard"`
 	User      User   `json:"user" gorm:"constraint;"`
 	CreatedAt string `json:"createdAt" gorm:"type:varchar(255);not null;idx_creditcard"`
@@ -38,8 +38,8 @@ func PrimToCreditCard(prim primitive.M) CreditCard {
 		ID:        prim["_id"].(primitive.ObjectID).Hex(),
 		Flag:      prim["flag"].(string),
 		Bank:      prim["bank"].(string),
-		ClosesAt:  prim["closesAt"].(string),
-		ExpiresAt: prim["expiresAt"].(string),
+		ClosesAt:  prim["closesAt"].(int),
+		ExpiresAt: prim["expiresAt"].(int),
 		UserID:    prim["userID"].(string),
 		CreatedAt: prim["createdAt"].(string),
 		UpdatedAt: prim["updatedAt"].(string),

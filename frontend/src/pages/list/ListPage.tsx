@@ -34,7 +34,11 @@ const ListPage = (props: any) => {
         }
 
         getList(user.id).then((response) => {
-            setRows(response)
+            if (response !== null) {
+                setRows(response)
+            } else {
+                setRows([])
+            }
         })
     }, [])
 
@@ -45,7 +49,11 @@ const ListPage = (props: any) => {
             if (res) {
                 const user = JSON.parse(localStorage.getItem('user') || '{}')
                 getList(user.id).then((response) => {
-                    setRows(response)
+                    if (response !== null) {
+                        setRows(response)
+                    } else {
+                        setRows([])
+                    }
                 })
             }
         })
@@ -106,23 +114,24 @@ const ListPage = (props: any) => {
                         </Button>
                     </ButtonGroup>
                 </DisplayFlex>
-                <DataGrid
-                    showCellVerticalBorder={true}
-                    rows={rows}
-                    columns={columns}
-                    style={{
-                        color: `${props.theme === 'dark' ? 'white' : 'black'}`,
-                    }}
-                    initialState={{
-                        pagination: {
-                            paginationModel: { page: 0, pageSize: 10 },
-                        },
-                    }}
-                    pageSizeOptions={[10, 20, 30, 50, 100]}
-                    checkboxSelection
-                    onRowSelectionModelChange={(e) => setSelectionModel(e)}
-                    rowSelectionModel={selectionModel}
-                />
+                    <DataGrid
+                        showCellVerticalBorder={true}
+                        rows={rows}
+                        columns={columns}
+                        style={{
+                            color: `${props.theme === 'dark' ? 'white' : 'black'}`,
+                            minHeight: '200px',
+                        }}
+                        initialState={{
+                            pagination: {
+                                paginationModel: { page: 0, pageSize: 10 },
+                            },
+                        }}
+                        pageSizeOptions={[10, 20, 30, 50, 100]}
+                        checkboxSelection
+                        onRowSelectionModelChange={(e) => setSelectionModel(e)}
+                        rowSelectionModel={selectionModel}
+                    />
             </DisplayFlex>
 
             <EditModal atual={selected} openEdit={openEdit} setOpenEdit={setOpenEdit} />

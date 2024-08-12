@@ -20,13 +20,14 @@ import (
 )
 
 type CloudCollections struct {
-	Base     *mongo.Client
-	Category *mongo.Collection
-	Expense  *mongo.Collection
-	Income   *mongo.Collection
-	List     *mongo.Collection
-	User     *mongo.Collection
-	Total    *mongo.Collection
+	Base       *mongo.Client
+	Category   *mongo.Collection
+	Expense    *mongo.Collection
+	Income     *mongo.Collection
+	List       *mongo.Collection
+	User       *mongo.Collection
+	Total      *mongo.Collection
+	CreditCard *mongo.Collection
 }
 
 var DBlocal *gorm.DB
@@ -113,7 +114,7 @@ func OpenConnectionCloud() error {
 	DBCloud.Expense = client.Database(base).Collection(constants.EXPENSE)
 	DBCloud.List = client.Database(base).Collection("list")
 	DBCloud.Total = client.Database(base).Collection("total")
-
+	DBCloud.CreditCard = client.Database(base).Collection("creditcard")
 	logging.OpenedConnection(constants.CLOUD)
 	return nil
 }

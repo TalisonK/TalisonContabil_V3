@@ -166,3 +166,17 @@ func JsonDateToTime(date string) string {
 	t, _ := time.Parse(time.RFC3339, date)
 	return t.Format(time.DateTime)
 }
+
+func CreditEndTime(day int, month string, year int, closes_at int) string {
+
+	var texit time.Time
+
+	if day < closes_at {
+		texit = time.Date(year, time.Month(MonthToNumber(month)), closes_at, 0, 0, 0, 0, time.UTC)
+	} else {
+		month, year = MonthAdder(month, year)
+		texit = time.Date(year, time.Month(MonthToNumber(month)), closes_at, 0, 0, 0, 0, time.UTC)
+	}
+
+	return texit.Format(time.DateTime)
+}

@@ -16,6 +16,8 @@ import ValueInput from './ValueInput'
 import CalendarInput from './CalendarInput'
 import TypeInput from './TypeInput'
 import ListInput from './ListInput'
+import CreditCard from '../../interfaces/CreditCard'
+import CreditCardInput from './CreditCardInput'
 
 interface item {
     id: number
@@ -37,7 +39,7 @@ const Insert = (props: any) => {
     const [totalParcel, setTotalParcel] = useState<number>(1)
     const [list, setList] = useState<boolean>(false)
     const [listItens, setListItens] = useState<item[]>([])
-
+    const [creditCard, setCreditCard] = useState<CreditCard>({} as CreditCard)
     const [categories, setCategories] = useState<Category[]>([])
 
     //Errors
@@ -46,6 +48,7 @@ const Insert = (props: any) => {
     const [valueError, setValueError] = useState<boolean>(false)
     const [categoryError, setCategoryError] = useState<boolean>(false)
     const [paymentMethodError, setPaymentMethodError] = useState<boolean>(false)
+    const [creditCardError, setCreditCardError] = useState<boolean>(false)
 
     useEffect(() => {
         categoryList()
@@ -115,6 +118,15 @@ const Insert = (props: any) => {
             validated = false
         }
 
+        if (paymentMethod === 'CREDIT_CARD' || paymentMethod === 'DEBIT_CARD') {
+            console.log(creditCard);
+            
+            if (!creditCard.bank) {
+                setCreditCardError(true)
+                validated = false
+            }
+        }
+
         return validated
     }
 
@@ -152,6 +164,7 @@ const Insert = (props: any) => {
                 actualParcel,
                 totalParcel,
                 paidAt,
+                creditCardId: creditCard.id,
             }
         } else {
             data = { ...data, receivedAt: paidAt }
@@ -210,10 +223,9 @@ const Insert = (props: any) => {
                 {/*ESQUERDA*/}
                 <DisplayFlex
                     width={type === 'Expense' ? '50%' : '100%'}
-                    height="100%"
+                    height="90%"
                     direction="column"
-                    justifyContent="space-evenly"
-                    marginTop="40px"
+                    marginTop='100px'
                 >
                     <DescricaoInput
                         description={description}
@@ -228,8 +240,8 @@ const Insert = (props: any) => {
                     <DisplayFlex
                         marginRight="70px"
                         marginLeft="70px"
-                        marginTop="50px"
-                        marginBottom="50px"
+                        marginTop='100px'
+                        marginBottom='100px'
                     >
                         <ValueInput
                             theme={props.theme}
@@ -251,31 +263,44 @@ const Insert = (props: any) => {
                     <>
                         <DisplayFlex
                             direction="column"
-                            justifyContent="space-evenly"
                             width="50%"
-                            height="100%"
-                            marginTop="50px"
+                            height="90%"
+                            marginTop='100px'
+                            style={{alignItems: 'center'}}
                         >
                             <CategoryInput
                                 error={categoryError}
                                 category={category}
                                 setter={setCategory}
                                 categories={categories}
-                                style={{marginRight: "70px", marginLeft:'70px'}}
+                                style={{ width: '80%' }}
                                 
                             />
 
-                            <PaymentMethodInput
-                                error={paymentMethodError}
-                                paymentMethod={paymentMethod}
-                                setter={setPaymentMethod}
-                                style={{marginRight: '70px',
-                                    marginLeft: '70px',
-                                    marginTop: '70px',
-                                    marginBottom: `${
-                                        paymentMethod === 'CREDIT_CARD' ? '0px' : '55px'
-                                    }`,}}
-                            />
+                            <DisplayFlex 
+                                width='80%' 
+                                justifyContent='center'
+                                marginTop='100px'
+                                marginBottom='100px'
+                                >
+                                <PaymentMethodInput
+                                    style={{width: (paymentMethod === 'CREDIT_CARD' || paymentMethod === "DEBIT_CARD") ? '50%' : '100%'}}
+                                    error={paymentMethodError}
+                                    paymentMethod={paymentMethod}
+                                    setter={setPaymentMethod}
+                                    
+                                />
+
+                                <CreditCardInput
+                                    style={{width: '50%'}}
+                                    error={creditCardError}
+                                    card={creditCard}
+                                    setter={setCreditCard}
+                                    paymentMethod={paymentMethod}
+                                    
+                                />
+                            </DisplayFlex>
+                            
 
                             <ParcelsInput
                                 paymentMethod={paymentMethod}

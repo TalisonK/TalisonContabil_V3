@@ -16,6 +16,7 @@ import {
 import { ThemeSwitch } from './styles'
 import { DisplayFlex } from '../styles'
 import User from '../interfaces/User'
+import { clearCache } from '../api/Dashboard'
 
 interface TopBarProps {
     theme: string
@@ -26,8 +27,9 @@ const TopBar = (props: TopBarProps) => {
     const pages = [
         {name: 'Insert', role: 'ROLE_USER'}, 
         {name: 'Activities', role: 'ROLE_USER'},
+        {name: 'Cards', role: 'ROLE_USER'},
         {name: 'Categories', role: 'ROLE_USER'},
-        {name: 'Users', role: 'ROLE_ADMIN'}
+        {name: 'Users', role: 'ROLE_ADMIN'},
     ]
     const settings = ['Profile', 'Logout']
 
@@ -168,6 +170,13 @@ const TopBar = (props: TopBarProps) => {
                                     }}
                                 />
                             </DisplayFlex>
+
+                            { 
+                            user.role === 'ROLE_ADMIN' ? 
+                                <MenuItem key="ClearCache" onClick={() => clearCache()}>Clear Cache</MenuItem>:<></>
+                            }
+
+                            
                             {settings.map((setting) => (
                                 <MenuItem
                                     key={setting}

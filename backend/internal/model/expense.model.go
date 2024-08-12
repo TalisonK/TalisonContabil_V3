@@ -181,11 +181,16 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) (string, *tagError.TagError
 	expense.PaidAt = paux.Format(time.DateTime)
 
 	if expense.PaymentMethod == "CREDIT_CARD" {
+
+		endDay := GetEndDay(expense.CreditCardID)
+
+		tstart, _ := time.Parse(time.DateTime, expense.PaidAt)
+
 		month, year := timeHandler.DateBreaker(expense.PaidAt)
 
 		endMonth, endYear := timeHandler.MonthAdderByJump(month, year, int(expense.TotalParcel)-1)
 
-		_, expense.EndsAt = timeHandler.GetFirstAndLastDayOfMonth(endMonth, endYear)
+		expense.EndsAt = timeHandler.CreditEndTime(tstart.Day(), endMonth, endYear, endDay)
 
 	} else {
 		expense.EndsAt = expense.PaidAt

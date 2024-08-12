@@ -114,3 +114,12 @@ func UpdateBucket(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 
 }
+
+func ClearCache(w http.ResponseWriter, r *http.Request) {
+
+	model.ClearCache()
+
+	logging.GenericSuccess("Cache cleared")
+	w.WriteHeader(http.StatusOK)
+
+}

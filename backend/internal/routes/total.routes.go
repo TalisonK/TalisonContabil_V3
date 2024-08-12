@@ -15,6 +15,7 @@ func TotalRouter() http.Handler {
 	r.Post("/dashboard", handler.GetDashboard)
 	r.Get("/activities/{id}", handler.GetActivities)
 	r.Post("/bucket", handler.DeleteBucket)
+	r.Delete("/clear-cache", handler.ClearCache)
 
 	return r
 }

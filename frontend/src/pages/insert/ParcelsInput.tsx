@@ -14,8 +14,8 @@ const ParcelsInput = (props: Props) => {
     return (
         <DisplayFlex
             justifyContent="center"
-            marginBottom="250px"
-            marginTop="150px"
+            marginBottom="220px"
+            marginTop="100px"
         >
             {props.paymentMethod === 'CREDIT_CARD' ? (
                 <>
@@ -41,7 +41,7 @@ const ParcelsInput = (props: Props) => {
                     />
                 </>
             ) : (
-                <></>
+                <DisplayFlex backgroundColor='red' height='10px' width='100%'></DisplayFlex>
             )}
         </DisplayFlex>
     )
