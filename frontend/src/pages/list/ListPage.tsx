@@ -9,12 +9,13 @@ import EditModal from './EditModal'
 const columns: GridColDef[] = [
     { field: 'id', headerName: 'ID', width: 220 },
     { field: 'description', headerName: 'Description', width: 350 },
-    { field: 'type', headerName: 'Type', width: 180 },
+    { field: 'type', headerName: 'Type', width: 100 },
     { field: 'paymentMethod', headerName: 'Payment Method', width: 180 },
-    { field: 'categoryName', headerName: 'Category', width: 200 },
-    { field: 'value', headerName: 'Value', width: 150, type: 'number' },
-    { field: 'actualParcel', headerName: 'Actual Parcel', width: 100 },
-    { field: 'totalParcel', headerName: 'Total Parcel', width: 100 },
+    { field: 'categoryName', headerName: 'Category', width: 180 },
+    { field: 'creditCardBank', headerName: 'Card', width: 200 },
+    { field: 'value', headerName: 'Value', width: 80, type: 'number' },
+    { field: 'actualParcel', headerName: 'Actual Parcel', width: 90 },
+    { field: 'totalParcel', headerName: 'Total Parcel', width: 90 },
     { field: 'activityDate', headerName: 'Activity Date', width: 250 },
     { field: 'createdAt', headerName: 'Created At', width: 250 },
 ]

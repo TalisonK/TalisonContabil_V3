@@ -600,4 +600,5 @@ func mountTotal(month string, year int, userId string, totalType string, activit
 
 func ClearCache() {
 	database.DBlocal.Exec("DELETE FROM totals")
+	database.DBCloud.Total.DeleteMany(context.Background(), bson.M{})
 }

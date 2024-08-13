@@ -21,22 +21,23 @@ type IncomevsExpense struct {
 }
 
 type Activity struct {
-	ID            string  `json:"id"`
-	Description   string  `json:"description"`
-	PaymentMethod string  `json:"paymentMethod"`
-	Value         float64 `json:"value"`
-	Type          string  `json:"type"`
-	CreatedAt     string  `json:"createdAt"`
-	UpdatedAt     string  `json:"updatedAt"`
-	ActivityDate  string  `json:"activityDate"`
-	ActualParcel  int32   `json:"actualParcel"`
-	TotalParcel   int32   `json:"totalParcel"`
-	UserID        string  `json:"userID"`
-	UserName      string  `json:"userName"`
-	CategoryID    string  `json:"categoryID"`
-	CreditCardID  string  `json:"creditCardID"`
-	CategoryName  string  `json:"categoryName"`
-	EndsAt        string  `json:"endsAt"`
+	ID             string  `json:"id"`
+	Description    string  `json:"description"`
+	PaymentMethod  string  `json:"paymentMethod"`
+	Value          float64 `json:"value"`
+	Type           string  `json:"type"`
+	CreatedAt      string  `json:"createdAt"`
+	UpdatedAt      string  `json:"updatedAt"`
+	ActivityDate   string  `json:"activityDate"`
+	ActualParcel   int32   `json:"actualParcel"`
+	TotalParcel    int32   `json:"totalParcel"`
+	UserID         string  `json:"userID"`
+	UserName       string  `json:"userName"`
+	CategoryID     string  `json:"categoryID"`
+	CreditCardID   string  `json:"creditCardID"`
+	CreditCardBank string  `json:"creditCardBank"`
+	CategoryName   string  `json:"categoryName"`
+	EndsAt         string  `json:"endsAt"`
 }
 
 type Resume struct {

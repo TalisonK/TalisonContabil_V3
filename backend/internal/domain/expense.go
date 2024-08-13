@@ -27,21 +27,22 @@ type Expense struct {
 }
 
 type ExpenseDTO struct {
-	ID            string  `json:"id"`
-	Description   string  `json:"description"`
-	PaymentMethod string  `json:"paymentMethod"`
-	Value         float64 `json:"value"`
-	CreatedAt     string  `json:"createdAt"`
-	UpdatedAt     string  `json:"updatedAt"`
-	PaidAt        string  `json:"paidAt"`
-	EndsAt        string  `json:"endsAt"`
-	ActualParcel  int32   `json:"actualParcel"`
-	TotalParcel   int32   `json:"totalParcel"`
-	UserID        string  `json:"userID"`
-	CategoryID    string  `json:"categoryID"`
-	CreditCardID  string  `json:"creditCardID"`
-	CategoryName  string  `json:"categoryName"`
-	List          []List  `json:"list"`
+	ID             string  `json:"id"`
+	Description    string  `json:"description"`
+	PaymentMethod  string  `json:"paymentMethod"`
+	Value          float64 `json:"value"`
+	CreatedAt      string  `json:"createdAt"`
+	UpdatedAt      string  `json:"updatedAt"`
+	PaidAt         string  `json:"paidAt"`
+	EndsAt         string  `json:"endsAt"`
+	ActualParcel   int32   `json:"actualParcel"`
+	TotalParcel    int32   `json:"totalParcel"`
+	UserID         string  `json:"userID"`
+	CategoryID     string  `json:"categoryID"`
+	CreditCardID   string  `json:"creditCardID"`
+	CategoryName   string  `json:"categoryName"`
+	CreditCardBank string  `json:"creditCardBank"`
+	List           []List  `json:"list"`
 }
 
 func (e *ExpenseDTO) ToEntity() Expense {
@@ -127,40 +128,42 @@ func (e *Expense) ToPrim() primitive.M {
 
 func (e *Expense) ToActivity() Activity {
 	return Activity{
-		ID:            e.ID,
-		Description:   e.Description,
-		PaymentMethod: e.PaymentMethod,
-		Value:         e.Value,
-		Type:          constants.EXPENSE,
-		CreatedAt:     e.CreatedAt,
-		UpdatedAt:     e.UpdatedAt,
-		ActivityDate:  e.PaidAt,
-		UserID:        e.UserID,
-		CategoryID:    e.CategoryID,
-		CreditCardID:  e.CreditCardID,
-		EndsAt:        e.EndsAt,
-		ActualParcel:  int32(timeHandler.MonthsAfterNow(e.PaidAt)),
-		TotalParcel:   int32(timeHandler.MonsthsAfterDate(e.PaidAt, e.EndsAt)),
+		ID:             e.ID,
+		Description:    e.Description,
+		PaymentMethod:  e.PaymentMethod,
+		Value:          e.Value,
+		Type:           constants.EXPENSE,
+		CreatedAt:      e.CreatedAt,
+		UpdatedAt:      e.UpdatedAt,
+		ActivityDate:   e.PaidAt,
+		UserID:         e.UserID,
+		CategoryID:     e.CategoryID,
+		CreditCardID:   e.CreditCardID,
+		CreditCardBank: e.CreditCard.Bank,
+		EndsAt:         e.EndsAt,
+		ActualParcel:   int32(timeHandler.MonthsAfterNow(e.PaidAt)),
+		TotalParcel:    int32(timeHandler.MonsthsAfterDate(e.PaidAt, e.EndsAt)),
 	}
 }
 
 func (e *ExpenseDTO) ToActivity() Activity {
 	return Activity{
-		ID:            e.ID,
-		Description:   e.Description,
-		PaymentMethod: e.PaymentMethod,
-		Value:         e.Value,
-		Type:          constants.EXPENSE,
-		CreatedAt:     e.CreatedAt,
-		UpdatedAt:     e.UpdatedAt,
-		ActivityDate:  e.PaidAt,
-		UserID:        e.UserID,
-		CategoryID:    e.CategoryID,
-		CreditCardID:  e.CreditCardID,
-		CategoryName:  e.CategoryName,
-		EndsAt:        e.EndsAt,
-		ActualParcel:  e.ActualParcel,
-		TotalParcel:   e.TotalParcel,
+		ID:             e.ID,
+		Description:    e.Description,
+		PaymentMethod:  e.PaymentMethod,
+		Value:          e.Value,
+		Type:           constants.EXPENSE,
+		CreatedAt:      e.CreatedAt,
+		UpdatedAt:      e.UpdatedAt,
+		ActivityDate:   e.PaidAt,
+		UserID:         e.UserID,
+		CategoryID:     e.CategoryID,
+		CreditCardID:   e.CreditCardID,
+		CategoryName:   e.CategoryName,
+		CreditCardBank: e.CreditCardBank,
+		EndsAt:         e.EndsAt,
+		ActualParcel:   e.ActualParcel,
+		TotalParcel:    e.TotalParcel,
 	}
 }
 

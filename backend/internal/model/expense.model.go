@@ -182,7 +182,7 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) (string, *tagError.TagError
 
 	if expense.PaymentMethod == "CREDIT_CARD" {
 
-		endDay := GetEndDay(expense.CreditCardID)
+		closeDay, endDay := GetCloseAndEndDay(expense.CreditCardID)
 
 		tstart, _ := time.Parse(time.DateTime, expense.PaidAt)
 
@@ -190,7 +190,7 @@ func CreateExpenseHandler(expense domain.ExpenseDTO) (string, *tagError.TagError
 
 		endMonth, endYear := timeHandler.MonthAdderByJump(month, year, int(expense.TotalParcel)-1)
 
-		expense.EndsAt = timeHandler.CreditEndTime(tstart.Day(), endMonth, endYear, endDay)
+		expense.EndsAt = timeHandler.CreditEndTime(tstart.Day(), endMonth, endYear, closeDay, endDay)
 
 	} else {
 		expense.EndsAt = expense.PaidAt
@@ -678,8 +678,17 @@ func ExpenseGetCategoryName(expenses []domain.Expense, month string, year int, s
 				return
 			}
 
+			bank, tagErr := GetBankNameById(exp.CreditCardID, statusDBLocal, statusDBCloud)
+
+			if tagErr != nil {
+				logging.FailedToFindOnDB(fmt.Sprintf("Bank from user %s", exp.UserID), constants.LOCAL, tagErr.Inner)
+				errors <- tagErr
+				return
+			}
+
 			expDto := exp.ToDTO(timeHandler.DateMaker(month, year))
 			expDto.CategoryName = cat.Name
+			expDto.CreditCardBank = bank
 
 			expensesDto[i] = expDto
 

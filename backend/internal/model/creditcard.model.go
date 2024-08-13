@@ -95,12 +95,47 @@ func CreateCreditCard(entry domain.CreditCard) (*domain.CreditCard, *tagError.Ta
 
 }
 
-func GetEndDay(id string) int {
+func GetBankNameById(id string, statusDbLocal bool, statusDbCloud bool) (string, *tagError.TagError) {
+
+	if statusDbLocal {
+
+		var result domain.CreditCard
+
+		database.DBlocal.Where("id = ?", id).First(&result)
+
+		return result.Bank, nil
+	}
+
+	if statusDbCloud {
+
+		prim, err := primitive.ObjectIDFromHex(id)
+
+		if err != nil {
+			return "", tagError.GetTagError(http.StatusInternalServerError, err)
+		}
+
+		result := database.DBCloud.CreditCard.FindOne(context.Background(), primitive.M{"_id": prim})
+
+		if result.Err() != nil {
+			return "", tagError.GetTagError(http.StatusInternalServerError, result.Err())
+		}
+
+		var creditCard domain.CreditCard
+
+		result.Decode(&creditCard)
+
+		return creditCard.Bank, nil
+	}
+
+	return "", tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
+func GetCloseAndEndDay(id string) (int, int) {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
 
 	if !statusDbLocal && !statusDbCloud {
-		return -1
+		return -1, -1
 	}
 
 	if statusDbLocal {
@@ -109,7 +144,7 @@ func GetEndDay(id string) int {
 
 		database.DBlocal.Where("id = ?", id).First(&result)
 
-		return result.ExpiresAt
+		return result.ClosesAt, result.ExpiresAt
 	}
 
 	if statusDbCloud {
@@ -117,21 +152,62 @@ func GetEndDay(id string) int {
 		prim, err := primitive.ObjectIDFromHex(id)
 
 		if err != nil {
-			return -1
+			return -1, -1
 		}
 
 		result := database.DBCloud.CreditCard.FindOne(context.Background(), primitive.M{"_id": prim})
 
 		if result.Err() != nil {
-			return -1
+			return -1, -1
 		}
 
 		var creditCard domain.CreditCard
 
 		result.Decode(&creditCard)
 
-		return creditCard.ExpiresAt
+		return creditCard.ClosesAt, creditCard.ExpiresAt
 	}
 
-	return -1
+	return -1, -1
+}
+
+func GetCreditCardById(id string) *domain.CreditCard {
+
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
+
+	if !statusDbLocal && !statusDbCloud {
+		return nil
+	}
+
+	if statusDbLocal {
+
+		var result domain.CreditCard
+
+		database.DBlocal.Where("id = ?", id).First(&result)
+
+		return &result
+	}
+
+	if statusDbCloud {
+
+		prim, err := primitive.ObjectIDFromHex(id)
+
+		if err != nil {
+			return nil
+		}
+
+		result := database.DBCloud.CreditCard.FindOne(context.Background(), primitive.M{"_id": prim})
+
+		if result.Err() != nil {
+			return nil
+		}
+
+		var creditCard domain.CreditCard
+
+		result.Decode(&creditCard)
+
+		return &creditCard
+	}
+
+	return nil
 }
