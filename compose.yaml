@@ -1,0 +1,24 @@
+version: '3.7'
+
+services:
+  front:
+    container_name: front
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "18000:3000"
+    expose:
+      - "18000"
+  
+  back:
+    container_name: back
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "18080:3033"
+    expose:
+      - "18080"

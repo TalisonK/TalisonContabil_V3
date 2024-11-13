@@ -4,7 +4,7 @@ import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type CreditCard struct {
 	ID        string `json:"id" gorm:"type:varchar(255);primary_key;"`
-	Flag      string `json:"flag" gorm:"type:varchar(255);not null;unique;idx_creditcard"`
+	Flag      string `json:"flag" gorm:"type:varchar(255);not null;idx_creditcard"`
 	Bank      string `json:"bank" gorm:"type:varchar(255);not null;idx_creditcard"`
 	ClosesAt  int    `json:"closesAt" gorm:"type:int;not null;idx_creditcard"`
 	ExpiresAt int    `json:"expiresAt" gorm:"type:int;not null;idx_creditcard"`

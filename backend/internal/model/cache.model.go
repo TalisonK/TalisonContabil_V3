@@ -27,6 +27,22 @@ func StartCache() database.CacheDB {
 
 	logging.GenericSuccess("Cache for Category started successfully.")
 
+	cards, tagerr := GetCreditCards()
+
+	if tagerr != nil {
+		logging.FailedToFindOnDB("All Credit Cards", constants.LOCAL, tagerr.Inner)
+		cache.CardStatus = false
+	} else {
+		cache.CardStatus = true
+		cache.Cards = map[string]domain.CreditCard{}
+
+		for _, card := range cards {
+			cache.Cards[card.ID] = card
+		}
+	}
+
+	logging.GenericSuccess("Cache for Credit Card started successfully.")
+
 	return cache
 
 }

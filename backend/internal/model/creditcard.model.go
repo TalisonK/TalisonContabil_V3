@@ -14,6 +14,45 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func GetCreditCards() ([]domain.CreditCard, *tagError.TagError) {
+
+	statusDbLocal, statusDbCloud := database.CheckDBStatus()
+
+	if !statusDbLocal && !statusDbCloud {
+		return nil, tagError.GetTagError(http.StatusInternalServerError, logging.NoDatabaseConnection())
+	}
+
+	if statusDbLocal {
+
+		var result []domain.CreditCard
+
+		database.DBlocal.Find(&result)
+
+		return result, nil
+	}
+
+	if statusDbCloud {
+
+		cursor, err := database.DBCloud.CreditCard.Find(context.Background(), primitive.M{})
+
+		if err != nil {
+			return nil, tagError.GetTagError(http.StatusInternalServerError, err)
+		}
+
+		var result []domain.CreditCard
+
+		for cursor.Next(context.Background()) {
+			var creditCard domain.CreditCard
+			cursor.Decode(&creditCard)
+			result = append(result, creditCard)
+		}
+
+		return result, nil
+	}
+
+	return nil, tagError.GetTagError(http.StatusInternalServerError, logging.ErrorOccurred())
+}
+
 func GetCreditCardsByUser(userId string) []domain.CreditCard {
 
 	statusDbLocal, statusDbCloud := database.CheckDBStatus()
@@ -96,6 +135,12 @@ func CreateCreditCard(entry domain.CreditCard) (*domain.CreditCard, *tagError.Ta
 }
 
 func GetBankNameById(id string, statusDbLocal bool, statusDbCloud bool) (string, *tagError.TagError) {
+
+	cards := database.CacheDatabase.GetCardById(id)
+
+	if cards != (domain.CreditCard{}) {
+		return cards.Bank, nil
+	}
 
 	if statusDbLocal {
 
